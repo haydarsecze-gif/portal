@@ -149,7 +149,7 @@ export default function ContentModal({
           targetParentId = subjectFolderId
         }
 
-        // 2. Create assignment folder if it doesn't exist yet
+        // 2. Create coursework folder if it doesn't exist yet
         if (!capturedFolderId) {
           const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
             method: 'POST',
@@ -158,7 +158,7 @@ export default function ContentModal({
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              name: formData.title.trim(), // EXACT name, keeping casing & spaces (e.g. "Task 1")
+              name: `${type}: ${formData.title.trim()}`,
               mimeType: 'application/vnd.google-apps.folder',
               parents: [targetParentId]
             })
