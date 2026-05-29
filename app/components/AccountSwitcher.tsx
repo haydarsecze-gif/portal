@@ -41,6 +41,20 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
       if (!Array.isArray(saved)) {
         saved = []
       }
+
+      // Purge stale hardcoded demo accounts from previous builds
+      saved = saved.filter((acc: any) => {
+        if (!acc || typeof acc !== 'object') return false
+        const email = (acc.email || '').toLowerCase()
+        const password = acc.password || ''
+        const isDemo = (
+          (email === 'theweirdone719@gmail.com' || email === 'nit.ratha01@gmail.com' || email === 'godchan22@gmail.com') &&
+          password === 'password123'
+        )
+        return !isDemo
+      })
+      localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+
       // Filter out invalid/corrupt entries
       saved = saved.filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
 
