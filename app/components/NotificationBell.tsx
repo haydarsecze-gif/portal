@@ -34,24 +34,45 @@ export default function NotificationBell() {
   useEffect(() => {
     if (!userId) return
 
-    // 3. Set up real-time listener for incoming notifications
-    const channel = supabase
-      .channel(`realtime_notifications_${userId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications'
-      }, (payload) => {
-        const newNotif = payload.new
-        if (newNotif.user_id === userId || !newNotif.user_id) {
-          setNotifications(prev => [newNotif, ...prev])
-          setUnreadCount(c => c + 1)
+    let channel: any;
+    try {
+      // 3. Set up real-time listener for incoming notifications
+      channel = supabase
+        .channel(`realtime_notifications_${userId}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications'
+        }, (payload) => {
+          try {
+            const newNotif = payload.new
+            if (newNotif && (newNotif.user_id === userId || !newNotif.user_id)) {
+              setNotifications(prev => [newNotif, ...prev])
+              setUnreadCount(c => c + 1)
+            }
+          } catch (e) {
+            console.error('Error handling realtime notification insert:', e)
+          }
+        })
+      
+      // Defensively handle subscription statuses and reject logs to prevent WebKit bubbles
+      channel.subscribe((status: string, err: any) => {
+        if (status === 'CHANNEL_ERROR' || err) {
+          console.warn('NotificationBell Realtime Channel Status:', status, err)
         }
       })
-      .subscribe()
+    } catch (e) {
+      console.error('Failed to initialize Supabase Realtime channel:', e)
+    }
 
     return () => {
-      supabase.removeChannel(channel)
+      if (channel) {
+        try {
+          supabase.removeChannel(channel)
+        } catch (e) {
+          console.error('Error removing channel:', e)
+        }
+      }
     }
   }, [userId])
 
