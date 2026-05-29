@@ -158,8 +158,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest items-center">
             <span>Theme & Refresh</span>
             <div className="flex items-center gap-2">
-              <AccountSwitcher />
-              <NotificationBell />
+              <AccountSwitcher align="left" />
+              <NotificationBell align="left" />
               <ThemeToggle />
               <button 
                 onClick={() => window.location.reload()}

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X } from 'lucide-react'
 
-export default function NotificationBell() {
+export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [userId, setUserId] = useState<string | null>(null)
@@ -200,7 +200,9 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-auto sm:mt-3 w-auto sm:w-80 bg-white/95 dark:bg-slate-950/95 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl backdrop-blur-xl z-[999] p-4 flex flex-col gap-3 max-sm:max-h-[calc(100vh-7rem)] sm:max-h-[420px] overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className={`fixed sm:absolute inset-x-4 sm:inset-x-auto top-20 sm:top-auto sm:mt-3 w-auto sm:w-80 bg-white/95 dark:bg-slate-950/95 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl backdrop-blur-xl z-[999] p-4 flex flex-col gap-3 max-sm:max-h-[calc(100vh-7rem)] sm:max-h-[420px] overflow-hidden animate-in zoom-in-95 duration-200 ${
+          align === 'left' ? 'sm:left-0 sm:right-auto' : 'sm:right-0 sm:left-auto'
+        }`}>
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-900 pb-2">
             <div>
               <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-wider">Inbox Notifications</h4>
