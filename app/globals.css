@@ -267,3 +267,28 @@ body {
 .dark .bg-emerald-500\/5 {
   background-color: rgba(192, 132, 252, 0.04) !important;
 }
+
+/* ==========================================================================
+   MOBILE RENDERING PERFORMANCE OPTIMIZATIONS (60FPS FOR LOW-END DEVICES)
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* Disable expensive backdrop filters on mobile GPUs to prevent rendering lag */
+  .backdrop-blur-2xl, 
+  .backdrop-blur-xl, 
+  .backdrop-blur-lg, 
+  .backdrop-blur-md, 
+  .backdrop-blur-sm,
+  .backdrop-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  /* Fallback to high-performance solid color backgrounds for cards and modals */
+  .bg-slate-950\/40 {
+    background-color: #05070e !important;
+  }
+  .bg-white\/5 {
+    background-color: #1a1e36 !important;
+  }
+}
+

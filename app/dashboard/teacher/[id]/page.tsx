@@ -142,7 +142,7 @@ export default function SubjectDetail() {
             <button 
               key={t} 
               onClick={() => setActiveTab(t as any)} 
-              className={`flex-1 py-3 px-6 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all cursor-pointer ${
+              className={`shrink-0 flex-1 sm:flex-none py-3 px-4 sm:px-6 rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${
                 activeTab === t 
                   ? 'bg-slate-900 text-white shadow' 
                   : 'text-slate-400 hover:text-slate-700'

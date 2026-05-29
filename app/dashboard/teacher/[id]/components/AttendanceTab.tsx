@@ -305,7 +305,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="p-6 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 sticky left-0 bg-white z-40 w-72">Student List</th>
+                <th className="p-6 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 sticky left-0 bg-white z-40 w-32 min-w-[130px] sm:w-72 sm:min-w-[280px]">Student List</th>
                 {weeks.map(w => (
                   <th key={w} className="p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 text-center min-w-[64px]">W{w}</th>
                 ))}
@@ -315,9 +315,9 @@ export default function AttendanceTab({ classId }: { classId: string }) {
               {students.length > 0 ? (
                 students.map((student) => (
                   <tr key={student.id} className="group">
-                    <td className="p-6 border-b border-slate-50 sticky left-0 bg-white group-hover:bg-slate-50/50 z-30 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)]">
-                      <div className="font-bold text-slate-700 text-sm">{student.name}</div>
-                      <div className="text-[10px] text-slate-400 font-medium normal-case tracking-normal mt-0.5">{student.email || 'No Email'}</div>
+                    <td className="p-6 border-b border-slate-50 sticky left-0 bg-white group-hover:bg-slate-50/50 z-30 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)] w-32 min-w-[130px] sm:w-72 sm:min-w-[280px] max-w-[130px] sm:max-w-none">
+                      <div className="font-bold text-slate-700 text-sm truncate">{student.name}</div>
+                      <div className="hidden sm:block text-[10px] text-slate-400 font-medium normal-case tracking-normal mt-0.5 truncate">{student.email || 'No Email'}</div>
                     </td>
                     {weeks.map(week => {
                       const cellKey = `${student.id}-${week}`

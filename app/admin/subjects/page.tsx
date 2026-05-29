@@ -448,7 +448,7 @@ export default function AdminCurriculum() {
                   <table className="min-w-full border-collapse text-left">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-900 text-[9px] font-black tracking-widest text-white uppercase divide-x divide-slate-800 select-none">
-                        <th className="p-4 min-w-[240px] sticky left-0 bg-slate-900 z-20">Student Profile</th>
+                        <th className="p-4 w-32 min-w-[120px] sm:min-w-[240px] sticky left-0 bg-slate-900 z-20">Student Profile</th>
                         {[...Array(17)].map((_, idx) => (
                           <th key={idx} className="p-3 text-center min-w-[90px]">Week {idx + 1}</th>
                         ))}
@@ -457,9 +457,9 @@ export default function AdminCurriculum() {
                     <tbody className="text-xs font-bold divide-y divide-slate-100 bg-white">
                       {activeRoster.map((student) => (
                         <tr key={student.id} className="hover:bg-slate-50/40 transition-colors divide-x divide-slate-100 group">
-                          <td className="p-4 font-black text-slate-850 uppercase tracking-tight sticky left-0 bg-white shadow-[3px_0_10px_rgba(0,0,0,0.02)] z-10">
-                            <div className="group-hover:text-indigo-600 transition-colors">{student.name}</div>
-                            <div className="text-[9px] font-bold text-slate-400 normal-case tracking-normal mt-0.5 leading-none">{student.email}</div>
+                          <td className="p-4 font-black text-slate-850 uppercase tracking-tight sticky left-0 bg-white shadow-[3px_0_10px_rgba(0,0,0,0.02)] z-10 w-32 min-w-[120px] sm:min-w-[240px] max-w-[120px] sm:max-w-none">
+                            <div className="group-hover:text-indigo-600 transition-colors truncate">{student.name}</div>
+                            <div className="hidden sm:block text-[9px] font-bold text-slate-400 normal-case tracking-normal mt-0.5 leading-none truncate">{student.email}</div>
                           </td>
 
                           {[...Array(17)].map((_, idx) => {
