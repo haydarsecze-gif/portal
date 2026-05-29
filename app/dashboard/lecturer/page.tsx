@@ -71,9 +71,12 @@ export default function LecturerDashboard() {
       <div className="w-full max-w-[1600px] mx-auto">
         
         {/* Modern radial gradient heading block */}
-        <div className="relative bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-[2.5rem] p-8 md:p-12 mb-12 shadow-xl shadow-slate-900/10 overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="absolute top-[-30%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
-          <div className="absolute bottom-[-30%] left-[-10%] w-[250px] h-[250px] bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-[2.5rem] p-8 md:p-12 mb-12 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          {/* Absolute Background Wrapper to safely clip the glow blobs without clipping dropdowns */}
+          <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none z-0">
+            <div className="absolute top-[-30%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute bottom-[-30%] left-[-10%] w-[250px] h-[250px] bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
+          </div>
           
           <div className="relative z-10 space-y-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-widest">
@@ -94,7 +97,7 @@ export default function LecturerDashboard() {
             <button 
               onClick={() => fetchData(false)} 
               disabled={isSyncing}
-              className="p-3.5 bg-white/5 border border-white/10 hover:border-white/20 text-slate-350 hover:text-indigo-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              className="p-3.5 bg-white/5 border border-white/10 hover:border-white/20 text-slate-300 hover:text-indigo-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
             >
               <RefreshCw size={14} className={isSyncing ? "animate-spin text-indigo-400" : ""} />
             </button>
