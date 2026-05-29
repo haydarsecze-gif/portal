@@ -15,7 +15,31 @@ export default function Login() {
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      if (saved.length === 0) {
+        // Seed default demo credentials
+        saved = [
+          {
+            email: "theweirdone719@gmail.com",
+            password: "password123",
+            role: "student",
+            name: "sam"
+          },
+          {
+            email: "nit.ratha01@gmail.com",
+            password: "password123",
+            role: "teacher",
+            name: "Ratha Nit"
+          },
+          {
+            email: "godchan22@gmail.com",
+            password: "password123",
+            role: "admin",
+            name: "Sora"
+          }
+        ]
+        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+      }
       setSavedAccounts(saved)
     } catch (e) {
       console.error(e)
@@ -61,13 +85,13 @@ export default function Login() {
         console.error('Error saving account to switcher:', e)
       }
 
-      if (profile?.role === 'admin') {
-        router.push('/admin/students')
-      } else if (profile?.role === 'teacher') {
-        router.push('/dashboard/lecturer')
-      } else {
-        router.push('/dashboard/student')
-      }
+      const targetUrl = profile?.role === 'admin'
+        ? '/admin/students'
+        : profile?.role === 'teacher'
+          ? '/dashboard/lecturer'
+          : '/dashboard/student'
+      
+      window.location.href = targetUrl
     }
   }
 
@@ -104,13 +128,13 @@ export default function Login() {
         localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
       }
 
-      if (profile?.role === 'admin') {
-        router.push('/admin/students')
-      } else if (profile?.role === 'teacher') {
-        router.push('/dashboard/lecturer')
-      } else {
-        router.push('/dashboard/student')
-      }
+      const targetUrl = profile?.role === 'admin'
+        ? '/admin/students'
+        : profile?.role === 'teacher'
+          ? '/dashboard/lecturer'
+          : '/dashboard/student'
+      
+      window.location.href = targetUrl
     }
   }
 

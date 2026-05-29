@@ -33,7 +33,30 @@ export default function AccountSwitcher() {
 
     // 2. Load saved accounts from localStorage
     try {
-      const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      if (saved.length === 0) {
+        saved = [
+          {
+            email: "theweirdone719@gmail.com",
+            password: "password123",
+            role: "student",
+            name: "sam"
+          },
+          {
+            email: "nit.ratha01@gmail.com",
+            password: "password123",
+            role: "teacher",
+            name: "Ratha Nit"
+          },
+          {
+            email: "godchan22@gmail.com",
+            password: "password123",
+            role: "admin",
+            name: "Sora"
+          }
+        ]
+        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+      }
       setSavedAccounts(saved)
     } catch (e) {
       console.error('Failed to parse saved accounts:', e)

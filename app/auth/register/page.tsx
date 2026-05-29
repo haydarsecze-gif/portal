@@ -108,6 +108,26 @@ export default function Register() {
           }
         }
 
+        // Save to switcher accounts on registration
+        try {
+          const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+          const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
+          const newAcc = {
+            email: email.toLowerCase(),
+            password,
+            role: userRole,
+            name: fullName
+          }
+          if (index > -1) {
+            saved[index] = newAcc
+          } else {
+            saved.push(newAcc)
+          }
+          localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+        } catch (e) {
+          console.error(e)
+        }
+
         setMessage(role === 'teacher' 
           ? "✅ Request sent! Wait for admin approval." 
           : "✅ Registration successful!")
