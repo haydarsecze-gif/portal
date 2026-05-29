@@ -16,17 +16,21 @@ export default function AccountSwitcher() {
   useEffect(() => {
     // 1. Fetch current session user
     const getUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setCurrentUser(user)
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-        if (profile) {
-          setCurrentProfile(profile)
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setCurrentUser(user)
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          if (profile) {
+            setCurrentProfile(profile)
+          }
         }
+      } catch (err) {
+        console.error('Error fetching user data:', err)
       }
     }
     getUserData()
@@ -34,6 +38,12 @@ export default function AccountSwitcher() {
     // 2. Load saved accounts from localStorage
     try {
       let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      if (!Array.isArray(saved)) {
+        saved = []
+      }
+      // Filter out invalid/corrupt entries
+      saved = saved.filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
+
       if (saved.length === 0) {
         saved = [
           {
@@ -123,7 +133,7 @@ export default function AccountSwitcher() {
 
   const handleRemoveAccount = (emailToRemove: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    const updated = savedAccounts.filter(a => a.email.toLowerCase() !== emailToRemove.toLowerCase())
+    const updated = savedAccounts.filter(a => a?.email && emailToRemove && a.email.toLowerCase() !== emailToRemove.toLowerCase())
     setSavedAccounts(updated)
     localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
   }
@@ -140,18 +150,30 @@ export default function AccountSwitcher() {
 
   // Get Initials for Avatar
   const getInitials = () => {
-    if (currentProfile?.full_name) {
-      const parts = currentProfile.full_name.split(' ')
-      if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase()
-      return parts[0].substring(0, 2).toUpperCase()
-    }
-    if (currentUser?.email) {
-      return currentUser.email.substring(0, 2).toUpperCase()
+    try {
+      if (currentProfile?.full_name) {
+        const cleanName = currentProfile.full_name.trim().replace(/\s+/g, ' ')
+        if (cleanName) {
+          const parts = cleanName.split(' ')
+          if (parts.length > 1 && parts[0]?.[0] && parts[1]?.[0]) {
+            return (parts[0][0] + parts[1][0]).toUpperCase()
+          }
+          if (parts[0]) {
+            return parts[0].substring(0, 2).toUpperCase()
+          }
+        }
+      }
+      if (currentUser?.email) {
+        return currentUser.email.substring(0, 2).toUpperCase()
+      }
+    } catch (err) {
+      console.error("Error getting initials:", err)
     }
     return 'U'
   }
 
-  const getRoleLabel = (role: string) => {
+  const getRoleLabel = (role?: string) => {
+    if (!role) return 'Student'
     switch (role) {
       case 'admin': return 'Administrator'
       case 'teacher': return 'Lecturer'
@@ -159,7 +181,8 @@ export default function AccountSwitcher() {
     }
   }
 
-  const getRoleBadgeStyle = (role: string) => {
+  const getRoleBadgeStyle = (role?: string) => {
+    if (!role) return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
     switch (role) {
       case 'admin': return 'bg-rose-500/10 border-rose-500/20 text-rose-500'
       case 'teacher': return 'bg-indigo-500/10 border-indigo-500/20 text-indigo-500'
@@ -228,9 +251,9 @@ export default function AccountSwitcher() {
             </h5>
 
             <div className="overflow-y-auto custom-scrollbar max-h-[180px] flex flex-col gap-2 pr-1">
-              {savedAccounts.filter(acc => acc.email.toLowerCase() !== currentUser?.email?.toLowerCase()).length > 0 ? (
+              {savedAccounts.filter(acc => acc?.email && acc.email.toLowerCase() !== currentUser?.email?.toLowerCase()).length > 0 ? (
                 savedAccounts
-                  .filter(acc => acc.email.toLowerCase() !== currentUser?.email?.toLowerCase())
+                  .filter(acc => acc?.email && acc.email.toLowerCase() !== currentUser?.email?.toLowerCase())
                   .map((acc, index) => (
                     <div
                       key={index}
@@ -239,11 +262,11 @@ export default function AccountSwitcher() {
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div className="w-7 h-7 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 rounded-lg flex items-center justify-center text-[9px] font-black uppercase shrink-0">
-                          {acc.name ? acc.name.substring(0, 2).toUpperCase() : acc.email.substring(0, 2).toUpperCase()}
+                          {acc.name ? acc.name.substring(0, 2).toUpperCase() : (acc.email ? acc.email.substring(0, 2).toUpperCase() : 'US')}
                         </div>
                         <div className="min-w-0">
                           <p className="text-[10px] font-black text-slate-700 dark:text-slate-200 uppercase truncate leading-none">
-                            {acc.name}
+                            {acc.name || acc.email}
                           </p>
                           <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 truncate mt-0.5 leading-none">
                             {acc.email} • {getRoleLabel(acc.role)}
@@ -251,7 +274,7 @@ export default function AccountSwitcher() {
                         </div>
                       </div>
                       <button
-                        onClick={(e) => handleRemoveAccount(acc.email, e)}
+                        onClick={(e) => handleRemoveAccount(acc.email || '', e)}
                         className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-350 hover:text-red-500 dark:hover:text-red-400 rounded-lg transition-all cursor-pointer shrink-0"
                         title="Remove Account"
                       >
