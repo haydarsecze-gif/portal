@@ -309,89 +309,98 @@ export default function StudentClassroom() {
       const { data: { user } } = await supabase.auth.getUser();
       const studentName = profile?.full_name || "Student";
 
-      // 1. Prepare Google Drive folder and get access token via server (100-byte body)
-      const res = await fetch('/api/drive/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentName,
-          targetFolderId: selectedItem.folder_id
-        })
-      });
-      const responseText = await res.text();
-      let initData;
-      try {
-        initData = JSON.parse(responseText);
-      } catch (jsonErr) {
-        throw new Error(`Server folder prep failed (Status ${res.status}): ${responseText.substring(0, 150)}`);
-      }
-      if (initData.error) throw new Error(initData.error);
-
-      const { studentFolderId, accessToken } = initData;
-
-      // 2. Upload files directly to Google Drive using the temporary accessToken (BYPASSES VERCEL LIMITS!)
       const uploadedLinks = [];
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+
       for (const file of selectedFiles) {
-        const metadata = {
-          name: file.name,
-          parents: [studentFolderId]
-        };
-
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', file);
-
-        // Upload
-        const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        // 1. Prepare Google Drive folder and get resumable session URL via server (100-byte body)
+        const res = await fetch('/api/drive/upload', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          },
-          body: form
-        });
-
-        if (!uploadRes.ok) {
-          const errText = await uploadRes.text();
-          throw new Error(`Google Drive upload failed (Status ${uploadRes.status}): ${errText}`);
-        }
-
-        const uploadData = await uploadRes.json();
-        const fileId = uploadData.id;
-
-        // Set permission to anyone reader
-        const permRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            role: 'reader',
-            type: 'anyone'
+            studentName,
+            targetFolderId: selectedItem.folder_id,
+            fileName: file.name,
+            fileType: file.type || 'application/octet-stream',
+            fileSize: file.size
           })
         });
-
-        if (!permRes.ok) {
-          console.error("Direct permission set failed for file", fileId);
+        const responseText = await res.text();
+        let initData;
+        try {
+          initData = JSON.parse(responseText);
+        } catch (jsonErr) {
+          throw new Error(`Google Drive resumable upload initialization failed (Status ${res.status}): ${responseText.substring(0, 150)}`);
         }
+        if (initData.error) throw new Error(initData.error);
 
-        // Fetch file webViewLink
-        const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink,name`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
+        const { uploadUrl, studentFolderId, accessToken } = initData;
+
+        // 2. Upload file in chunks (BYPASSES ALL PAYLOAD AND MEMORY LIMITS!)
+        let uploadedBytes = 0;
+        const totalBytes = file.size;
+
+        while (uploadedBytes < totalBytes) {
+          const chunkEnd = Math.min(uploadedBytes + CHUNK_SIZE, totalBytes);
+          const chunkBlob = file.slice(uploadedBytes, chunkEnd);
+          const chunkSize = chunkBlob.size;
+
+          const uploadRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Length': String(chunkSize),
+              'Content-Range': `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`
+            },
+            body: chunkBlob
+          });
+
+          if (uploadRes.status === 308) {
+            // Intermediate chunk uploaded successfully!
+            uploadedBytes = chunkEnd;
+          } else if (uploadRes.ok) {
+            // Final chunk uploaded successfully!
+            const uploadData = await uploadRes.json();
+            const fileId = uploadData.id;
+
+            // Set permission to anyone reader
+            const permRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                role: 'reader',
+                type: 'anyone'
+              })
+            });
+
+            if (!permRes.ok) {
+              console.error("Direct permission set failed for file", fileId);
+            }
+
+            // Fetch file webViewLink
+            const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink,name`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`
+              }
+            });
+
+            if (!metaRes.ok) {
+              throw new Error("Failed to retrieve uploaded file web link from Google Drive.");
+            }
+
+            const fileMeta = await metaRes.json();
+            uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
+            uploadedBytes = totalBytes; // Complete
+          } else {
+            const errText = await uploadRes.text();
+            throw new Error(`Chunk upload failed at byte ${uploadedBytes} (Status ${uploadRes.status}): ${errText}`);
           }
-        });
-
-        if (!metaRes.ok) {
-          throw new Error("Failed to retrieve uploaded file metadata from Google Drive.");
         }
-
-        const fileMeta = await metaRes.json();
-
-        // PACKING format: filename:::url
-        uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
       }
+
 
       // 3. Save to database
       const existingSubmission = getSub(selectedItem.title);

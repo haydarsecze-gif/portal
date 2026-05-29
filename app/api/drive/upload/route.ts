@@ -6,7 +6,7 @@ export const maxDuration = 60; // Allow up to 60 seconds for file uploads to Goo
 
 export async function POST(req: Request) {
   try {
-    const { studentName, targetFolderId } = await req.json();
+    const { studentName, targetFolderId, fileName, fileType, fileSize } = await req.json();
 
     let clientId = process.env.GOOGLE_CLIENT_ID || '';
     if (clientId.startsWith("'") || clientId.startsWith('"')) {
@@ -61,7 +61,32 @@ export async function POST(req: Request) {
       throw new Error('Failed to retrieve access token from Google.');
     }
 
-    return NextResponse.json({ studentFolderId, accessToken: token });
+    // 3. Initiate Google Resumable Upload Session
+    const initRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Upload-Content-Type': fileType || 'application/octet-stream',
+        'X-Upload-Content-Length': String(fileSize)
+      },
+      body: JSON.stringify({
+        name: fileName,
+        parents: [studentFolderId]
+      })
+    });
+
+    if (!initRes.ok) {
+      const errText = await initRes.text();
+      throw new Error(`Google Resumable Upload initiation failed: ${errText}`);
+    }
+
+    const uploadUrl = initRes.headers.get('Location');
+    if (!uploadUrl) {
+      throw new Error('Google did not return a resumable upload Location URI.');
+    }
+
+    return NextResponse.json({ uploadUrl, studentFolderId, accessToken: token });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
