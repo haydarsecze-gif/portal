@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, FileText, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap } from 'lucide-react'
+import { ArrowLeft, FileText, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -494,6 +494,17 @@ export default function StudentClassroom() {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   Assigned Target: <span className="text-indigo-600">Room {roomName}</span>
                 </p>
+                <div className="bg-amber-500/5 border border-amber-500/10 p-3.5 rounded-xl max-w-xl mt-3 flex items-start gap-2.5">
+                  <div className="bg-amber-500/10 p-1.5 rounded-lg text-amber-600 shrink-0 mt-0.5 animate-pulse">
+                    <AlertCircle size={12} />
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase text-amber-700 tracking-wider">Required Location Settings</p>
+                    <p className="text-[10px] font-bold text-amber-600 leading-normal mt-0.5">
+                      When your system prompts, you **must** select <span className="underline font-black">Precise (Exact Location)</span> and choose <span className="underline font-black">Allow while visiting the site</span>. Choosing "Approximate" will fail the 200m campus verification.
+                    </p>
+                  </div>
+                </div>
 
                 {geoError && (
                   <p className="text-xs font-bold text-red-500 bg-red-50/50 p-3 rounded-xl border border-red-100 max-w-xl mt-4 leading-relaxed">
