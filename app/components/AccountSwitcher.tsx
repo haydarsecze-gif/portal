@@ -44,29 +44,6 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
       // Filter out invalid/corrupt entries
       saved = saved.filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
 
-      if (saved.length === 0) {
-        saved = [
-          {
-            email: "theweirdone719@gmail.com",
-            password: "password123",
-            role: "student",
-            name: "sam"
-          },
-          {
-            email: "nit.ratha01@gmail.com",
-            password: "password123",
-            role: "teacher",
-            name: "Ratha Nit"
-          },
-          {
-            email: "godchan22@gmail.com",
-            password: "password123",
-            role: "admin",
-            name: "Sora"
-          }
-        ]
-        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
-      }
       setSavedAccounts(saved)
     } catch (e) {
       console.error('Failed to parse saved accounts:', e)

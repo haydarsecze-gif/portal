@@ -16,30 +16,11 @@ export default function Login() {
   useEffect(() => {
     try {
       let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-      if (saved.length === 0) {
-        // Seed default demo credentials
-        saved = [
-          {
-            email: "theweirdone719@gmail.com",
-            password: "password123",
-            role: "student",
-            name: "sam"
-          },
-          {
-            email: "nit.ratha01@gmail.com",
-            password: "password123",
-            role: "teacher",
-            name: "Ratha Nit"
-          },
-          {
-            email: "godchan22@gmail.com",
-            password: "password123",
-            role: "admin",
-            name: "Sora"
-          }
-        ]
-        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+      if (!Array.isArray(saved)) {
+        saved = []
       }
+      // Filter out invalid/corrupt entries
+      saved = saved.filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
       setSavedAccounts(saved)
     } catch (e) {
       console.error(e)

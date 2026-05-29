@@ -154,25 +154,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* LOGOUT BUTTON */}
-        <div className="mt-auto p-8 border-t border-slate-800 space-y-4">
-          <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest items-center">
-            <span>Theme & Refresh</span>
-            <div className="flex items-center gap-2">
-              <AccountSwitcher align="left" />
-              <NotificationBell align="left" />
-              <ThemeToggle />
-              <button 
-                onClick={() => window.location.reload()}
-                className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
-                title="Refresh Page"
-              >
-                <RefreshCw size={20} />
-              </button>
-            </div>
-          </div>
+        <div className="mt-auto p-8 border-t border-slate-800">
           <button 
             onClick={handleAdminLogout}
-            className="flex items-center gap-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors w-full text-left outline-none cursor-pointer pt-2"
+            className="flex items-center gap-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors w-full text-left outline-none cursor-pointer"
           >
             <LogOut size={18} /> Exit Admin
           </button>
