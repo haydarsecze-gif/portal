@@ -6,10 +6,7 @@ export const maxDuration = 60; // Allow up to 60 seconds for file uploads to Goo
 
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const files = formData.getAll('files') as File[];
-    const studentName = formData.get('studentName') as string;
-    const targetFolderId = formData.get('targetFolderId') as string;
+    const { studentName, targetFolderId } = await req.json();
 
     let clientId = process.env.GOOGLE_CLIENT_ID || '';
     if (clientId.startsWith("'") || clientId.startsWith('"')) {
@@ -58,26 +55,13 @@ export async function POST(req: Request) {
       studentFolderId = folderRes.data.id!;
     }
 
-    // 2. Upload and pack Name + URL
-    const links = [];
-    for (const file of files) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const res = await drive.files.create({
-        requestBody: { name: file.name, parents: [studentFolderId!] },
-        media: { mimeType: file.type, body: Readable.from(buffer) },
-        fields: 'id, webViewLink, name',
-      });
-
-      await drive.permissions.create({
-        fileId: res.data.id!,
-        requestBody: { role: 'reader', type: 'anyone' }
-      });
-
-      // PACKING: filename:::url
-      links.push(`${res.data.name}:::${res.data.webViewLink}`);
+    // 2. Fetch a fresh temporary Access Token
+    const { token } = await oauth2Client.getAccessToken();
+    if (!token) {
+      throw new Error('Failed to retrieve access token from Google.');
     }
 
-    return NextResponse.json({ links });
+    return NextResponse.json({ studentFolderId, accessToken: token });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
