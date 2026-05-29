@@ -2,31 +2,57 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, Database, ArrowRight } from 'lucide-react'
+import { Loader2, Database, ArrowRight, User, LogOut } from 'lucide-react'
 
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
+  const [profile, setProfile] = useState<any>(null)
 
   useEffect(() => {
     const checkUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-        if (!user) { setChecking(false); return; }
+        if (!user) { 
+          setProfile(null)
+          setChecking(false)
+          return
+        }
 
-        const { data: profile } = await supabase
+        const { data: prof } = await supabase
           .from('profiles')
-          .select('role')
+          .select('*')
           .eq('id', user.id)
           .single()
 
-        if (profile?.role === 'admin') router.push('/admin/students')
-        else if (profile?.role === 'teacher') router.push('/dashboard/teacher')
-        else router.push('/dashboard/student')
-      } catch (e) { setChecking(false); }
+        setProfile(prof)
+      } catch (e) { 
+        setProfile(null) 
+      } finally {
+        setChecking(false)
+      }
     }
     checkUser()
-  }, [router])
+  }, [])
+
+  const handleGoToPortal = () => {
+    if (!profile) return
+    if (profile.role === 'admin') router.push('/admin/students')
+    else if (profile.role === 'teacher') router.push('/dashboard/teacher')
+    else router.push('/dashboard/student')
+  }
+
+  const handleSignOut = async () => {
+    setChecking(true)
+    try {
+      await supabase.auth.signOut()
+      setProfile(null)
+    } catch (e) {
+      console.error("Sign out error:", e)
+    } finally {
+      setChecking(false)
+    }
+  }
 
   if (checking) return (
     <div className="min-h-screen flex items-center justify-center bg-[#05070f]">
@@ -63,22 +89,59 @@ export default function Home() {
         </p>
         <div className="w-10 h-[2px] bg-indigo-500/30 mx-auto mt-3 mb-8 rounded-full" />
 
-        <div className="space-y-3">
-          <button 
-            onClick={() => router.push('/auth/login')}
-            className="w-full relative group overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-4.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-950/20 hover:shadow-indigo-500/20 active:scale-98 transition-all duration-300 flex items-center justify-center gap-2"
-          >
-            <span>Enter Portal</span>
-            <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
-          </button>
-          
-          <button 
-            onClick={() => router.push('/auth/register')}
-            className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] hover:border-white/[0.08] text-slate-400 hover:text-slate-200 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300"
-          >
-            Create Account
-          </button>
-        </div>
+        {profile ? (
+          /* Stored active session details and action buttons */
+          <div className="space-y-4">
+            <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-2xl text-left">
+              <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-2">Active Session</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-[10px] font-black uppercase shrink-0">
+                  {profile.full_name?.charAt(0) || 'U'}
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-slate-200 text-[11px] font-black uppercase tracking-tight truncate leading-tight">{profile.full_name}</p>
+                  <p className="text-indigo-400 text-[9px] font-bold uppercase tracking-widest mt-0.5 leading-none">{profile.role}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button 
+                onClick={handleGoToPortal}
+                className="w-full relative group overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-4.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-950/20 hover:shadow-indigo-500/20 active:scale-98 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Enter Portal</span>
+                <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              
+              <button 
+                onClick={handleSignOut}
+                className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LogOut size={12} />
+                <span>Switch Account</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Fresh login or registration options */
+          <div className="space-y-3">
+            <button 
+              onClick={() => router.push('/auth/login')}
+              className="w-full relative group overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-4.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-950/20 hover:shadow-indigo-500/20 active:scale-98 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Enter Portal</span>
+              <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+            
+            <button 
+              onClick={() => router.push('/auth/register')}
+              className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] hover:border-white/[0.08] text-slate-400 hover:text-slate-200 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300 cursor-pointer"
+            >
+              Create Account
+            </button>
+          </div>
+        )}
 
         <p className="mt-10 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
           Secured Campus Network System
