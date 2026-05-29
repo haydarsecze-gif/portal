@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, FileText, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle } from 'lucide-react'
+import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -544,11 +544,25 @@ export default function StudentClassroom() {
                         ? (hasSub ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600') 
                         : 'bg-indigo-50 text-indigo-600'
                     }`}>
-                      <FileText size={22} />
+                      {item.type === 'assignment' ? <FileText size={22} /> : <BookOpen size={22} />}
                     </div>
                     <div>
                       <h3 className="font-black text-slate-800 text-base uppercase tracking-tight leading-tight">{item.title}</h3>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{item.type}</p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${
+                          item.type === 'assignment' ? 'text-amber-500' : 'text-indigo-500'
+                        }`}>
+                          {item.type}
+                        </span>
+                        {item.type === 'assignment' && (
+                          <>
+                            <span className="text-slate-300 text-[9px] font-bold">•</span>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                              Due: {checkStatus(item).formattedDeadline}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {hasSub && (
@@ -838,10 +852,12 @@ export default function StudentClassroom() {
                     <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-indigo-100">{selectedItem.type}</span>
                     <h2 className="text-xl font-black text-slate-900 mt-3 tracking-tight uppercase">{selectedItem.title}</h2>
                     
-                    <div className="flex items-center gap-1.5 text-slate-400 mt-2 font-bold text-[10px] uppercase tracking-widest">
-                      <Clock size={12} className="text-slate-300" />
-                      <span>Deadline: {status.formattedDeadline}</span>
-                    </div>
+                    {selectedItem.type === 'assignment' && (
+                      <div className="flex items-center gap-1.5 text-slate-400 mt-2 font-bold text-[10px] uppercase tracking-widest">
+                        <Clock size={12} className="text-slate-300" />
+                        <span>Deadline: {status.formattedDeadline}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-slate-50 rounded-3xl p-6 mb-6 border border-slate-100/80">

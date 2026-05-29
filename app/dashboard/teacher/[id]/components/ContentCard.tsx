@@ -84,9 +84,21 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
             </div>
             <div>
               <h3 className={`font-bold text-base ${isDeleting ? 'text-gray-400' : 'text-gray-900'}`}>{item.title}</h3>
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                {isDeleting ? 'DELETING...' : (isAssignment ? 'Assignment' : 'Material')}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                <span className={`text-[10px] font-black uppercase tracking-widest ${
+                  isDeleting ? 'text-gray-400' : (isAssignment ? 'text-blue-600' : 'text-amber-600')
+                }`}>
+                  {isDeleting ? 'DELETING...' : (isAssignment ? 'Assignment' : 'Material')}
+                </span>
+                {isAssignment && (
+                  <>
+                    <span className="text-gray-300 text-[10px] font-bold">•</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      Due: {item.deadline ? new Date(item.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'No Deadline'}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
