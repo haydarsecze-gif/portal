@@ -913,9 +913,26 @@ export default function StudentClassroom() {
                               </div>
                               
                               <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 h-28 rounded-[2rem] cursor-pointer hover:bg-indigo-50/30 hover:border-indigo-400 group transition-all duration-300">
-                                <Upload className="text-slate-300 mb-1.5 group-hover:text-indigo-600 transition-colors duration-300" size={22}/>
+                                <Upload className="text-slate-300 mb-1 group-hover:text-indigo-600 transition-colors duration-300" size={22}/>
                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">Choose Local Files</span>
-                                <input type="file" multiple className="hidden" onChange={(e) => setSelectedFiles(prev => [...prev, ...Array.from(e.target.files || [])])} disabled={uploading} />
+                                <span className="text-[7.5px] font-bold text-slate-300 group-hover:text-indigo-400 uppercase tracking-wider mt-0.5 transition-colors">Max upload size: 2GB per file</span>
+                                <input 
+                                  type="file" 
+                                  multiple 
+                                  className="hidden" 
+                                  onChange={(e) => {
+                                    const filesArray = Array.from(e.target.files || []);
+                                    const MAX_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+                                    for (const file of filesArray) {
+                                      if (file.size > MAX_SIZE) {
+                                        alert(`File "${file.name}" exceeds the maximum 2GB size limit.`);
+                                        return;
+                                      }
+                                    }
+                                    setSelectedFiles(prev => [...prev, ...filesArray]);
+                                  }} 
+                                  disabled={uploading} 
+                                />
                               </label>
 
                               <div className="flex gap-2.5 pt-2">
