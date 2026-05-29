@@ -290,5 +290,17 @@ body {
   .bg-white\/5 {
     background-color: #1a1e36 !important;
   }
+
+  /* Disable expensive background blur filters and decoration glow blobs on mobile to eliminate paint/redraw lag */
+  .blur-\[120px\],
+  .blur-\[100px\],
+  .blur-\[80px\],
+  .blur-3xl,
+  .blur-2xl,
+  .blur-xl,
+  .blur-lg {
+    filter: none !important;
+    display: none !important;
+  }
 }
 
