@@ -67,8 +67,39 @@ export default function LecturerDashboard() {
   )
 
   return (
-    <div className="p-4 sm:p-8 md:p-12 bg-[#F8FAFC] min-h-screen font-sans select-none animate-in fade-in duration-300">
-      <div className="w-full max-w-[1600px] mx-auto">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none animate-in fade-in duration-300">
+      {/* Sticky top header bar */}
+      <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100">
+              Lecturer Portal Console
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <AccountSwitcher />
+            <NotificationBell />
+            <ThemeToggle />
+            <button 
+              onClick={() => fetchData(false)} 
+              disabled={isSyncing}
+              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              title="Refresh Data"
+            >
+              <RefreshCw size={20} className={isSyncing ? "animate-spin text-indigo-400" : ""} />
+            </button>
+            <button 
+              onClick={handleLogout} 
+              className="flex items-center gap-2 px-5 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-red-500/30 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
+              title="Sign Out"
+            >
+              <LogOut size={14} /> Sign Out
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="p-4 sm:p-8 md:p-12 flex-1 w-full max-w-[1600px] mx-auto">
         
         {/* Modern radial gradient heading block */}
         <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-[2.5rem] p-8 md:p-12 mb-12 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -88,25 +119,6 @@ export default function LecturerDashboard() {
             <p className="text-slate-400 text-sm font-bold">
               Welcome back, <span className="text-indigo-400">{profile?.full_name || 'Lecturer'}</span>
             </p>
-          </div>
-
-          <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end">
-            <AccountSwitcher />
-            <NotificationBell />
-            <ThemeToggle />
-            <button 
-              onClick={() => fetchData(false)} 
-              disabled={isSyncing}
-              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
-            >
-              <RefreshCw size={20} className={isSyncing ? "animate-spin text-indigo-400" : ""} />
-            </button>
-            <button 
-              onClick={handleLogout} 
-              className="flex items-center gap-2 px-5 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-red-500/30 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
-            >
-              <LogOut size={14} /> Sign Out
-            </button>
           </div>
         </div>
 

@@ -180,8 +180,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* CORE FRAME LAYOUT children */}
-      <main className="flex-1 p-4 sm:p-8 md:p-12 overflow-y-auto custom-scrollbar">
-        {children}
+      <main className="flex-1 overflow-y-auto custom-scrollbar flex flex-col bg-[#F8FAFC]">
+        {/* Sticky Desktop Top Header */}
+        <header className="hidden lg:flex items-center justify-between px-8 py-4 bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/50 dark:border-slate-800/50 sticky top-0 z-40 backdrop-blur-md shadow-xs">
+          <div className="flex items-center gap-2 text-slate-450 font-black text-[10px] uppercase tracking-widest">
+            <span>Admin Console</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <AccountSwitcher />
+            <NotificationBell />
+            <ThemeToggle />
+            <button 
+              onClick={() => window.location.reload()}
+              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
+              title="Refresh Page"
+            >
+              <RefreshCw size={20} />
+            </button>
+            <button 
+              onClick={handleAdminLogout}
+              className="flex items-center gap-2 px-5 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-red-500/30 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
+              title="Exit Admin"
+            >
+              <LogOut size={14} /> Exit Admin
+            </button>
+          </div>
+        </header>
+
+        <div className="flex-1 p-4 sm:p-8 md:p-12">
+          {children}
+        </div>
       </main>
     </div>
   )

@@ -100,34 +100,38 @@ export default function SubjectDetail() {
   )
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20 font-sans select-none animate-in fade-in duration-300">
-      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-8">
-        
-        {/* Header Section */}
-        <header className="mb-8 flex flex-col gap-4">
-          {/* Compact Top Bar */}
-          <div className="flex justify-between items-center w-full">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none animate-in fade-in duration-300">
+      {/* Sticky top header bar */}
+      <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => router.push('/dashboard/lecturer')} 
               className="flex items-center gap-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-black text-[9px] uppercase tracking-widest transition duration-300 cursor-pointer"
             >
               <ArrowLeft size={12} /> Back to dashboard
             </button>
-
-            <div className="flex items-center gap-2">
-              <AccountSwitcher />
-              <NotificationBell />
-              <ThemeToggle />
-              <button 
-                onClick={fetchSubjectData} 
-                disabled={loading}
-                className="p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center justify-center"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin text-indigo-600" : ""} />
-              </button>
-            </div>
           </div>
+          <div className="flex items-center gap-3">
+            <AccountSwitcher />
+            <NotificationBell />
+            <ThemeToggle />
+            <button 
+              onClick={fetchSubjectData} 
+              disabled={loading}
+              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              title="Refresh Data"
+            >
+              <RefreshCw size={20} className={loading ? "animate-spin text-indigo-600" : ""} />
+            </button>
+          </div>
+        </div>
+      </header>
 
+      <div className="p-4 sm:p-8 md:p-12 flex-1 w-full max-w-[1600px] mx-auto">
+        
+        {/* Header Section */}
+        <header className="mb-8 flex flex-col gap-4">
           {/* Subject Title and Badges */}
           <div className="flex flex-col gap-2 mt-1">
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
