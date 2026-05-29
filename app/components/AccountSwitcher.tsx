@@ -219,7 +219,7 @@ export default function AccountSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-80 bg-white/95 dark:bg-slate-950/95 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl backdrop-blur-xl z-[999] p-4 flex flex-col gap-3 max-h-[480px] overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-auto sm:mt-3 w-auto sm:w-80 bg-white/95 dark:bg-slate-950/95 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl backdrop-blur-xl z-[999] p-4 flex flex-col gap-3 max-sm:max-h-[calc(100vh-7rem)] sm:max-h-[480px] overflow-hidden animate-in zoom-in-95 duration-200">
           
           {/* Active Profile Info */}
           <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-900 flex items-center gap-3">
