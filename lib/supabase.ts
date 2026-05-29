@@ -4,9 +4,14 @@ import { createBrowserClient } from '@supabase/ssr'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 
+// Resolve local domain proxy if running in a client browser to bypass DNS blocks
+const resolvedUrl = typeof window !== 'undefined' 
+  ? `${window.location.origin}/_supabase` 
+  : supabaseUrl
+
 // ✅ Only public client (safe for browser)
 export const supabase = createBrowserClient(
-  supabaseUrl,
+  resolvedUrl,
   supabaseAnonKey
 )
 
