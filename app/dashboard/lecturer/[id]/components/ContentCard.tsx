@@ -3,8 +3,14 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { FileText, BookOpen, Trash2, ChevronDown, ChevronUp, Eye, HardDrive, Database, AlertCircle } from 'lucide-react'
 
-export default function ContentCard({ item, isAssignment, onRefresh, studentCount }: any) {
-  const [expanded, setExpanded] = useState(false)
+export default function ContentCard({ item, isAssignment, onRefresh, studentCount, autoExpanded }: any) {
+  const [expanded, setExpanded] = useState(autoExpanded || false)
+
+  useEffect(() => {
+    if (autoExpanded) {
+      setExpanded(true)
+    }
+  }, [autoExpanded])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)

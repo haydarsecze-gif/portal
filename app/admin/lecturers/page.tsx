@@ -19,15 +19,52 @@ export default function LecturerManagement() {
   }
 
   const updateStatus = async (id: string, approved: boolean) => {
+    const targetLecturer = teachers.find(t => t.id === id)
+    const lecturerName = targetLecturer?.full_name || "Lecturer"
+
     const { error } = await supabase.from('profiles').update({ is_approved: approved }).eq('id', id)
-    if (!error && approved) {
+    if (!error) {
       try {
-        await supabase.from('notifications').insert({
-          user_id: id,
-          title: "Account Approved",
-          message: "Your lecturer account has been approved by the Administrator.",
-          type: "approval"
-        })
+        let adminName = "Administrator"
+        const { data: { user: adminUser } } = await supabase.auth.getUser()
+        if (adminUser) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', adminUser.id)
+            .single()
+          if (prof?.full_name) adminName = prof.full_name
+        }
+
+        const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+        if (approved) {
+          // Notify the lecturer
+          await supabase.from('notifications').insert({
+            user_id: id,
+            title: "Lecturer Account Approved",
+            message: `Your lecturer account has been approved by ${adminName} at ${currentTime}.`,
+            type: "approval",
+            link: "/dashboard/lecturer"
+          })
+
+          // Notify all admins
+          const { data: adminProfiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'admin')
+
+          if (adminProfiles && adminProfiles.length > 0) {
+            const adminNotifs = adminProfiles.map(adm => ({
+              user_id: adm.id,
+              title: "Lecturer Account Approved",
+              message: `${adminName} approved lecturer ${lecturerName}'s account at ${currentTime}.`,
+              type: "approval",
+              link: "/admin/lecturers"
+            }))
+            await supabase.from('notifications').insert(adminNotifs)
+          }
+        }
       } catch (err) {
         console.error("Error creating approval notification:", err)
       }
@@ -36,8 +73,46 @@ export default function LecturerManagement() {
   }
 
   const deleteTeacher = async (id: string) => {
-    if (confirm("Delete this lecturer account?")) {
-      await supabase.from('profiles').delete().eq('id', id)
+    const targetLecturer = teachers.find(t => t.id === id)
+    const lecturerName = targetLecturer?.full_name || "Lecturer"
+
+    if (confirm(`Delete lecturer account "${lecturerName}"?`)) {
+      const { error } = await supabase.from('profiles').delete().eq('id', id)
+      if (!error) {
+        try {
+          let adminName = "Administrator"
+          const { data: { user: adminUser } } = await supabase.auth.getUser()
+          if (adminUser) {
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', adminUser.id)
+              .single()
+            if (prof?.full_name) adminName = prof.full_name
+          }
+
+          const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+          // Notify all admins
+          const { data: adminProfiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'admin')
+
+          if (adminProfiles && adminProfiles.length > 0) {
+            const adminNotifs = adminProfiles.map(adm => ({
+              user_id: adm.id,
+              title: "Lecturer Account Deleted",
+              message: `${adminName} deleted lecturer account "${lecturerName}" at ${currentTime}.`,
+              type: "approval",
+              link: "/admin/lecturers"
+            }))
+            await supabase.from('notifications').insert(adminNotifs)
+          }
+        } catch (err) {
+          console.error("Error creating deletion notification:", err)
+        }
+      }
       fetchTeachers()
     }
   }

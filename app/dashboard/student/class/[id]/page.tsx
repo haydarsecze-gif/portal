@@ -193,14 +193,27 @@ export default function StudentClassroom() {
       setSubmissions(subData.data || []);
       setStudentAttendance(attData.data || []);
       
-      setContent([
+      const parsedContent = [
         ...(assignments.data || []).map((x: any) => ({ ...x, type: 'assignment' })),
         ...(materials.data || []).map((x: any) => ({ ...x, type: 'material' }))
       ].sort((a, b) => {
         const timeB = parseSafeDate(b.created_at)?.getTime() || 0
         const timeA = parseSafeDate(a.created_at)?.getTime() || 0
         return timeB - timeA
-      }));
+      });
+      setContent(parsedContent);
+
+      // Auto-open selected assignment/material if passed in URL query parameters
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const selectId = searchParams.get('select') || searchParams.get('assignment') || searchParams.get('material');
+        if (selectId) {
+          const matched = parsedContent.find(c => c.id === selectId || c.title === selectId);
+          if (matched) {
+            setSelectedItem(matched);
+          }
+        }
+      }
     } catch (err: any) {
       console.error("Sync Failure in classroom loader:", err.message);
     } finally {

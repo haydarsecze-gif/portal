@@ -114,6 +114,64 @@ export default function StudentDirectory() {
         .eq('id', studentId)
       if (studentErr) throw studentErr
 
+      // 3. Resolve metadata and dispatch notifications
+      try {
+        let className = "Unassigned"
+        let semester = 1
+        if (selectedClassId) {
+          const { data: classData } = await supabase
+            .from('subjects')
+            .select('name, semester')
+            .eq('id', selectedClassId)
+            .maybeSingle()
+          if (classData) {
+            className = classData.name
+            semester = classData.semester
+          }
+        }
+
+        let adminName = "Administrator"
+        const { data: { user: adminUser } } = await supabase.auth.getUser()
+        if (adminUser) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', adminUser.id)
+            .single()
+          if (prof?.full_name) adminName = prof.full_name
+        }
+
+        const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+        // Notify the target student
+        await supabase.from('notifications').insert({
+          user_id: studentId,
+          title: "Class Track & Semester Updated",
+          message: `Your class track was updated to ${className} (Semester ${semester}) by ${adminName} at ${currentTime}.`,
+          type: "system",
+          link: "/dashboard/student"
+        })
+
+        // Notify all admins
+        const { data: adminProfiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'admin')
+
+        if (adminProfiles && adminProfiles.length > 0) {
+          const adminNotifs = adminProfiles.map(adm => ({
+            user_id: adm.id,
+            title: "Student Class Track Updated",
+            message: `${adminName} updated student ${editingStudent.full_name}'s track to ${className} (Semester ${semester}) at ${currentTime}.`,
+            type: "approval",
+            link: "/admin/students"
+          }))
+          await supabase.from('notifications').insert(adminNotifs)
+        }
+      } catch (notifErr) {
+        console.error("Error creating student class change notifications:", notifErr)
+      }
+
       setIsEditModalOpen(false)
       fetchData()
     } catch (err: any) {

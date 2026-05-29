@@ -1,9 +1,11 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X } from 'lucide-react'
 
 export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [userId, setUserId] = useState<string | null>(null)
@@ -246,7 +248,16 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                   }`}>
                     {getIcon(n.type)}
                   </div>
-                  <div className="flex-1 min-w-0" onClick={() => !n.is_read && markAsRead(n.id)}>
+                  <div 
+                    className="flex-1 min-w-0 cursor-pointer" 
+                    onClick={() => {
+                      if (!n.is_read) markAsRead(n.id)
+                      if (n.link) {
+                        router.push(n.link)
+                        setIsOpen(false)
+                      }
+                    }}
+                  >
                     <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight leading-tight truncate">{n.title}</p>
                     <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 font-bold leading-normal truncate-2-lines">{n.message}</p>
                     <p className="text-[7px] text-slate-400 dark:text-slate-650 mt-1.5 uppercase font-black tracking-widest leading-none">

@@ -41,6 +41,15 @@ export default function SubjectDetail() {
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null) // State for Editing
   const [uploadProgress, setUploadProgress] = useState<{ [tempId: string]: { title: string; type: 'assignment' | 'material'; progress: number; status: 'uploading' | 'success' | 'failed'; error?: string } }>({});
+  const [selectId, setSelectId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search)
+      const sid = searchParams.get('select') || searchParams.get('assignment') || searchParams.get('material')
+      if (sid) setSelectId(sid)
+    }
+  }, [])
 
   const startCourseworkUpload = async (formData: any, files: File[], type: 'assignment' | 'material', initialData?: any) => {
     const tempId = initialData?.id || Date.now().toString();
@@ -234,6 +243,7 @@ export default function SubjectDetail() {
         }
 
         let dbError
+        let insertedId = ""
         if (initialData) {
           // Update existing item
           const updatePayload: any = {
@@ -270,10 +280,16 @@ export default function SubjectDetail() {
             payload.allow_late = formData.allowLate
           }
 
-          const { error } = await supabase
+          const { data: insertedData, error } = await supabase
             .from(type === 'assignment' ? 'assignments' : 'materials')
             .insert([payload])
+            .select()
+            .single()
+          
           dbError = error
+          if (insertedData) {
+            insertedId = insertedData.id
+          }
         }
 
         if (dbError) throw dbError
@@ -287,11 +303,38 @@ export default function SubjectDetail() {
               .eq('subject_id', subjectId)
 
             if (mappings && mappings.length > 0) {
+              const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+              
+              // Resolve Lecturer Name
+              let lecturerName = "Lecturer"
+              const { data: { user } } = await supabase.auth.getUser()
+              if (user) {
+                const { data: prof } = await supabase
+                  .from('profiles')
+                  .select('full_name')
+                  .eq('id', user.id)
+                  .single()
+                if (prof?.full_name) {
+                  lecturerName = prof.full_name
+                }
+              }
+
+              const formattedDeadline = type === 'assignment'
+                ? new Date(formData.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+                : ''
+
+              const message = type === 'assignment'
+                ? `${lecturerName} added a new assignment: "${formData.title}" in ${subject?.name || 'Classroom'} at ${currentTime}. Due: ${formattedDeadline}.`
+                : `${lecturerName} added a new material: "${formData.title}" in ${subject?.name || 'Classroom'} at ${currentTime}.`
+
+              const linkPath = `/dashboard/student/class/${subjectId}?select=${insertedId}`
+
               const notificationsToInsert = mappings.map(m => ({
                 user_id: m.student_id,
                 title: type === 'assignment' ? "New Assignment Added" : "New Material Added",
-                message: `Lecturer added a new ${type}: "${formData.title}" in ${subject?.name}`,
-                type: type
+                message: message,
+                type: type,
+                link: linkPath
               }))
 
               await supabase.from('notifications').insert(notificationsToInsert)
@@ -562,6 +605,7 @@ export default function SubjectDetail() {
                     onRefresh={fetchSubjectData} 
                     studentCount={students.length}
                     onEdit={() => setEditingItem(item)} 
+                    autoExpanded={item.id === selectId || item.title === selectId}
                   />
                 ))}
             </div>

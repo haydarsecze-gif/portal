@@ -20,8 +20,13 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     message TEXT NOT NULL,
     type TEXT NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT false,
+    link TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- 1.1 Support dynamic link column addition for existing database instances
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link TEXT;
+
 
 -- 2. Enable Row-Level Security (RLS)
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;

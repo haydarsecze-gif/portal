@@ -282,10 +282,56 @@ export default function AdminCurriculum() {
     setEditingId(subject.id); setName(subject.name || ''); setRoom(subject.room || ''); setSemester(String(subject.semester || '1')); setStartDate(subject.start_date || ''); setStartTime(subject.class_start_time || ''); setEndTime(subject.class_end_time || ''); setSelectedLecturers(subject.lecturer_names || []); setIsModalOpen(true);
   }
 
+  const handleDeleteSubject = async (s: any) => {
+    if (!confirm(`Delete subject completely from system: "${s.name}"?`)) return
+    try {
+      const { error } = await supabase.from('subjects').delete().eq('id', s.id)
+      if (!error) {
+        try {
+          let adminName = "Administrator"
+          const { data: { user: adminUser } } = await supabase.auth.getUser()
+          if (adminUser) {
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', adminUser.id)
+              .single()
+            if (prof?.full_name) adminName = prof.full_name
+          }
+
+          const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+          // Notify all admins
+          const { data: adminProfiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'admin')
+
+          if (adminProfiles && adminProfiles.length > 0) {
+            const adminNotifs = adminProfiles.map(adm => ({
+              user_id: adm.id,
+              title: "Subject Class Deleted",
+              message: `${adminName} deleted subject class "${s.name}" at ${currentTime}.`,
+              type: "approval",
+              link: "/admin/subjects"
+            }))
+            await supabase.from('notifications').insert(adminNotifs)
+          }
+        } catch (err) {
+          console.error("Error creating deletion notification:", err)
+        }
+      }
+      fetchSubjects()
+    } catch (err: any) {
+      alert("Failed to delete subject: " + err.message)
+    }
+  }
+
   const handleSaveSubject = async () => {
     if (!name || !semester) return alert("Please fill in the Subject Name and Semester!")
     const payload = { name, room, semester: parseInt(semester), start_date: startDate || null, class_start_time: startTime || null, class_end_time: endTime || null, lecturer_names: selectedLecturers }
     try {
+      let activeSubjectId = editingId
       if (editingId) {
         await supabase.from('subjects').update(payload).eq('id', editingId)
         await supabase.from('classes').update({
@@ -301,6 +347,7 @@ export default function AdminCurriculum() {
         const { data: insertedData, error: insertError } = await supabase.from('subjects').insert([payload]).select().single()
         if (insertError) throw insertError
         if (insertedData) {
+          activeSubjectId = insertedData.id
           await supabase.from('classes').insert({
             id: insertedData.id,
             name: name,
@@ -313,6 +360,61 @@ export default function AdminCurriculum() {
           })
         }
       }
+
+      // Dispatch audit and lecturer assignment notifications
+      try {
+        let adminName = "Administrator"
+        const { data: { user: adminUser } } = await supabase.auth.getUser()
+        if (adminUser) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', adminUser.id)
+            .single()
+          if (prof?.full_name) adminName = prof.full_name
+        }
+
+        const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+        // Notify assigned lecturers
+        if (selectedLecturers && selectedLecturers.length > 0) {
+          const { data: lecturerProfiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .in('full_name', selectedLecturers)
+
+          if (lecturerProfiles && lecturerProfiles.length > 0) {
+            const lecturerNotifs = lecturerProfiles.map(lec => ({
+              user_id: lec.id,
+              title: editingId ? "Subject Assignment Updated" : "Assigned to New Subject",
+              message: `${adminName} assigned/updated your role to teach subject "${name}" at ${currentTime}.`,
+              type: "approval",
+              link: `/dashboard/lecturer/${activeSubjectId}`
+            }))
+            await supabase.from('notifications').insert(lecturerNotifs)
+          }
+        }
+
+        // Notify all admins
+        const { data: adminProfiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'admin')
+
+        if (adminProfiles && adminProfiles.length > 0) {
+          const adminNotifs = adminProfiles.map(adm => ({
+            user_id: adm.id,
+            title: editingId ? "Subject Class Updated" : "Subject Class Created",
+            message: `${adminName} ${editingId ? 'updated' : 'created'} subject class "${name}" (assigned to: ${selectedLecturers.join(', ') || 'none'}) at ${currentTime}.`,
+            type: "approval",
+            link: "/admin/subjects"
+          }))
+          await supabase.from('notifications').insert(adminNotifs)
+        }
+      } catch (notifErr) {
+        console.error("Error creating subject notifications:", notifErr)
+      }
+
       setIsModalOpen(false); fetchSubjects()
     } catch (err: any) { alert("Failed to save: " + err.message) }
   }
@@ -393,7 +495,7 @@ export default function AdminCurriculum() {
                 <Pencil size={16} />
               </button>
               <button 
-                onClick={async () => { if(confirm("Delete this subject completely from system?")) { await supabase.from('subjects').delete().eq('id', s.id); fetchSubjects(); } }} 
+                onClick={() => handleDeleteSubject(s)} 
                 className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl active:scale-95 transition-all cursor-pointer"
               >
                 <Trash2 size={16} />
