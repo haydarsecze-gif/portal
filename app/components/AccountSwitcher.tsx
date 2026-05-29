@@ -81,14 +81,15 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     try {
       await supabase.auth.signOut()
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: targetAccount.email,
-        password: targetAccount.password
+      // Securely log in using the cached session tokens (no plain text password stored!)
+      const { data, error } = await supabase.auth.setSession({
+        access_token: targetAccount.access_token || '',
+        refresh_token: targetAccount.refresh_token
       })
 
       if (error) throw error
 
-      if (data.user) {
+      if (data.user && data.session) {
         // Refresh page and route accordingly
         const { data: profile } = await supabase
           .from('profiles')
@@ -98,11 +99,13 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
 
         const role = profile?.role || targetAccount.role
 
-        // Update the account name and metadata if it changed
+        // Update the access tokens and metadata in cache
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
         const idx = saved.findIndex((a: any) => a.email.toLowerCase() === targetAccount.email.toLowerCase())
         if (idx > -1) {
           saved[idx].role = role
+          saved[idx].access_token = data.session.access_token
+          saved[idx].refresh_token = data.session.refresh_token
           localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
         }
 
@@ -115,8 +118,12 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         window.location.href = targetUrl
       }
     } catch (err: any) {
-      alert('Failed to switch account: ' + err.message)
-      router.push('/auth/login')
+      alert('Session expired. Please log in again.')
+      // Remove expired account from cache
+      const updated = savedAccounts.filter(a => a?.email && targetAccount?.email && a.email.toLowerCase() !== targetAccount.email.toLowerCase())
+      setSavedAccounts(updated)
+      localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
+      window.location.href = '/auth/login'
     } finally {
       setIsSwitching(false)
     }
