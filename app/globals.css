@@ -24,14 +24,14 @@
   
   --bg-portal: #03050a;      /* Futuristic deep black background */
   --bg-card: #080b15;        /* Futuristic dark blue-black card */
-  --border-card: #1d1735;    /* Glowing dark purple card borders */
+  --border-card: #2e2454;    /* Glowing dark purple card borders */
   --text-title: #f5f3ff;     /* High contrast off-white/violet text */
   --text-desc: #a78bfa;      /* Vibrant purple-toned descriptions for perfect visibility */
   
   --purple-accent: #a78bfa;       /* Violet 400 (brighter in dark mode) */
   --purple-accent-hover: #c084fc; /* Purple 400 */
   --purple-light: #120e24;        /* Deep purple tint */
-  --purple-border: #4c1d95;       /* Strong violet 900 border */
+  --purple-border: #5c3b9e;       /* Strong glowing purple border */
 }
 
 @theme inline {
@@ -116,7 +116,76 @@ body {
 
 /* ==========================================================================
    DARK MODE CONTRAST & VISIBILITY OVERRIDES (CRITICAL FOR READABILITY)
-   ========================================================================== */
+   ========================================================================= */
+
+/* Bulletproof Dark Mode Text Contrast (forces all text to be highly visible by default in dark mode) */
+.dark,
+.dark body,
+.dark div,
+.dark p,
+.dark span,
+.dark a,
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark td,
+.dark th,
+.dark label {
+  color: #e2daf8 !important;
+}
+
+/* Specific overrides to preserve white, purple, and muted titles/buttons */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark .text-white,
+.dark .text-slate-100,
+.dark tr th,
+.dark .font-black {
+  color: #ffffff !important;
+}
+
+/* Purple text accents */
+.dark .text-indigo-600, 
+.dark .text-indigo-500, 
+.dark .text-blue-600, 
+.dark .text-indigo-400,
+.dark .text-indigo-300,
+.dark .text-purple-600 {
+  color: #c084fc !important;
+}
+
+/* Muted secondary descriptions (lavender-silver for readability) */
+.dark .text-slate-400,
+.dark .text-slate-450,
+.dark .text-slate-500,
+.dark .text-gray-400,
+.dark .text-slate-600,
+.dark .text-slate-700,
+.dark .text-slate-500\/70,
+.dark p.text-slate-400,
+.dark p.text-slate-300 {
+  color: #a79fc4 !important;
+}
+
+/* White text for buttons/badges that are dark/purple backgrounds */
+.dark button,
+.dark button span,
+.dark .bg-indigo-600,
+.dark .bg-blue-600,
+.dark .bg-purple-600,
+.dark .bg-indigo-600 span,
+.dark .bg-indigo-600 svg,
+.dark .bg-blue-600 span,
+.dark .bg-blue-600 svg,
+.dark .bg-slate-900,
+.dark .bg-slate-900 span,
+.dark .bg-slate-900 svg {
+  color: #ffffff !important;
+}
 
 /* Fix hardcoded light backgrounds in portals */
 .bg-\[\#F8FAFC\], .bg-\[\#f8fafc\] {
@@ -138,25 +207,6 @@ body {
 /* Fix generic card borders */
 .border-slate-100, .border-slate-100\/50, .border-slate-100\/80, .border-gray-100, .border-gray-50 {
   border-color: var(--border-card) !important;
-}
-
-/* Title text colors (highest contrast) */
-.text-slate-800, .text-slate-900, .text-gray-900, .text-slate-950 {
-  color: var(--text-title) !important;
-}
-.dark .text-slate-800, .dark .text-slate-900, .dark .text-gray-900, .dark .text-slate-950 {
-  color: var(--text-title) !important;
-}
-
-/* Description, dates, metadata text colors (ensures perfect readability) */
-.text-slate-400, .text-slate-450, .text-slate-500, .text-gray-400, .text-slate-600, .text-slate-700 {
-  color: var(--text-desc) !important;
-}
-.dark .text-slate-400, .dark .text-slate-450, .dark .text-slate-500, .dark .text-gray-400, .dark .text-slate-650, .dark .text-slate-600, .dark .text-slate-700 {
-  color: #c0b3e5 !important; /* Brighter lavender-silver for outstanding contrast in dark mode */
-}
-.dark .text-slate-300, .dark .text-slate-200 {
-  color: #e2daf8 !important; /* Super bright readable violet-white */
 }
 
 /* Checkboxes, icons, inputs */
