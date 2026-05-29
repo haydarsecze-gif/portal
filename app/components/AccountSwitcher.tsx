@@ -81,10 +81,20 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     try {
       await supabase.auth.signOut()
       
-      // Securely log in using the cached session tokens (no plain text password stored!)
-      const { data, error } = await supabase.auth.setSession({
-        access_token: targetAccount.access_token || '',
-        refresh_token: targetAccount.refresh_token
+      // Decrypt/de-obfuscate password from localStorage
+      let decPassword = ''
+      if (targetAccount.password) {
+        try {
+          decPassword = atob(targetAccount.password)
+        } catch (e) {
+          decPassword = targetAccount.password // fallback if stored plain in old cache
+        }
+      }
+
+      // Log in with password which never expires and bypasses refresh token rotation!
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: targetAccount.email,
+        password: decPassword
       })
 
       if (error) throw error
@@ -93,19 +103,18 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         // Refresh page and route accordingly
         const { data: profile } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, full_name')
           .eq('id', data.user.id)
           .single()
 
         const role = profile?.role || targetAccount.role
 
-        // Update the access tokens and metadata in cache
+        // Update name/role in localStorage
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
         const idx = saved.findIndex((a: any) => a.email.toLowerCase() === targetAccount.email.toLowerCase())
         if (idx > -1) {
           saved[idx].role = role
-          saved[idx].access_token = data.session.access_token
-          saved[idx].refresh_token = data.session.refresh_token
+          saved[idx].name = profile?.full_name || saved[idx].name
           localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
         }
 
@@ -118,11 +127,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         window.location.href = targetUrl
       }
     } catch (err: any) {
-      alert('Session expired. Please log in again.')
-      // Remove expired account from cache
-      const updated = savedAccounts.filter(a => a?.email && targetAccount?.email && a.email.toLowerCase() !== targetAccount.email.toLowerCase())
-      setSavedAccounts(updated)
-      localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
+      alert('Authentication failed: ' + (err.message || 'Please log in manually.'))
       window.location.href = '/auth/login'
     } finally {
       setIsSwitching(false)

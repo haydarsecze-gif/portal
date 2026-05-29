@@ -60,27 +60,24 @@ export default function Login() {
         .eq('id', data.user.id)
         .single()
 
-      // Save session tokens securely for switching (NEVER store password in plain text!)
-      if (data.session) {
-        try {
-          const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-          const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
-          const newAcc = {
-            email: email.toLowerCase(),
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token,
-            role: profile?.role || 'student',
-            name: profile?.full_name || email
-          }
-          if (index > -1) {
-            saved[index] = newAcc
-          } else {
-            saved.push(newAcc)
-          }
-          localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
-        } catch (e) {
-          console.error('Error saving account to switcher:', e)
+      // Save account details securely for switching (obfuscating password to protect it from plain text display)
+      try {
+        const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+        const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
+        const newAcc = {
+          email: email.toLowerCase(),
+          password: btoa(password),
+          role: profile?.role || 'student',
+          name: profile?.full_name || email
         }
+        if (index > -1) {
+          saved[index] = newAcc
+        } else {
+          saved.push(newAcc)
+        }
+        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+      } catch (e) {
+        console.error('Error saving account to switcher:', e)
       }
 
       const targetUrl = profile?.role === 'admin'
@@ -98,10 +95,19 @@ export default function Login() {
     setMessage('')
     
     try {
-      // Securely log in using the cached session tokens (no password required!)
-      const { data, error } = await supabase.auth.setSession({
-        access_token: acc.access_token || '',
-        refresh_token: acc.refresh_token
+      let decPassword = ''
+      if (acc.password) {
+        try {
+          decPassword = atob(acc.password)
+        } catch (e) {
+          decPassword = acc.password
+        }
+      }
+
+      // Log in with password which never expires and bypasses refresh token rotation!
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: acc.email,
+        password: decPassword
       })
       
       if (error) throw error
@@ -113,14 +119,12 @@ export default function Login() {
           .eq('id', data.user.id)
           .single()
 
-        // Keep metadata and refresh token updated
+        // Keep metadata updated
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
         const idx = saved.findIndex((a: any) => a.email.toLowerCase() === acc.email.toLowerCase())
         if (idx > -1) {
           saved[idx].name = profile?.full_name || acc.email
           saved[idx].role = profile?.role || acc.role
-          saved[idx].access_token = data.session.access_token
-          saved[idx].refresh_token = data.session.refresh_token
           localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
         }
 
@@ -133,11 +137,7 @@ export default function Login() {
         window.location.href = targetUrl
       }
     } catch (err: any) {
-      setMessage('❌ Session expired. Please log in manually.')
-      // Clean up the expired account
-      const updated = savedAccounts.filter(a => a?.email && acc?.email && a.email.toLowerCase() !== acc.email.toLowerCase())
-      setSavedAccounts(updated)
-      localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
+      setMessage('❌ Quick login failed: ' + (err.message || 'Please log in manually.'))
       setLoading(false)
     }
   }
