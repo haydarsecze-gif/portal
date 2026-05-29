@@ -9,31 +9,32 @@ export async function POST(req: Request) {
     }
     const token = authHeader.split(' ')[1];
 
-    // Create a user client with the user's token to verify their identity and role
-    const userClient = createClient(
+    // Create service client to bypass RLS safely on the server
+    const serviceClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: { headers: { Authorization: `Bearer ${token}` } },
-        auth: { persistSession: false }
-      }
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
     );
 
-    const { data: { user }, error: authErr } = await userClient.auth.getUser();
+    // Get the user from the auth token securely on the server
+    const { data: { user }, error: authErr } = await serviceClient.auth.getUser(token);
     if (authErr || !user) {
       return NextResponse.json({ error: 'Unauthorized: ' + authErr?.message }, { status: 401 });
     }
 
-    // Fetch the user's profile to verify they are teacher/admin
-    const { data: profile, error: profErr } = await userClient
+    // Fetch the user's profile using serviceClient to bypass all RLS limits on profiles
+    const { data: profile, error: profErr } = await serviceClient
       .from('profiles')
       .select('role, full_name')
       .eq('id', user.id)
       .single();
 
     if (profErr || !profile) {
+      console.error('Profile fetch error:', profErr);
       return NextResponse.json({ error: 'Forbidden: Profile not found' }, { status: 403 });
     }
+
+    console.log(`Settings API Auth: User ID: ${user.id}, Full Name: ${profile.full_name}, Role: ${profile.role}`);
 
     if (profile.role !== 'teacher' && profile.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden: Insufficient permissions' }, { status: 403 });
@@ -65,13 +66,6 @@ export async function POST(req: Request) {
       lecturerEmail?.trim() ? `email:${lecturerEmail.trim()}` : null,
       lecturerPhone?.trim() ? `phone:${lecturerPhone.trim()}` : null
     ].filter(Boolean);
-
-    // Create service client to bypass RLS safely on the server
-    const serviceClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
 
     // 1. Update classes table
     const { error: classErr } = await serviceClient
