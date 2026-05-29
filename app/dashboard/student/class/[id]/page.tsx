@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import NotificationBell from '@/app/components/NotificationBell'
 
 const STATUS_LABELS: Record<string, string> = {
   'P': 'Present', 'L': 'Late', 'X': 'Absent', 'M': 'Medical (MC)', 'V': 'Valid Reason', 'H': 'Holiday / Break', 'N': 'Not Applicable', '--': 'Unmarked'
@@ -300,7 +301,15 @@ export default function StudentClassroom() {
         }
       },
       (error) => {
-        setGeoError("GPS Signal blocked. Ensure location tracking permissions are granted to this site.");
+        let msg = "GPS Signal blocked. Ensure location tracking permissions are granted to this site.";
+        if (error.code === 1) {
+          msg = "Location permission denied. Please enable location permissions for this app/site in settings.";
+        } else if (error.code === 2) {
+          msg = "GPS/Location signal unavailable. Please ensure your device's location services (GPS) are turned ON.";
+        } else if (error.code === 3) {
+          msg = "Location request timed out. Please try checking in again from an open area.";
+        }
+        setGeoError(msg);
         setIsCheckingGeo(false);
       },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
@@ -416,7 +425,7 @@ export default function StudentClassroom() {
         finalLinks = [...existingSubmission.file_urls, ...uploadedLinks];
       }
 
-      await supabase.from('submissions').upsert({
+      const { error: submitErr } = await supabase.from('submissions').upsert({
         id: existingSubmission?.id, // Fix: Include primary key ID to update the existing row rather than inserting duplicate records
         class_id: subjectTrueUUID,
         student_id: user?.id,
@@ -424,6 +433,36 @@ export default function StudentClassroom() {
         file_urls: finalLinks,
         submitted_at: new Date().toISOString(),
       });
+
+      if (submitErr) throw submitErr;
+
+      // Notify lecturers about the new assignment submission
+      try {
+        const { data: lecturers } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'teacher')
+          .in('full_name', subject?.lecturer_names || [])
+
+        if (lecturers && lecturers.length > 0) {
+          const notificationsToInsert = lecturers.map(lec => ({
+            user_id: lec.id,
+            title: "New Assignment Submission",
+            message: `${studentName} submitted the assignment "${selectedItem.title}" in ${subject?.name || "Classroom"}.`,
+            type: "submission"
+          }))
+
+          const { error: notifErr } = await supabase
+            .from('notifications')
+            .insert(notificationsToInsert)
+
+          if (notifErr) {
+            console.error("Failed to insert lecturer notifications:", notifErr)
+          }
+        }
+      } catch (err) {
+        console.error("Error creating submission notifications:", err)
+      }
 
       setShowSuccess(true);
       setSelectedFiles([]);
@@ -485,6 +524,7 @@ export default function StudentClassroom() {
             </button>
 
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <ThemeToggle />
               <button 
                 onClick={fetchClassData} 

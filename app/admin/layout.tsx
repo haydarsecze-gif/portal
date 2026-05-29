@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import NotificationBell from '@/app/components/NotificationBell'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -37,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <NotificationBell />
           <ThemeToggle />
           <button 
             onClick={() => window.location.reload()}
@@ -154,6 +156,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest items-center">
             <span>Theme & Refresh</span>
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <ThemeToggle />
               <button 
                 onClick={() => window.location.reload()}

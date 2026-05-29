@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Plus, RefreshCw, Loader2, BookOpen, GraduationCap } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import NotificationBell from '@/app/components/NotificationBell'
 
 import ContentCard from './components/ContentCard'
 import ContentModal from './components/ContentModal'
@@ -113,6 +114,7 @@ export default function SubjectDetail() {
             </button>
 
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <ThemeToggle />
               <button 
                 onClick={fetchSubjectData} 

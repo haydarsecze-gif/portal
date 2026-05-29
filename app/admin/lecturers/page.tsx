@@ -19,7 +19,19 @@ export default function LecturerManagement() {
   }
 
   const updateStatus = async (id: string, approved: boolean) => {
-    await supabase.from('profiles').update({ is_approved: approved }).eq('id', id)
+    const { error } = await supabase.from('profiles').update({ is_approved: approved }).eq('id', id)
+    if (!error && approved) {
+      try {
+        await supabase.from('notifications').insert({
+          user_id: id,
+          title: "Account Approved",
+          message: "Your lecturer account has been approved by the Administrator.",
+          type: "approval"
+        })
+      } catch (err) {
+        console.error("Error creating approval notification:", err)
+      }
+    }
     fetchTeachers()
   }
 

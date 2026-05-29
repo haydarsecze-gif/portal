@@ -188,6 +188,35 @@ export default function ContentModal({
 
       if (dbError) throw dbError
 
+      // Notify all students in this class if it's a new coursework item (not editing)
+      if (!initialData) {
+        try {
+          const { data: mappings } = await supabase
+            .from('student_classes')
+            .select('student_id')
+            .eq('subject_id', classId)
+
+          if (mappings && mappings.length > 0) {
+            const notificationsToInsert = mappings.map(m => ({
+              user_id: m.student_id,
+              title: type === 'assignment' ? "New Assignment Added" : "New Material Added",
+              message: `Lecturer added a new ${type}: "${formData.title}" in ${subjectName}`,
+              type: type
+            }))
+
+            const { error: notifErr } = await supabase
+              .from('notifications')
+              .insert(notificationsToInsert)
+
+            if (notifErr) {
+              console.error("Failed to insert student notifications:", notifErr)
+            }
+          }
+        } catch (err) {
+          console.error("Error creating coursework notifications:", err)
+        }
+      }
+
       onRefresh()
       onClose()
 

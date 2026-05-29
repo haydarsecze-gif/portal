@@ -86,6 +86,28 @@ export default function Register() {
           if (studentError) throw studentError
         }
 
+        if (userRole === 'teacher') {
+          try {
+            const { data: admins } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('role', 'admin')
+
+            if (admins && admins.length > 0) {
+              const notificationsToInsert = admins.map(adm => ({
+                user_id: adm.id,
+                title: "New Lecturer Registration",
+                message: `${fullName} registered as a lecturer and is pending approval.`,
+                type: "approval"
+              }))
+
+              await supabase.from('notifications').insert(notificationsToInsert)
+            }
+          } catch (err) {
+            console.error("Error creating registration notifications for admins:", err)
+          }
+        }
+
         setMessage(role === 'teacher' 
           ? "✅ Request sent! Wait for admin approval." 
           : "✅ Registration successful!")

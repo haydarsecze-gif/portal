@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
+import NotificationBell from '@/app/components/NotificationBell'
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -110,6 +111,7 @@ export default function StudentDashboard() {
           </div>
 
           <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end">
+            <NotificationBell />
             <ThemeToggle />
             <button 
               onClick={() => loadDashboard(false)} 
