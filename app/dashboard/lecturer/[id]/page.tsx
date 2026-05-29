@@ -13,6 +13,20 @@ import StudentTab from './components/StudentTab'
 import SettingsTab from './components/SettingsTab'
 import AttendanceTab from './components/AttendanceTab'
 
+const parseSafeDate = (dateStr?: string) => {
+  if (!dateStr) return null
+  try {
+    const safeStr = dateStr.includes(' ') && !dateStr.includes('T')
+      ? dateStr.replace(' ', 'T')
+      : dateStr
+    const d = new Date(safeStr)
+    if (isNaN(d.getTime())) return null
+    return d
+  } catch (e) {
+    return null
+  }
+}
+
 export default function SubjectDetail() {
   const params = useParams()
   const router = useRouter()
@@ -177,16 +191,22 @@ export default function SubjectDetail() {
             </button>
             
             <div className="grid gap-4">
-              {[...assignments, ...materials].map((item: any) => (
-                <ContentCard 
-                  key={item.id} 
-                  item={item} 
-                  isAssignment={assignments.some(a => a.id === item.id)} 
-                  onRefresh={fetchSubjectData} 
-                  studentCount={students.length}
-                  onEdit={() => setEditingItem(item)} 
-                />
-              ))}
+              {[...assignments, ...materials]
+                .sort((a, b) => {
+                  const timeB = parseSafeDate(b.created_at)?.getTime() || 0
+                  const timeA = parseSafeDate(a.created_at)?.getTime() || 0
+                  return timeB - timeA
+                })
+                .map((item: any) => (
+                  <ContentCard 
+                    key={item.id} 
+                    item={item} 
+                    isAssignment={assignments.some(a => a.id === item.id)} 
+                    onRefresh={fetchSubjectData} 
+                    studentCount={students.length}
+                    onEdit={() => setEditingItem(item)} 
+                  />
+                ))}
             </div>
           </div>
         )}

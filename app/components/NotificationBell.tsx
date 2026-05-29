@@ -76,6 +76,16 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
     }
   }, [userId])
 
+  // 4. Setup resilient background fallback polling mechanism every 10 seconds
+  // to bypass private DNS (e.g. NextDNS) blocks on WebSocket connections.
+  useEffect(() => {
+    if (!userId) return
+    const interval = setInterval(() => {
+      fetchNotifications(userId)
+    }, 10000)
+    return () => clearInterval(interval)
+  }, [userId])
+
   const fetchNotifications = async (uId: string) => {
     try {
       const { data, error } = await supabase

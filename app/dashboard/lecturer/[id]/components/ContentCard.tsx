@@ -27,6 +27,27 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
     }
   }
 
+  const formatUploadDate = (dateStr?: string) => {
+    if (!dateStr) return 'N/A'
+    try {
+      const safeDate = dateStr.includes(' ') && !dateStr.includes('T') 
+        ? dateStr.replace(' ', 'T') 
+        : dateStr
+      const d = new Date(safeDate)
+      if (isNaN(d.getTime())) return 'N/A'
+      return d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      })
+    } catch (e) {
+      return 'N/A'
+    }
+  }
+
   useEffect(() => {
     let timer: any;
     if (isDeleting) {
@@ -109,6 +130,10 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
                   isDeleting ? 'text-gray-400' : (isAssignment ? 'text-blue-600' : 'text-amber-600')
                 }`}>
                   {isDeleting ? 'DELETING...' : (isAssignment ? 'Assignment' : 'Material')}
+                </span>
+                <span className="text-gray-300 text-[10px] font-bold">•</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Uploaded: {formatUploadDate(item.created_at)}
                 </span>
                 {isAssignment && (
                   <>

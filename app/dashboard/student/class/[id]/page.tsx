@@ -30,6 +30,19 @@ const parseSafeDate = (dateStr?: string) => {
   }
 } 
 
+const formatUploadDate = (dateStr?: string) => {
+  const d = parseSafeDate(dateStr)
+  if (!d) return 'N/A'
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+}
+
 export default function StudentClassroom() {
   const params = useParams();
   const router = useRouter();
@@ -624,6 +637,10 @@ export default function StudentClassroom() {
                           item.type === 'assignment' ? 'text-amber-500' : 'text-indigo-500'
                         }`}>
                           {item.type}
+                        </span>
+                        <span className="text-slate-300 text-[9px] font-bold">•</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                          Uploaded: {formatUploadDate(item.created_at)}
                         </span>
                         {item.type === 'assignment' && (
                           <>
