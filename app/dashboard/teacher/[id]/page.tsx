@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, Plus, RefreshCw, Loader2, BookOpen, GraduationCap } from 'lucide-react'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 import ContentCard from './components/ContentCard'
 import ContentModal from './components/ContentModal'
@@ -123,13 +124,16 @@ export default function SubjectDetail() {
             </div>
           </div>
 
-          <button 
-            onClick={fetchSubjectData} 
-            disabled={loading}
-            className="p-3.5 bg-white border border-slate-100 hover:border-slate-200 text-slate-400 hover:text-indigo-600 rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center justify-center"
-          >
-            <RefreshCw size={18} className={loading ? "animate-spin text-indigo-600" : ""} />
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button 
+              onClick={fetchSubjectData} 
+              disabled={loading}
+              className="p-3.5 bg-white border border-slate-100 hover:border-slate-200 text-slate-400 hover:text-indigo-600 rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+            >
+              <RefreshCw size={18} className={loading ? "animate-spin text-indigo-600" : ""} />
+            </button>
+          </div>
         </header>
 
         {/* Tab Navigation Pill Bar */}

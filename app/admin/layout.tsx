@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ShieldCheck, UserCheck, Users, BookOpen, LogOut } from 'lucide-react'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -35,13 +36,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Institutional<br/>Admin Panel
           </span>
         </div>
-        <button 
-          onClick={handleAdminLogout}
-          className="text-slate-400 hover:text-red-400 transition-colors p-2 outline-none cursor-pointer"
-          title="Exit Admin"
-        >
-          <LogOut size={18} />
-        </button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button 
+            onClick={handleAdminLogout}
+            className="text-slate-400 hover:text-red-400 transition-colors p-2 outline-none cursor-pointer"
+            title="Exit Admin"
+          >
+            <LogOut size={18} />
+          </button>
+        </div>
       </header>
 
       {/* MOBILE NAVIGATION TABS */}
@@ -139,10 +143,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* LOGOUT BUTTON */}
-        <div className="mt-auto p-8 border-t border-slate-800">
+        <div className="mt-auto p-8 border-t border-slate-800 space-y-4">
+          <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest">
+            <span>Theme Toggle</span>
+            <ThemeToggle />
+          </div>
           <button 
             onClick={handleAdminLogout}
-            className="flex items-center gap-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors w-full text-left outline-none cursor-pointer"
+            className="flex items-center gap-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors w-full text-left outline-none cursor-pointer pt-2"
           >
             <LogOut size={18} /> Exit Admin
           </button>

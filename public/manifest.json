@@ -1,0 +1,18 @@
+{
+  "name": "Limkokwing Student Portal",
+  "short_name": "Student Portal",
+  "description": "Institutional Student Portal Gateway",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070e",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

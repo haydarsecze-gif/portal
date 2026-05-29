@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight } from 'lucide-react'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 // Helper function to format time (e.g., 08:00 -> 8:00 AM)
 const formatTime = (time: string) => {
@@ -72,12 +73,15 @@ export default function TeacherDashboard() {
             </p>
           </div>
 
-          <button 
-            onClick={handleLogout} 
-            className="relative z-10 flex items-center gap-2 px-5 py-3.5 bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
-          >
-            <LogOut size={14} /> Sign Out
-          </button>
+          <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end">
+            <ThemeToggle />
+            <button 
+              onClick={handleLogout} 
+              className="flex items-center gap-2 px-5 py-3.5 bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
+            >
+              <LogOut size={14} /> Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Section Title */}
