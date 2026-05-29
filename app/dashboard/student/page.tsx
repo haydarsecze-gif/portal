@@ -121,13 +121,13 @@ export default function StudentDashboard() {
             <button 
               onClick={() => loadDashboard(false)} 
               disabled={isSyncing}
-              className="p-3.5 bg-white/5 border border-white/10 hover:border-white/20 text-slate-300 hover:text-indigo-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
             >
               <RefreshCw size={14} className={isSyncing ? "animate-spin text-indigo-400" : ""} />
             </button>
             <button 
               onClick={handleLogout} 
-              className="flex items-center gap-2 px-5 py-3.5 bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
+              className="flex items-center gap-2 px-5 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-red-500/30 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
             >
               <LogOut size={14} /> Sign Out
             </button>
