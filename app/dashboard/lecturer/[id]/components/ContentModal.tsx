@@ -84,6 +84,71 @@ export default function ContentModal({
           }
         }
 
+        // A. Search/Create the Subject/Class Folder inside targetParentId dynamically
+        let subjectFolderId = null
+        try {
+          const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${subjectName.replace(/'/g, "\\'")}' and '${targetParentId}' in parents and trashed = false`
+          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          })
+          if (searchRes.ok) {
+            const searchData = await searchRes.json()
+            if (searchData.files && searchData.files.length > 0) {
+              subjectFolderId = searchData.files[0].id
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to search for subject folder, will attempt to create:", e)
+        }
+
+        if (!subjectFolderId) {
+          try {
+            // Create the Subject/Class Folder
+            const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: subjectName.trim(),
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [targetParentId]
+              })
+            })
+            if (createSubRes.ok) {
+              const subFolderData = await createSubRes.json()
+              subjectFolderId = subFolderData.id
+
+              // Grant anyone reader permission to the subject folder so students can access assignments/materials inside
+              await fetch(`https://www.googleapis.com/drive/v3/files/${subjectFolderId}/permissions`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  role: 'reader',
+                  type: 'anyone'
+                })
+              })
+            } else {
+              const errText = await createSubRes.text()
+              console.error("Failed to create subject folder:", errText)
+            }
+          } catch (e) {
+            console.error("Error creating subject folder:", e)
+          }
+        }
+
+        // If we found or created the subject folder, nest the coursework folder inside it
+        if (subjectFolderId) {
+          targetParentId = subjectFolderId
+        }
+
         // 2. Create assignment folder if it doesn't exist yet
         if (!capturedFolderId) {
           const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
