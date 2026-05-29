@@ -11,6 +11,7 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [inviteCode, setInviteCode] = useState('')
+  const [driveFolderId, setDriveFolderId] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
@@ -33,6 +34,11 @@ export default function Register() {
 
     if (role === 'student' && !inviteCode) {
       setMessage("❌ Student must enter Invite Code")
+      return
+    }
+
+    if (role === 'teacher' && !driveFolderId.trim()) {
+      setMessage("❌ Lecturer must enter Google Drive Folder ID")
       return
     }
 
@@ -71,7 +77,8 @@ export default function Register() {
           full_name: fullName,
           role: userRole,
           status: status,
-          class_id: classId
+          class_id: classId,
+          drive_folder_id: role === 'teacher' ? driveFolderId.trim() : null
         })
 
         if (profileError) throw profileError
@@ -232,6 +239,32 @@ export default function Register() {
               className="w-full pl-12 pr-6 py-4.5 bg-slate-900/30 group-hover:bg-slate-900/50 border border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
             />
           </div>
+
+          {/* Drive Folder ID field (Lecturer only) */}
+          {role === 'teacher' && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
+              <div className="bg-indigo-950/20 border border-indigo-900/60 p-4 rounded-2xl">
+                <p className="text-[9px] font-black uppercase text-indigo-300 tracking-wider">Required Google Drive Setup</p>
+                <ol className="text-[9.5px] font-bold text-indigo-400/90 leading-relaxed list-decimal pl-4 mt-2 space-y-1">
+                  <li>Create a coursework folder in your personal Google Drive.</li>
+                  <li>Share it with Editor access to our service email: <span className="underline font-black select-all text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span></li>
+                  <li>Copy the Folder ID from the URL (the string after <code className="bg-indigo-950 px-1 py-0.5 rounded">folders/</code>) and paste it below.</li>
+                </ol>
+              </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-400 group-focus-within:text-indigo-350 transition-colors">
+                  <KeyRound size={16} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Google Drive Folder ID"
+                  value={driveFolderId}
+                  onChange={(e) => setDriveFolderId(e.target.value.trim())}
+                  className="w-full pl-12 pr-6 py-4.5 bg-indigo-950/20 border border-indigo-900/60 focus:border-indigo-500 rounded-2xl text-indigo-300 text-sm font-black placeholder:text-indigo-500/60 outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Invite Code field (Student only) */}
           {role === 'student' && (

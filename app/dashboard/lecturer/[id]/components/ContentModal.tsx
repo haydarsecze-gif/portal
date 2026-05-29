@@ -70,6 +70,20 @@ export default function ContentModal({
         }
         const { accessToken, parentFolderId } = tokenData
 
+        // Query the lecturer's own drive folder ID if defined
+        let targetParentId = parentFolderId
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('drive_folder_id')
+            .eq('id', user.id)
+            .single()
+          if (prof?.drive_folder_id) {
+            targetParentId = prof.drive_folder_id
+          }
+        }
+
         // 2. Create assignment folder if it doesn't exist yet
         if (!capturedFolderId) {
           const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
@@ -81,7 +95,7 @@ export default function ContentModal({
             body: JSON.stringify({
               name: formData.title.trim(), // EXACT name, keeping casing & spaces (e.g. "Task 1")
               mimeType: 'application/vnd.google-apps.folder',
-              parents: [parentFolderId]
+              parents: [targetParentId]
             })
           })
 

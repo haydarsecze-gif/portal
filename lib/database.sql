@@ -1,13 +1,16 @@
 -- ====================================================================
--- MIGRATION: CREATE NOTIFICATIONS TABLE & CONFIGURE SECURITY/REALTIME
+-- MIGRATION: ADD DRIVE_FOLDER_ID TO PROFILES & NOTIFICATIONS SETUP
 -- ====================================================================
 -- Description:
---   This script creates the public.notifications table, sets up appropriate 
---   Row-Level Security (RLS) policies, and enables real-time WebSocket replication.
+--   This script adds the drive_folder_id column to public.profiles and 
+--   creates the public.notifications table with Row-Level Security policies.
 -- Instructions:
 --   Copy this entire script, open the Supabase Dashboard, navigate to
 --   "SQL Editor", click "New query", paste this code, and click "Run".
 -- ====================================================================
+
+-- 0. Add drive_folder_id column to profiles table if it doesn't exist
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS drive_folder_id TEXT;
 
 -- 1. Create the notifications table in the public schema if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.notifications (
