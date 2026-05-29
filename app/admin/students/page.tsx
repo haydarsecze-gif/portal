@@ -1,13 +1,19 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Search, Loader2, UserMinus, GraduationCap, AlertTriangle, RefreshCcw } from 'lucide-react'
+import { Search, Loader2, UserMinus, GraduationCap, AlertTriangle, RefreshCcw, Pencil, X, Save } from 'lucide-react'
 
 export default function StudentDirectory() {
   const [students, setStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [debugInfo, setDebugInfo] = useState<string | null>(null)
+  
+  // Class/Semester assignment states
+  const [classesList, setClassesList] = useState<any[]>([])
+  const [editingStudent, setEditingStudent] = useState<any>(null)
+  const [selectedClassId, setSelectedClassId] = useState<string>('')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const fetchData = async () => {
     setLoading(true)
@@ -38,6 +44,7 @@ export default function StudentDirectory() {
       })
 
       setStudents(combined)
+      setClassesList(classes)
     } catch (error: any) {
       console.error("Fetch Data Error:", error)
       
@@ -45,7 +52,7 @@ export default function StudentDirectory() {
         .from('profiles')
         .select('*')
         .eq('role', 'student')
-
+ 
       if (profileError) {
         setDebugInfo(`Database Error: ${profileError.message}. Check if RLS policies allow Admin to read profiles.`)
       } else if (fallbackData?.length === 0) {
@@ -53,6 +60,7 @@ export default function StudentDirectory() {
       } else {
         const { data: classesData } = await supabase.from('classes').select('id, name, semester')
         const classes = classesData || []
+        setClassesList(classes)
         
         const mappedFallback = (fallbackData || []).map(p => {
           const cls = classes.find(c => c.id === p.class_id)
@@ -85,6 +93,31 @@ export default function StudentDirectory() {
       alert("Delete failed: " + error.message)
     } else {
       fetchData()
+    }
+  }
+
+  const handleSaveStudentClass = async () => {
+    if (!editingStudent) return
+    const studentId = editingStudent.student_id || editingStudent.id
+    try {
+      // 1. Update profiles table
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .update({ class_id: selectedClassId || null })
+        .eq('id', studentId)
+      if (profileErr) throw profileErr
+
+      // 2. Update students table
+      const { error: studentErr } = await supabase
+        .from('students')
+        .update({ class_id: selectedClassId || null })
+        .eq('id', studentId)
+      if (studentErr) throw studentErr
+
+      setIsEditModalOpen(false)
+      fetchData()
+    } catch (err: any) {
+      alert("Failed to assign class: " + err.message)
     }
   }
 
@@ -211,10 +244,22 @@ export default function StudentDirectory() {
                         <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest mt-1">Days Present</span>
                       </div>
                     </td>
-                    <td className="p-6 text-right">
+                    <td className="p-6 text-right flex justify-end gap-2">
+                      <button 
+                        onClick={() => {
+                          setEditingStudent(s)
+                          setSelectedClassId(s.class_id || '')
+                          setIsEditModalOpen(true)
+                        }}
+                        className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all cursor-pointer active:scale-95"
+                        title="Assign Class & Semester"
+                      >
+                        <Pencil size={16} />
+                      </button>
                       <button 
                         onClick={() => deleteStudent(s.student_id || s.id)} 
-                        className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 hover:bg-red-50 border border-slate-100 hover:border-red-100 text-slate-300 hover:text-red-500 rounded-xl transition-all cursor-pointer"
+                        className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 hover:bg-red-50 border border-slate-100 hover:border-red-100 text-slate-350 hover:text-red-500 rounded-xl transition-all cursor-pointer active:scale-95"
+                        title="Delete Student"
                       >
                         <UserMinus size={16} />
                       </button>
@@ -223,6 +268,74 @@ export default function StudentDirectory() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Class & Semester Modal */}
+      {isEditModalOpen && editingStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-6 right-6 p-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-350 hover:text-slate-600 dark:hover:text-slate-100 rounded-xl transition-all cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+                Curriculum Assignment
+              </span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight mt-2 leading-none">
+                Assign Class & Semester
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                Configure academic track for student
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-900/50 p-4 rounded-2xl">
+                <p className="text-[8px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest leading-none mb-2">Student Identity</p>
+                <p className="text-slate-800 dark:text-slate-200 text-sm font-black uppercase tracking-tight">{editingStudent.full_name}</p>
+                <p className="text-[10px] text-slate-450 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-none">{editingStudent.email || 'No email provided'}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none block">
+                  Select Target Classroom Track
+                </label>
+                <select
+                  value={selectedClassId}
+                  onChange={e => setSelectedClassId(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none cursor-pointer focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all duration-300"
+                >
+                  <option value="">Unassigned (No Class / Semester N/A)</option>
+                  {classesList.map(cls => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name} (Semester {cls.semester})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="flex-1 py-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveStudentClass}
+                className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-950/10 active:scale-95 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Save size={12} />
+                <span>Save Track</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

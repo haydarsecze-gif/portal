@@ -15,7 +15,7 @@ const formatTime = (time: string) => {
   return `${formattedH}:${minutes} ${ampm}`;
 };
 
-export default function TeacherDashboard() {
+export default function LecturerDashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [subjects, setSubjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -60,7 +60,7 @@ export default function TeacherDashboard() {
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
       <Loader2 className="animate-spin text-indigo-600 mb-2" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Teacher Dashboard...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Lecturer Dashboard...</p>
     </div>
   )
 
@@ -81,7 +81,7 @@ export default function TeacherDashboard() {
               Lecturer Portal
             </h1>
             <p className="text-slate-400 text-sm font-bold">
-              Welcome back, <span className="text-indigo-400">{profile?.full_name || 'Teacher'}</span>
+              Welcome back, <span className="text-indigo-400">{profile?.full_name || 'Lecturer'}</span>
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export default function TeacherDashboard() {
               </div>
 
               <button 
-                onClick={() => router.push(`/dashboard/teacher/${s.id}`)}
+                onClick={() => router.push(`/dashboard/lecturer/${s.id}`)}
                 className="w-full mt-8 bg-slate-900 group-hover:bg-indigo-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-md hover:shadow-lg hover:shadow-indigo-500/10 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>View Classroom</span>

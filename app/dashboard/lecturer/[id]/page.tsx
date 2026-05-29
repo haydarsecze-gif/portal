@@ -106,7 +106,7 @@ export default function SubjectDetail() {
           {/* Compact Top Bar */}
           <div className="flex justify-between items-center w-full">
             <button 
-              onClick={() => router.push('/dashboard/teacher')} 
+              onClick={() => router.push('/dashboard/lecturer')} 
               className="flex items-center gap-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-black text-[9px] uppercase tracking-widest transition duration-300 cursor-pointer"
             >
               <ArrowLeft size={12} /> Back to dashboard

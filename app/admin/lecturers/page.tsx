@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Check, X, Trash2, Mail, Clock, ShieldAlert, Loader2, Sparkles, UserCheck } from 'lucide-react'
 
-export default function TeacherManagement() {
+export default function LecturerManagement() {
   const [teachers, setTeachers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -24,7 +24,7 @@ export default function TeacherManagement() {
   }
 
   const deleteTeacher = async (id: string) => {
-    if (confirm("Delete this teacher account?")) {
+    if (confirm("Delete this lecturer account?")) {
       await supabase.from('profiles').delete().eq('id', id)
       fetchTeachers()
     }
@@ -33,7 +33,7 @@ export default function TeacherManagement() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 text-slate-300">
       <Loader2 className="animate-spin mb-2" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Teacher Approvals...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Loading Lecturer Approvals...</p>
     </div>
   )
 
@@ -47,7 +47,7 @@ export default function TeacherManagement() {
       <section>
         <div className="flex items-center gap-3 mb-6">
           <Clock className="text-amber-500" size={18} />
-          <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Pending Teacher Approvals</h2>
+          <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Pending Lecturer Approvals</h2>
           <span className="bg-amber-50 border border-amber-100 text-amber-600 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">{pending.length}</span>
         </div>
         
@@ -83,7 +83,7 @@ export default function TeacherManagement() {
           ) : (
             <div className="py-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-200">
               <Sparkles size={24} className="mx-auto text-slate-300 mb-2" />
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No pending teacher registration logs found.</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No pending lecturer registration logs found.</p>
             </div>
           )}
         </div>
@@ -102,7 +102,7 @@ export default function TeacherManagement() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Teacher Profile Details</th>
+                  <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lecturer Profile Details</th>
                   <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Account Options</th>
                 </tr>
               </thead>

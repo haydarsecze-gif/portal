@@ -258,7 +258,7 @@ export default function AdminCurriculum() {
       
       setNotification({
         message: hideFromStudent
-          ? "Attendance saved! Changes are visible to admins & teachers only — students will see their original check-in status."
+          ? "Attendance saved! Changes are visible to admins & lecturers only — students will see their original check-in status."
           : "Attendance changes successfully saved! Students can now see the updated status.",
         type: 'success'
       })
@@ -573,7 +573,7 @@ export default function AdminCurriculum() {
                   </p>
                   <p className="text-[10px] font-bold text-slate-500 mt-1.5 normal-case tracking-normal leading-relaxed">
                     {hideFromStudent
-                      ? 'Changes will be saved for admins & teachers only. Students will see their original check-in status.'
+                      ? 'Changes will be saved for admins & lecturers only. Students will see their original check-in status.'
                       : 'Changes will immediately update and be visible to students in their portal.'
                     }
                   </p>

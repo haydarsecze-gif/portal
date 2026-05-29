@@ -872,7 +872,7 @@ export default function StudentClassroom() {
                     {selectedItem.file_url && (
                       <a href={selectedItem.file_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white w-fit px-4 py-2.5 rounded-xl border border-slate-200/80 shadow-xs hover:border-indigo-400 transition-colors">
                         <Paperclip size={13} className="text-indigo-500" />
-                        <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Teacher File Attachment</span>
+                        <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Lecturer File Attachment</span>
                       </a>
                     )}
                   </div>

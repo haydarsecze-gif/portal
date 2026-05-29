@@ -58,15 +58,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* MOBILE NAVIGATION TABS */}
       <nav className="lg:hidden bg-slate-950 border-b border-slate-900 px-4 py-2.5 flex gap-2 overflow-x-auto custom-scrollbar sticky top-[68px] z-40">
         <Link 
-          href="/admin/teachers" 
+          href="/admin/lecturers" 
           className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
-            pathname === '/admin/teachers' 
+            pathname === '/admin/lecturers' 
               ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow' 
               : 'text-slate-400 hover:bg-slate-900/50'
           }`}
         >
           <UserCheck size={14} />
-          <span>Teachers</span>
+          <span>Lecturers</span>
         </Link>
         <Link 
           href="/admin/students" 
@@ -106,16 +106,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           <nav className="space-y-2">
             <Link 
-              href="/admin/teachers" 
+              href="/admin/lecturers" 
               className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-300 group cursor-pointer ${
-                pathname === '/admin/teachers' 
+                pathname === '/admin/lecturers' 
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-xl shadow-indigo-900/10' 
                   : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
               }`}
             >
               <div className="flex items-center gap-3">
                 <UserCheck size={18} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Teacher Approvals</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Lecturer Approvals</span>
               </div>
             </Link>
 

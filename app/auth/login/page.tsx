@@ -34,7 +34,7 @@ export default function Login() {
       if (profile?.role === 'admin') {
         router.push('/admin/students')
       } else if (profile?.role === 'teacher') {
-        router.push('/dashboard/teacher')
+        router.push('/dashboard/lecturer')
       } else {
         router.push('/dashboard/student')
       }

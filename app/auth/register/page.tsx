@@ -162,7 +162,7 @@ export default function Register() {
                 : 'text-slate-500 hover:text-slate-300'
             }`}
           >
-            Teacher
+            Lecturer
           </button>
         </div>
 

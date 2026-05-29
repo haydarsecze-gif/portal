@@ -231,12 +231,12 @@ export default function AttendanceTab({ classId }: { classId: string }) {
       
       setNotification({
         message: hideFromStudent 
-          ? "Attendance saved! Changes are visible to teachers & admins only — students will see their original status." 
+          ? "Attendance saved! Changes are visible to lecturers & admins only — students will see their original status." 
           : "Attendance changes successfully committed! Students can now see the updated status.",
         type: 'success'
       })
     } catch (err: any) {
-      console.error("Teacher portal push error execution tracker:", err)
+      console.error("Lecturer portal push error execution tracker:", err)
       setNotification({
         message: "Failed to save changes: " + err.message,
         type: 'error'
@@ -449,7 +449,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
                   </p>
                   <p className="text-[10px] font-medium text-slate-500 mt-0.5 normal-case tracking-normal">
                     {hideFromStudent 
-                      ? 'Changes will be saved for teachers & admins only. Students will see their original check-in status.'
+                      ? 'Changes will be saved for lecturers & admins only. Students will see their original check-in status.'
                       : 'Changes will immediately update and be visible to students in their portal.'
                     }
                   </p>

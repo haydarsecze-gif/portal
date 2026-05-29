@@ -39,7 +39,7 @@ export default function Home() {
   const handleGoToPortal = () => {
     if (!profile) return
     if (profile.role === 'admin') router.push('/admin/students')
-    else if (profile.role === 'teacher') router.push('/dashboard/teacher')
+    else if (profile.role === 'teacher') router.push('/dashboard/lecturer')
     else router.push('/dashboard/student')
   }
 
@@ -113,7 +113,9 @@ export default function Home() {
                 </div>
                 <div className="overflow-hidden">
                   <p className="text-slate-200 text-[11px] font-black uppercase tracking-tight truncate leading-tight">{profile.full_name}</p>
-                  <p className="text-indigo-400 text-[9px] font-bold uppercase tracking-widest mt-0.5 leading-none">{profile.role}</p>
+                  <p className="text-indigo-400 text-[9px] font-bold uppercase tracking-widest mt-0.5 leading-none">
+                    {profile.role === 'teacher' ? 'lecturer' : profile.role}
+                  </p>
                 </div>
               </div>
             </div>
