@@ -71,101 +71,108 @@ export default function StudentClassroom() {
 
   const fetchClassData = useCallback(async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
 
-    let resolvedSubjectUUID = classId;
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      let resolvedSubjectUUID = classId;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    if (!uuidRegex.test(classId)) {
-      const { data: assignmentData } = await supabase
-        .from('assignments')
-        .select('class_id')
-        .eq('id', classId)
+      if (!uuidRegex.test(classId)) {
+        const { data: assignmentData } = await supabase
+          .from('assignments')
+          .select('class_id')
+          .eq('id', classId)
+          .maybeSingle();
+
+        if (assignmentData && assignmentData.class_id) {
+          resolvedSubjectUUID = assignmentData.class_id;
+        } else {
+          const { data: subjectByName } = await supabase
+            .from('subjects')
+            .select('id')
+            .eq('name', classId)
+            .maybeSingle();
+          if (subjectByName) resolvedSubjectUUID = subjectByName.id;
+        }
+      }
+
+      const { data: subjectDetails } = await supabase
+        .from('subjects')
+        .select('id, room, name, semester, class_start_time, class_end_time, start_date, lecturer_names')
+        .eq('id', resolvedSubjectUUID)
         .maybeSingle();
 
-      if (assignmentData && assignmentData.class_id) {
-        resolvedSubjectUUID = assignmentData.class_id;
-      } else {
-        const { data: subjectByName } = await supabase
-          .from('subjects')
-          .select('id')
-          .eq('name', classId)
-          .maybeSingle();
-        if (subjectByName) resolvedSubjectUUID = subjectByName.id;
-      }
-    }
+      setSubjectTrueUUID(resolvedSubjectUUID);
+      setSubject(subjectDetails);
+      setRoomName(subjectDetails?.room || 'Unassigned');
+      setSubjectStartDate(subjectDetails?.start_date || null);
 
-    const { data: subjectDetails } = await supabase
-      .from('subjects')
-      .select('id, room, name, semester, class_start_time, class_end_time, start_date, lecturer_names')
-      .eq('id', resolvedSubjectUUID)
-      .maybeSingle();
-
-    setSubjectTrueUUID(resolvedSubjectUUID);
-    setSubject(subjectDetails);
-    setRoomName(subjectDetails?.room || 'Unassigned');
-    setSubjectStartDate(subjectDetails?.start_date || null);
-
-    if (subjectDetails) {
-      const { data: existingClass } = await supabase
-        .from('classes')
-        .select('id')
-        .eq('id', subjectDetails.id)
-        .maybeSingle()
-
-      if (!existingClass) {
-        await supabase
+      if (subjectDetails) {
+        const { data: existingClass } = await supabase
           .from('classes')
-          .insert({
-            id: subjectDetails.id,
-            name: subjectDetails.name || 'Unassigned',
-            subject_name: subjectDetails.name || 'Unassigned',
-            semester: subjectDetails.semester || 1,
-            room: subjectDetails.room || 'Unassigned',
-            start_time: subjectDetails.class_start_time || '08:00:00',
-            end_time: subjectDetails.class_end_time || '11:30:00',
-            class_date: subjectDetails.start_date || new Date().toISOString().split('T')[0]
+          .select('id')
+          .eq('id', subjectDetails.id)
+          .maybeSingle()
+
+        if (!existingClass) {
+          await supabase
+            .from('classes')
+            .insert({
+              id: subjectDetails.id,
+              name: subjectDetails.name || 'Unassigned',
+              subject_name: subjectDetails.name || 'Unassigned',
+              semester: subjectDetails.semester || 1,
+              room: subjectDetails.room || 'Unassigned',
+              start_time: subjectDetails.class_start_time || '08:00:00',
+              end_time: subjectDetails.class_end_time || '11:30:00',
+              class_date: subjectDetails.start_date || new Date().toISOString().split('T')[0]
+            })
+        }
+      }
+
+      const [assignments, materials, subData, profData, attData] = await Promise.all([
+        supabase.from('assignments').select('*').eq('class_id', resolvedSubjectUUID),
+        supabase.from('materials').select('*').eq('class_id', resolvedSubjectUUID),
+        supabase.from('submissions').select('*').eq('class_id', resolvedSubjectUUID).eq('student_id', user.id),
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('attendance').select('week, status, check_in_time, hidden_from_student').eq('class_id', resolvedSubjectUUID).eq('student_id', user.id).order('week', { ascending: true })
+      ]);
+
+      setProfile(profData.data);
+
+      if (profData.data && profData.data.role === 'student') {
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!existingStudent) {
+          await supabase.from('students').insert({
+            id: user.id,
+            name: profData.data.full_name,
+            email: user.email,
+            class_id: profData.data.class_id
           })
+        }
       }
+      setSubmissions(subData.data || []);
+      setStudentAttendance(attData.data || []);
+      
+      setContent([
+        ...(assignments.data || []).map(a => ({ ...a, type: 'assignment' })),
+        ...(materials.data || []).map(m => ({ ...m, type: 'material' }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+    } catch (err: any) {
+      console.error("Sync Failure in classroom loader:", err.message);
+    } finally {
+      setLoading(false);
     }
-
-    const [assignments, materials, subData, profData, attData] = await Promise.all([
-      supabase.from('assignments').select('*').eq('class_id', resolvedSubjectUUID),
-      supabase.from('materials').select('*').eq('class_id', resolvedSubjectUUID),
-      supabase.from('submissions').select('*').eq('class_id', resolvedSubjectUUID).eq('student_id', user.id),
-      supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('attendance').select('week, status, check_in_time, hidden_from_student').eq('class_id', resolvedSubjectUUID).eq('student_id', user.id).order('week', { ascending: true })
-    ]);
-
-    setProfile(profData.data);
-
-    if (profData.data && profData.data.role === 'student') {
-      const { data: existingStudent } = await supabase
-        .from('students')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (!existingStudent) {
-        await supabase.from('students').insert({
-          id: user.id,
-          name: profData.data.full_name,
-          email: user.email,
-          class_id: profData.data.class_id
-        })
-      }
-    }
-    setSubmissions(subData.data || []);
-    setStudentAttendance(attData.data || []);
-    
-    setContent([
-      ...(assignments.data || []).map(a => ({ ...a, type: 'assignment' })),
-      ...(materials.data || []).map(m => ({ ...m, type: 'material' }))
-    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
-    
-    setLoading(false);
-  }, [classId]);
+  }, [classId, router]);
 
   useEffect(() => { if (classId) fetchClassData(); }, [classId, fetchClassData]);
 
