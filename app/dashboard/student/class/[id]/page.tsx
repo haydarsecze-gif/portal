@@ -58,6 +58,7 @@ export default function StudentClassroom() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isResubmitting, setIsResubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ [itemId: string]: { progress: number; status: 'uploading' | 'success' | 'failed'; error?: string } }>({});
   const [profile, setProfile] = useState<any>(null);
   const [roomName, setRoomName] = useState<string>('');
   const [subjectTrueUUID, setSubjectTrueUUID] = useState<string>('');
@@ -351,156 +352,203 @@ export default function StudentClassroom() {
   const closeModal = () => { setSelectedItem(null); setShowSuccess(false); setSelectedFiles([]); setIsResubmitting(false); };
 
   const turnInAssignment = async () => {
-    if (selectedFiles.length === 0) return;
-    setUploading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const studentName = profile?.full_name || "Student";
+    if (selectedFiles.length === 0 || !selectedItem) return;
+    
+    // Capture state values to prevent race conditions when clearing/closing modal
+    const filesToUpload = [...selectedFiles];
+    const itemToUpload = { ...selectedItem };
+    const assignmentTitle = itemToUpload.title;
 
-      const uploadedLinks = [];
-      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+    // Clear input selection and close submit modal immediately so they return to normal page
+    setSelectedFiles([]);
+    setIsResubmitting(false);
+    setSelectedItem(null);
+    setShowSuccess(false);
 
-      for (const file of selectedFiles) {
-        // 1. Prepare Google Drive folder and get resumable session URL via server (100-byte body)
-        const res = await fetch('/api/drive/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            studentName,
-            targetFolderId: selectedItem.folder_id,
-            fileName: file.name,
-            fileType: file.type || 'application/octet-stream',
-            fileSize: file.size
-          })
-        });
-        const responseText = await res.text();
-        let initData;
-        try {
-          initData = JSON.parse(responseText);
-        } catch (jsonErr) {
-          throw new Error(`Google Drive resumable upload initialization failed (Status ${res.status}): ${responseText.substring(0, 150)}`);
-        }
-        if (initData.error) throw new Error(initData.error);
+    // Initialize progress tracking state
+    setUploadProgress(prev => ({
+      ...prev,
+      [assignmentTitle]: { progress: 0, status: 'uploading' }
+    }));
 
-        const { uploadUrl, studentFolderId, accessToken } = initData;
-
-        // 2. Upload file in chunks (BYPASSES ALL PAYLOAD AND MEMORY LIMITS!)
-        let uploadedBytes = 0;
-        const totalBytes = file.size;
-
-        while (uploadedBytes < totalBytes) {
-          const chunkEnd = Math.min(uploadedBytes + CHUNK_SIZE, totalBytes);
-          const chunkBlob = file.slice(uploadedBytes, chunkEnd);
-          const chunkSize = chunkBlob.size;
-
-          const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-              'Content-Length': String(chunkSize),
-              'Content-Range': `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`
-            },
-            body: chunkBlob
-          });
-
-          if (uploadRes.status === 308) {
-            // Intermediate chunk uploaded successfully!
-            uploadedBytes = chunkEnd;
-          } else if (uploadRes.ok) {
-            // Final chunk uploaded successfully!
-            const uploadData = await uploadRes.json();
-            const fileId = uploadData.id;
-
-            // Set permission to anyone reader
-            const permRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                role: 'reader',
-                type: 'anyone'
-              })
-            });
-
-            if (!permRes.ok) {
-              console.error("Direct permission set failed for file", fileId);
-            }
-
-            // Fetch file webViewLink
-            const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink,name`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`
-              }
-            });
-
-            if (!metaRes.ok) {
-              throw new Error("Failed to retrieve uploaded file web link from Google Drive.");
-            }
-
-            const fileMeta = await metaRes.json();
-            uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
-            uploadedBytes = totalBytes; // Complete
-          } else {
-            const errText = await uploadRes.text();
-            throw new Error(`Chunk upload failed at byte ${uploadedBytes} (Status ${uploadRes.status}): ${errText}`);
-          }
-        }
-      }
-
-
-      // 3. Save to database
-      const existingSubmission = getSub(selectedItem.title);
-      let finalLinks = uploadedLinks;
-      if (existingSubmission && existingSubmission.file_urls) {
-        finalLinks = [...existingSubmission.file_urls, ...uploadedLinks];
-      }
-
-      const { error: submitErr } = await supabase.from('submissions').upsert({
-        id: existingSubmission?.id, // Fix: Include primary key ID to update the existing row rather than inserting duplicate records
-        class_id: subjectTrueUUID,
-        student_id: user?.id,
-        assignment_name: selectedItem.title,
-        file_urls: finalLinks,
-        submitted_at: new Date().toISOString(),
-      });
-
-      if (submitErr) throw submitErr;
-
-      // Notify lecturers about the new assignment submission
+    // Start background execution
+    (async () => {
       try {
-        const { data: lecturers } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'teacher')
-          .in('full_name', subject?.lecturer_names || [])
+        const { data: { user } } = await supabase.auth.getUser();
+        const studentName = profile?.full_name || "Student";
+        const uploadedLinks = [];
+        const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+        
+        const totalSize = filesToUpload.reduce((sum, f) => sum + f.size, 0);
+        let totalUploadedBytes = 0;
 
-        if (lecturers && lecturers.length > 0) {
-          const notificationsToInsert = lecturers.map(lec => ({
-            user_id: lec.id,
-            title: "New Assignment Submission",
-            message: `${studentName} submitted the assignment "${selectedItem.title}" in ${subject?.name || "Classroom"}.`,
-            type: "submission"
-          }))
+        for (const file of filesToUpload) {
+          // 1. Prepare Google Drive folder and get resumable session URL via server (100-byte body)
+          const res = await fetch('/api/drive/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              studentName,
+              targetFolderId: itemToUpload.folder_id,
+              fileName: file.name,
+              fileType: file.type || 'application/octet-stream',
+              fileSize: file.size
+            })
+          });
+          const responseText = await res.text();
+          let initData;
+          try {
+            initData = JSON.parse(responseText);
+          } catch (jsonErr) {
+            throw new Error(`Google Drive resumable upload initialization failed (Status ${res.status}): ${responseText.substring(0, 150)}`);
+          }
+          if (initData.error) throw new Error(initData.error);
 
-          const { error: notifErr } = await supabase
-            .from('notifications')
-            .insert(notificationsToInsert)
+          const { uploadUrl, studentFolderId, accessToken } = initData;
 
-          if (notifErr) {
-            console.error("Failed to insert lecturer notifications:", notifErr)
+          // 2. Upload file in chunks (BYPASSES ALL PAYLOAD AND MEMORY LIMITS!)
+          let uploadedBytes = 0;
+          const totalBytes = file.size;
+
+          while (uploadedBytes < totalBytes) {
+            const chunkEnd = Math.min(uploadedBytes + CHUNK_SIZE, totalBytes);
+            const chunkBlob = file.slice(uploadedBytes, chunkEnd);
+            const chunkSize = chunkBlob.size;
+
+            const uploadRes = await fetch(uploadUrl, {
+              method: 'PUT',
+              headers: {
+                'Content-Length': String(chunkSize),
+                'Content-Range': `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`
+              },
+              body: chunkBlob
+            });
+
+            if (uploadRes.status === 308) {
+              // Intermediate chunk uploaded successfully!
+              totalUploadedBytes += chunkSize;
+              const pct = Math.round((totalUploadedBytes / totalSize) * 98);
+              setUploadProgress(prev => ({
+                ...prev,
+                [assignmentTitle]: { progress: pct, status: 'uploading' }
+              }));
+              uploadedBytes = chunkEnd;
+            } else if (uploadRes.ok) {
+              // Final chunk uploaded successfully!
+              totalUploadedBytes += chunkSize;
+              const pct = Math.round((totalUploadedBytes / totalSize) * 98);
+              setUploadProgress(prev => ({
+                ...prev,
+                [assignmentTitle]: { progress: pct, status: 'uploading' }
+              }));
+              const uploadData = await uploadRes.json();
+              const fileId = uploadData.id;
+
+              // Set permission to anyone reader
+              const permRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  role: 'reader',
+                  type: 'anyone'
+                })
+              });
+
+              if (!permRes.ok) {
+                console.error("Direct permission set failed for file", fileId);
+              }
+
+              // Fetch file webViewLink
+              const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink,name`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`
+                }
+              });
+
+              if (!metaRes.ok) {
+                throw new Error("Failed to retrieve uploaded file web link from Google Drive.");
+              }
+
+              const fileMeta = await metaRes.json();
+              uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
+              uploadedBytes = totalBytes; // Complete
+            } else {
+              const errText = await uploadRes.text();
+              throw new Error(`Chunk upload failed at byte ${uploadedBytes} (Status ${uploadRes.status}): ${errText}`);
+            }
           }
         }
-      } catch (err) {
-        console.error("Error creating submission notifications:", err)
-      }
 
-      setShowSuccess(true);
-      setSelectedFiles([]);
-      setIsResubmitting(false);
-      fetchClassData();
-    } catch (err: any) { alert(err.message); } finally { setUploading(false); }
+        // 3. Save to database
+        const existingSubmission = getSub(assignmentTitle);
+        let finalLinks = uploadedLinks;
+        if (existingSubmission && existingSubmission.file_urls) {
+          finalLinks = [...existingSubmission.file_urls, ...uploadedLinks];
+        }
+
+        const { error: submitErr } = await supabase.from('submissions').upsert({
+          id: existingSubmission?.id,
+          class_id: subjectTrueUUID,
+          student_id: user?.id,
+          assignment_name: assignmentTitle,
+          file_urls: finalLinks,
+          submitted_at: new Date().toISOString(),
+        });
+
+        if (submitErr) throw submitErr;
+
+        // Notify lecturers about the new assignment submission
+        try {
+          const { data: lecturers } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'teacher')
+            .in('full_name', subject?.lecturer_names || [])
+
+          if (lecturers && lecturers.length > 0) {
+            const notificationsToInsert = lecturers.map(lec => ({
+              user_id: lec.id,
+              title: "New Assignment Submission",
+              message: `${studentName} submitted the assignment "${assignmentTitle}" in ${subject?.name || "Classroom"}.`,
+              type: "submission"
+            }))
+
+            await supabase.from('notifications').insert(notificationsToInsert)
+          }
+        } catch (err) {
+          console.error("Error creating submission notifications:", err)
+        }
+
+        // Success state
+        setUploadProgress(prev => ({
+          ...prev,
+          [assignmentTitle]: { progress: 100, status: 'success' }
+        }));
+        
+        // Refresh page data so they see the green Done status
+        fetchClassData();
+
+        // Automatically hide success bar after 6 seconds
+        setTimeout(() => {
+          setUploadProgress(prev => {
+            const copy = { ...prev };
+            delete copy[assignmentTitle];
+            return copy;
+          });
+        }, 6000);
+
+      } catch (err: any) {
+        console.error("Background upload failed:", err);
+        setUploadProgress(prev => ({
+          ...prev,
+          [assignmentTitle]: { progress: 0, status: 'failed', error: err.message || 'Unknown network error.' }
+        }));
+      }
+    })();
   };
 
   const handleRemoveExistingFile = async (fileStringToRemove: string) => {
@@ -619,43 +667,91 @@ export default function StudentClassroom() {
               return (
                 <div 
                   key={item.id} 
-                  onClick={() => setSelectedItem(item)} 
-                  className="bg-white p-6 rounded-[2rem] border border-slate-100/80 flex justify-between items-center cursor-pointer hover:border-indigo-200 transition-all duration-300 hover:shadow-lg shadow-sm"
+                  onClick={() => {
+                    if (!uploadProgress[item.title] || uploadProgress[item.title].status !== 'uploading') {
+                      setSelectedItem(item);
+                    }
+                  }} 
+                  className="bg-white p-6 rounded-[2rem] border border-slate-100/80 hover:border-indigo-200 transition-all duration-300 hover:shadow-lg shadow-sm flex flex-col gap-4 cursor-pointer"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                      item.type === 'assignment' 
-                        ? (hasSub ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600') 
-                        : 'bg-indigo-50 text-indigo-600'
-                    }`}>
-                      {item.type === 'assignment' ? <FileText size={22} /> : <BookOpen size={22} />}
-                    </div>
-                    <div>
-                      <h3 className="font-black text-slate-800 text-base uppercase tracking-tight leading-tight">{item.title}</h3>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-                        <span className={`text-[9px] font-black uppercase tracking-widest ${
-                          item.type === 'assignment' ? 'text-amber-500' : 'text-indigo-500'
-                        }`}>
-                          {item.type}
-                        </span>
-                        <span className="text-slate-300 text-[9px] font-bold">•</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                          Uploaded: {formatUploadDate(item.created_at)}
-                        </span>
-                        {item.type === 'assignment' && (
-                          <>
-                            <span className="text-slate-300 text-[9px] font-bold">•</span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                              Due: {checkStatus(item).formattedDeadline}
-                            </span>
-                          </>
-                        )}
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                        item.type === 'assignment' 
+                          ? (hasSub ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600') 
+                          : 'bg-indigo-50 text-indigo-600'
+                      }`}>
+                        {item.type === 'assignment' ? <FileText size={22} /> : <BookOpen size={22} />}
+                      </div>
+                      <div>
+                        <h3 className="font-black text-slate-800 text-base uppercase tracking-tight leading-tight">{item.title}</h3>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${
+                            item.type === 'assignment' ? 'text-amber-500' : 'text-indigo-500'
+                          }`}>
+                            {item.type}
+                          </span>
+                          <span className="text-slate-300 text-[9px] font-bold">•</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                            Uploaded: {formatUploadDate(item.created_at)}
+                          </span>
+                          {item.type === 'assignment' && (
+                            <>
+                              <span className="text-slate-300 text-[9px] font-bold">•</span>
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                                Due: {checkStatus(item).formattedDeadline}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    {hasSub && (
+                      <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-emerald-100 shrink-0">
+                        <Check size={11} strokeWidth={4}/> Done
+                      </div>
+                    )}
                   </div>
-                  {hasSub && (
-                    <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-emerald-100 shrink-0">
-                      <Check size={11} strokeWidth={4}/> Done
+
+                  {uploadProgress[item.title] && (
+                    <div className="w-full border-t border-slate-100 dark:border-slate-850/60 pt-3.5 animate-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${
+                          uploadProgress[item.title].status === 'success' 
+                            ? 'text-emerald-600 dark:text-emerald-450' 
+                            : uploadProgress[item.title].status === 'failed'
+                              ? 'text-red-500 dark:text-red-450'
+                              : 'text-indigo-650 dark:text-indigo-400'
+                        }`}>
+                          {uploadProgress[item.title].status === 'success' && '✅ Submission Uploaded Successfully!'}
+                          {uploadProgress[item.title].status === 'failed' && `❌ Upload Failed: ${uploadProgress[item.title].error}`}
+                          {uploadProgress[item.title].status === 'uploading' && `⚡ Background Uploading (${uploadProgress[item.title].progress}%)`}
+                        </span>
+                        {uploadProgress[item.title].status !== 'uploading' && (
+                          <button 
+                            onClick={() => setUploadProgress(prev => {
+                              const copy = { ...prev };
+                              delete copy[item.title];
+                              return copy;
+                            })}
+                            className="text-[8px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-650 px-2 py-1 bg-slate-50 border border-slate-150 rounded-lg cursor-pointer"
+                          >
+                            Dismiss
+                          </button>
+                        )}
+                      </div>
+                      <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-300 ${
+                            uploadProgress[item.title].status === 'success' 
+                              ? 'bg-emerald-500' 
+                              : uploadProgress[item.title].status === 'failed'
+                                ? 'bg-red-500'
+                                : 'bg-indigo-650 animate-pulse'
+                          }`}
+                          style={{ width: `${uploadProgress[item.title].progress}%` }}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

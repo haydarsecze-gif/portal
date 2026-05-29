@@ -10,6 +10,7 @@ interface ContentModalProps {
   onClose: () => void
   onRefresh: () => void
   initialData?: any
+  onStartUpload?: (formData: any, files: File[], type: 'assignment' | 'material') => void
 }
 
 const getSafeISODateStr = (dateStr?: string) => {
@@ -31,7 +32,8 @@ export default function ContentModal({
   subjectName,
   onClose,
   onRefresh,
-  initialData
+  initialData,
+  onStartUpload
 }: ContentModalProps) {
 
   const [type, setType] = useState<'assignment' | 'material'>(
@@ -53,6 +55,11 @@ export default function ContentModal({
   const handleSave = async () => {
     if (!formData.title.trim()) return setError('Title is required!')
     if (!initialData && files.length === 0) return setError('Please attach at least one file.')
+
+    if (onStartUpload) {
+      onStartUpload(formData, files, type)
+      return
+    }
 
     setLoading(true)
     setError(null)
