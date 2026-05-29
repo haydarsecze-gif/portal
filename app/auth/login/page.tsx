@@ -82,28 +82,59 @@ export default function Login() {
     setMessage('')
     
     try {
-      let decPassword = ''
+      let loggedIn = false
+      let loginError = null
+
+      // 1. Try password login if password exists
       if (acc.password) {
+        let decPassword = ''
         try {
           decPassword = atob(acc.password)
         } catch (e) {
           decPassword = acc.password
         }
+
+        if (decPassword && decPassword !== 'undefined') {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: acc.email,
+            password: decPassword
+          })
+          if (!error && data.user && data.session) {
+            loggedIn = true
+          } else {
+            loginError = error
+          }
+        }
       }
 
-      // Log in with password which never expires and bypasses refresh token rotation!
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: acc.email,
-        password: decPassword
-      })
-      
-      if (error) throw error
+      // 2. Fallback to setSession if not logged in yet (supports old token-only cache)
+      if (!loggedIn && acc.access_token) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: acc.access_token,
+            refresh_token: acc.refresh_token
+          })
+          if (!error && data.user && data.session) {
+            loggedIn = true
+          } else {
+            if (!loginError) loginError = error
+          }
+        } catch (e) {
+          console.warn('setSession fallback failed:', e)
+        }
+      }
 
-      if (data.user && data.session) {
+      if (!loggedIn) {
+        throw loginError || new Error('No valid session credentials found.')
+      }
+
+      // Successful login
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, full_name')
-          .eq('id', data.user.id)
+          .eq('id', user.id)
           .single()
 
         // Keep metadata updated

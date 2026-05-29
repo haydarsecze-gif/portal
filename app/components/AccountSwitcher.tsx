@@ -68,30 +68,59 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     try {
       await supabase.auth.signOut()
       
-      // Decrypt/de-obfuscate password from localStorage
-      let decPassword = ''
+      let loggedIn = false
+      let loginError = null
+
+      // 1. Try password login if password exists
       if (targetAccount.password) {
+        let decPassword = ''
         try {
           decPassword = atob(targetAccount.password)
         } catch (e) {
-          decPassword = targetAccount.password // fallback if stored plain in old cache
+          decPassword = targetAccount.password
+        }
+
+        if (decPassword && decPassword !== 'undefined') {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: targetAccount.email,
+            password: decPassword
+          })
+          if (!error && data.user && data.session) {
+            loggedIn = true
+          } else {
+            loginError = error
+          }
         }
       }
 
-      // Log in with password which never expires and bypasses refresh token rotation!
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: targetAccount.email,
-        password: decPassword
-      })
+      // 2. Fallback to setSession if not logged in yet (supports old token-only cache)
+      if (!loggedIn && targetAccount.access_token) {
+        try {
+          const { data, error } = await supabase.auth.setSession({
+            access_token: targetAccount.access_token,
+            refresh_token: targetAccount.refresh_token
+          })
+          if (!error && data.user && data.session) {
+            loggedIn = true
+          } else {
+            if (!loginError) loginError = error
+          }
+        } catch (e) {
+          console.warn('setSession fallback failed:', e)
+        }
+      }
 
-      if (error) throw error
+      if (!loggedIn) {
+        throw loginError || new Error('No valid session credentials found.')
+      }
 
-      if (data.user && data.session) {
-        // Refresh page and route accordingly
+      // Successful login
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, full_name')
-          .eq('id', data.user.id)
+          .eq('id', user.id)
           .single()
 
         const role = profile?.role || targetAccount.role
@@ -114,7 +143,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         window.location.href = targetUrl
       }
     } catch (err: any) {
-      alert('Authentication failed: ' + (err.message || 'Please log in manually.'))
+      alert('Session expired. Please log in manually to re-establish this account.')
       window.location.href = '/auth/login'
     } finally {
       setIsSwitching(false)
