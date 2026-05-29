@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Loader2, Mail, Lock, LogIn, ArrowLeft, RefreshCw } from 'lucide-react'
@@ -10,7 +10,17 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [savedAccounts, setSavedAccounts] = useState<any[]>([])
   const router = useRouter()
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      setSavedAccounts(saved)
+    } catch (e) {
+      console.error(e)
+    }
+  }, [])
 
   const handleLogin = async () => {
     setLoading(true)
@@ -27,9 +37,72 @@ export default function Login() {
     if (data.user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, full_name')
         .eq('id', data.user.id)
         .single()
+
+      // Save credentials for switching
+      try {
+        const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+        const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
+        const newAcc = {
+          email: email.toLowerCase(),
+          password,
+          role: profile?.role || 'student',
+          name: profile?.full_name || email
+        }
+        if (index > -1) {
+          saved[index] = newAcc
+        } else {
+          saved.push(newAcc)
+        }
+        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+      } catch (e) {
+        console.error('Error saving account to switcher:', e)
+      }
+
+      if (profile?.role === 'admin') {
+        router.push('/admin/students')
+      } else if (profile?.role === 'teacher') {
+        router.push('/dashboard/lecturer')
+      } else {
+        router.push('/dashboard/student')
+      }
+    }
+  }
+
+  const handleQuickLogin = async (acc: any) => {
+    setLoading(true)
+    setMessage('')
+    setEmail(acc.email)
+    setPassword(acc.password)
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: acc.email,
+      password: acc.password
+    })
+    
+    if (error) {
+      setMessage('❌ ' + error.message)
+      setLoading(false)
+      return
+    }
+
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', data.user.id)
+        .single()
+
+      // Keep metadata updated
+      const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      const idx = saved.findIndex((a: any) => a.email.toLowerCase() === acc.email.toLowerCase())
+      if (idx > -1) {
+        saved[idx].name = profile?.full_name || acc.email
+        saved[idx].role = profile?.role || acc.role
+        localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+      }
 
       if (profile?.role === 'admin') {
         router.push('/admin/students')
@@ -142,6 +215,41 @@ export default function Login() {
             Forgot Password?
           </a>
         </div>
+
+        {savedAccounts.length > 0 && (
+          <div className="mt-8 pt-8 border-t border-slate-900/60">
+            <p className="text-center text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4">
+              Saved Accounts
+            </p>
+            <div className="grid gap-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+              {savedAccounts.map((acc, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleQuickLogin(acc)}
+                  className="w-full flex items-center justify-between p-3 bg-slate-900/20 hover:bg-slate-900/50 border border-slate-900 hover:border-indigo-500/20 text-left rounded-2xl cursor-pointer active:scale-98 transition-all duration-300 group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-black uppercase rounded-xl flex items-center justify-center group-hover:border-indigo-500/10 transition-colors">
+                      {acc.name ? acc.name.substring(0, 2).toUpperCase() : acc.email.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black text-slate-200 uppercase truncate leading-none">
+                        {acc.name}
+                      </p>
+                      <p className="text-[8px] font-bold text-slate-500 truncate mt-1.5 leading-none">
+                        {acc.email} • {acc.role === 'admin' ? 'Admin' : acc.role === 'teacher' ? 'Lecturer' : 'Student'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-[7.5px] font-black uppercase tracking-widest text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
+                    Switch →
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </form>
     </div>
   )

@@ -5,6 +5,7 @@ import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
+import AccountSwitcher from '@/app/components/AccountSwitcher'
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -111,6 +112,7 @@ export default function StudentDashboard() {
           </div>
 
           <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end">
+            <AccountSwitcher />
             <NotificationBell />
             <ThemeToggle />
             <button 

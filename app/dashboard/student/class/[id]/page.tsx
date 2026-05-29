@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
+import AccountSwitcher from '@/app/components/AccountSwitcher'
 
 const STATUS_LABELS: Record<string, string> = {
   'P': 'Present', 'L': 'Late', 'X': 'Absent', 'M': 'Medical (MC)', 'V': 'Valid Reason', 'H': 'Holiday / Break', 'N': 'Not Applicable', '--': 'Unmarked'
@@ -524,6 +525,7 @@ export default function StudentClassroom() {
             </button>
 
             <div className="flex items-center gap-2">
+              <AccountSwitcher />
               <NotificationBell />
               <ThemeToggle />
               <button 

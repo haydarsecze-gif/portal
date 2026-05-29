@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
+import AccountSwitcher from '@/app/components/AccountSwitcher'
 
 // Helper function to format time (e.g., 08:00 -> 8:00 AM)
 const formatTime = (time: string) => {
@@ -87,6 +88,7 @@ export default function LecturerDashboard() {
           </div>
 
           <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end">
+            <AccountSwitcher />
             <NotificationBell />
             <ThemeToggle />
             <button 

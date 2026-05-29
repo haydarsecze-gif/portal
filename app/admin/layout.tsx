@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
+import AccountSwitcher from '@/app/components/AccountSwitcher'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -38,6 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </span>
         </div>
         <div className="flex items-center gap-3">
+          <AccountSwitcher />
           <NotificationBell />
           <ThemeToggle />
           <button 
@@ -156,6 +158,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest items-center">
             <span>Theme & Refresh</span>
             <div className="flex items-center gap-2">
+              <AccountSwitcher />
               <NotificationBell />
               <ThemeToggle />
               <button 
