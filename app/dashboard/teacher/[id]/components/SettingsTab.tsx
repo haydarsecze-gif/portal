@@ -141,45 +141,35 @@ export default function SettingsTab({ subject, onRefresh }: any) {
     setSuccess(false)
 
     try {
-      // 1. Construct lecturer names array containing serialized contact details
-      const lecturerNamesArray = [
-        lecturerName.trim(),
-        `email:${lecturerEmail.trim()}`,
-        `phone:${lecturerPhone.trim()}`
-      ].filter(Boolean)
+      // Get the authenticated session token from Supabase Client
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error("Unauthorized: No active session located.")
 
-      // 2. Update classes table first (so that database sync triggers run first)
-      const { error: classErr } = await supabase
-        .from('classes')
-        .update({
-          name: subjectName,
-          subject_name: subjectName,
+      // Call the server-side API endpoint to perform the updates securely bypassing client RLS
+      const response = await fetch('/api/subjects/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          subjectId: subject.id,
+          subjectName,
           semester: parseInt(semester),
-          class_date: startDate || null,
-          start_time: startTime || null,
-          end_time: endTime || null,
-          lecture_name: lecturerName.trim(),
-          room: room
+          startDate: startDate || null,
+          startTime: startTime || null,
+          endTime: endTime || null,
+          room,
+          lecturerName,
+          lecturerEmail: lecturerEmail || '',
+          lecturerPhone: lecturerPhone || ''
         })
-        .eq('id', subject.id)
+      })
 
-      if (classErr) throw classErr
-
-      // 3. Update subjects table second (preserving our rich lecturer_names details)
-      const { error: subjectErr } = await supabase
-        .from('subjects')
-        .update({
-          name: subjectName,
-          semester: parseInt(semester),
-          start_date: startDate || null,
-          class_start_time: startTime || null,
-          class_end_time: endTime || null,
-          lecturer_names: lecturerNamesArray,
-          room: room
-        })
-        .eq('id', subject.id)
-
-      if (subjectErr) throw subjectErr
+      const resData = await response.json()
+      if (!response.ok) {
+        throw new Error(resData.error || "Failed to write classroom settings to database.")
+      }
 
       setSuccess(true)
       if (onRefresh) await onRefresh()
@@ -356,11 +346,10 @@ export default function SettingsTab({ subject, onRefresh }: any) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Mail size={14} className="text-pink-500" /> Lecturer Email
+                  <Mail size={14} className="text-pink-500" /> Lecturer Email (Optional)
                 </label>
                 <input
                   type="email"
-                  required
                   value={lecturerEmail}
                   onChange={e => setLecturerEmail(e.target.value)}
                   className="w-full p-4 bg-slate-50 border border-slate-100/50 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all text-slate-800"
@@ -370,11 +359,10 @@ export default function SettingsTab({ subject, onRefresh }: any) {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Phone size={14} className="text-teal-500" /> Lecturer Phone
+                  <Phone size={14} className="text-teal-500" /> Lecturer Phone (Optional)
                 </label>
                 <input
                   type="tel"
-                  required
                   value={lecturerPhone}
                   onChange={e => setLecturerPhone(e.target.value)}
                   className="w-full p-4 bg-slate-50 border border-slate-100/50 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all text-slate-800"
