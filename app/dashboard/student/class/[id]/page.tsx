@@ -323,8 +323,12 @@ export default function StudentClassroom() {
       }
 
       await supabase.from('submissions').upsert({
-        class_id: subjectTrueUUID, student_id: user?.id, assignment_name: selectedItem.title,
-        file_urls: finalLinks, submitted_at: new Date().toISOString(),
+        id: existingSubmission?.id, // Fix: Include primary key ID to update the existing row rather than inserting duplicate records
+        class_id: subjectTrueUUID,
+        student_id: user?.id,
+        assignment_name: selectedItem.title,
+        file_urls: finalLinks,
+        submitted_at: new Date().toISOString(),
       });
 
       setShowSuccess(true);
@@ -343,9 +347,9 @@ export default function StudentClassroom() {
     const updatedUrls = activeSub.file_urls.filter((url: string) => url !== fileStringToRemove);
 
     if (updatedUrls.length === 0) {
-      await supabase.from('submissions').delete().eq('assignment_name', selectedItem.title).eq('student_id', user?.id);
+      await supabase.from('submissions').delete().eq('id', activeSub.id); // Fix: Delete precisely by primary key ID
     } else {
-      await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('assignment_name', selectedItem.title).eq('student_id', user?.id);
+      await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', activeSub.id); // Fix: Update precisely by primary key ID
     }
     fetchClassData();
   };
