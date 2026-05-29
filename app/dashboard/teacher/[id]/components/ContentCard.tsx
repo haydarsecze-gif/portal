@@ -32,19 +32,25 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
     const table = isAssignment ? 'assignments' : 'materials'
     
     try {
-      // 1. IF REQUESTED, DELETE FROM GOOGLE DRIVE VIA EDGE FUNCTION
+      // 1. IF REQUESTED, DELETE FROM GOOGLE DRIVE DIRECTLY
       if (deleteFromDrive && item.folder_id) {
-        const { data, error: driveError } = await supabase.functions.invoke('upload-to-drive', { 
-          body: { 
-            action: 'delete', 
-            folderId: item.folder_id 
-          } 
+        const tokenRes = await fetch('/api/drive/token')
+        const tokenData = await tokenRes.json()
+        if (!tokenRes.ok || tokenData.error) {
+          throw new Error(tokenData.error || 'Failed to retrieve Google Drive delete session.')
+        }
+        const { accessToken } = tokenData
+
+        const delRes = await fetch(`https://www.googleapis.com/drive/v3/files/${item.folder_id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
         })
         
-        if (driveError) {
-          console.error("Drive Deletion Failed:", driveError)
-          // We throw error here because user specifically asked to delete Drive
-          throw new Error("Could not delete from Google Drive. DB record preserved.")
+        if (!delRes.ok && delRes.status !== 404) { // 404 means already deleted, ignore it
+          const errText = await delRes.text()
+          throw new Error(`Could not delete from Google Drive: ${errText}. DB record preserved.`)
         }
       }
 

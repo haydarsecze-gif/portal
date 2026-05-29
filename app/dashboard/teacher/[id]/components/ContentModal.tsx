@@ -47,35 +47,99 @@ export default function ContentModal({
 
     try {
       const links: string[] = []
-      let capturedFolderId: string | null = null
+      let capturedFolderId = initialData?.folder_id || null
 
-      // UPLOAD ALL FILES
-      for (const f of files) {
-        const reader = new FileReader()
-        const base64: string = await new Promise((resolve) => {
-          reader.onload = () => resolve(reader.result as string)
-          reader.readAsDataURL(f)
-        })
+      if (files.length > 0) {
+        // 1. Fetch OAuth2 access token and root folder ID
+        const tokenRes = await fetch('/api/drive/token')
+        const tokenData = await tokenRes.json()
+        if (!tokenRes.ok || tokenData.error) {
+          throw new Error(tokenData.error || 'Failed to retrieve Google Drive upload session.')
+        }
+        const { accessToken, parentFolderId } = tokenData
 
-        const { data, error: uploadError } = await supabase.functions.invoke('upload-to-drive', {
-          body: {
-            file: base64,
-            fileName: f.name,
-            mimeType: f.type,
-            subjectName: subjectName.trim(),
-            assignmentName: formData.title.trim(),
-            itemType: type
+        // 2. Create assignment folder if it doesn't exist yet
+        if (!capturedFolderId) {
+          const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: formData.title.trim(), // EXACT name, keeping casing & spaces (e.g. "Task 1")
+              mimeType: 'application/vnd.google-apps.folder',
+              parents: [parentFolderId]
+            })
+          })
+
+          if (!folderRes.ok) {
+            const errText = await folderRes.text()
+            throw new Error(`Failed to create assignment folder in Google Drive: ${errText}`)
           }
-        })
 
-        if (uploadError) throw uploadError
+          const folderData = await folderRes.json()
+          capturedFolderId = folderData.id
+        }
 
-        links.push(data.link)
+        // 3. Upload attached files
+        for (const f of files) {
+          const metadata = {
+            name: f.name,
+            parents: [capturedFolderId]
+          }
 
-        // IMPORTANT: Capture the folderId from the first file
-        // All files in this loop go into the same folder
-        if (!capturedFolderId && data.folderId) {
-          capturedFolderId = data.folderId
+          const formDataPayload = new FormData()
+          formDataPayload.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
+          formDataPayload.append('file', f)
+
+          const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: formDataPayload
+          })
+
+          if (!uploadRes.ok) {
+            const errText = await uploadRes.text()
+            throw new Error(`File upload failed for "${f.name}": ${errText}`)
+          }
+
+          const uploadData = await uploadRes.json()
+          const fileId = uploadData.id
+
+          // Set anyone reader permission
+          const permRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              role: 'reader',
+              type: 'anyone'
+            })
+          })
+
+          if (!permRes.ok) {
+            console.error("Direct permission set failed for file", fileId)
+          }
+
+          // Fetch webViewLink
+          const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          })
+
+          if (!metaRes.ok) {
+            throw new Error("Failed to retrieve file web link from Google Drive.")
+          }
+
+          const metaData = await metaRes.json()
+          links.push(metaData.webViewLink)
         }
       }
 
