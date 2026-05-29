@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, User, KeyRound, ArrowLeft, UserCheck } from 'lucide-react'
+import { Loader2, Mail, Lock, User, KeyRound, ArrowLeft, UserCheck, RefreshCw } from 'lucide-react'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Register() {
   const [role, setRole] = useState<'student' | 'teacher'>('student')
@@ -101,6 +102,18 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-gradient-to-tr from-[#05070e] via-[#0b0e1e] to-[#040508] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
       
+      {/* Theme and Refresh Controls */}
+      <div className="absolute top-6 right-6 flex items-center gap-2 z-50">
+        <ThemeToggle />
+        <button 
+          onClick={() => window.location.reload()}
+          className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
+          title="Refresh Page"
+        >
+          <RefreshCw size={20} />
+        </button>
+      </div>
+
       {/* Background glow blobs */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />

@@ -3,7 +3,7 @@ import React from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, UserCheck, Users, BookOpen, LogOut } from 'lucide-react'
+import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -39,8 +39,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <button 
+            onClick={() => window.location.reload()}
+            className="p-3 bg-white/85 dark:bg-slate-900/85 border border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
+            title="Refresh Page"
+          >
+            <RefreshCw size={20} />
+          </button>
+          <button 
             onClick={handleAdminLogout}
-            className="text-slate-400 hover:text-red-400 transition-colors p-2 outline-none cursor-pointer"
+            className="text-slate-400 hover:text-red-400 transition-colors p-2 outline-none cursor-pointer flex items-center justify-center"
             title="Exit Admin"
           >
             <LogOut size={18} />
@@ -144,9 +151,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* LOGOUT BUTTON */}
         <div className="mt-auto p-8 border-t border-slate-800 space-y-4">
-          <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest">
-            <span>Theme Toggle</span>
-            <ThemeToggle />
+          <div className="flex items-center justify-between text-slate-400 font-black text-[10px] uppercase tracking-widest items-center">
+            <span>Theme & Refresh</span>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button 
+                onClick={() => window.location.reload()}
+                className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
+                title="Refresh Page"
+              >
+                <RefreshCw size={20} />
+              </button>
+            </div>
           </div>
           <button 
             onClick={handleAdminLogout}

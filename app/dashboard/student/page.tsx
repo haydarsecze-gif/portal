@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles } from 'lucide-react'
+import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
@@ -9,67 +9,72 @@ export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [myClasses, setMyClasses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isSyncing, setIsSyncing] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    async function loadDashboard() {
-      setLoading(true)
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return router.push('/auth/login')
+  const loadDashboard = useCallback(async (showFullLoader = false) => {
+    if (showFullLoader) setLoading(true)
+    else setIsSyncing(true)
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return router.push('/auth/login')
 
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('*')
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      setProfile(prof)
+
+      if (prof && prof.role === 'student') {
+        const { data: existingStudent } = await supabase
+          .from('students')
+          .select('id')
           .eq('id', user.id)
-          .single()
-        setProfile(prof)
+          .maybeSingle()
 
-        if (prof && prof.role === 'student') {
-          const { data: existingStudent } = await supabase
-            .from('students')
-            .select('id')
-            .eq('id', user.id)
-            .maybeSingle()
-
-          if (!existingStudent) {
-            await supabase.from('students').insert({
-              id: user.id,
-              name: prof.full_name,
-              email: user.email,
-              class_id: prof.class_id
-            })
-          }
+        if (!existingStudent) {
+          await supabase.from('students').insert({
+            id: user.id,
+            name: prof.full_name,
+            email: user.email,
+            class_id: prof.class_id
+          })
         }
-
-        const { data: enrollments, error } = await supabase
-          .from('student_classes')
-          .select(`
-            subject_id,
-            subjects (
-              id,
-              name,
-              room,
-              lecturer_names
-            )
-          `)
-          .eq('student_id', user.id)
-
-        if (error) throw error
-
-        const classes = (enrollments || [])
-          .map((e: any) => e.subjects)
-          .filter(Boolean)
-          
-        setMyClasses(classes)
-      } catch (err) {
-        console.error("Dashboard Load Error:", err)
-      } finally {
-        setLoading(false)
       }
+
+      const { data: enrollments, error } = await supabase
+        .from('student_classes')
+        .select(`
+          subject_id,
+          subjects (
+            id,
+            name,
+            room,
+            lecturer_names
+          )
+        `)
+        .eq('student_id', user.id)
+
+      if (error) throw error
+
+      const classes = (enrollments || [])
+        .map((e: any) => e.subjects)
+        .filter(Boolean)
+        
+      setMyClasses(classes)
+    } catch (err) {
+      console.error("Dashboard Load Error:", err)
+    } finally {
+      setLoading(false)
+      setIsSyncing(false)
     }
-    loadDashboard()
   }, [router])
+
+  useEffect(() => {
+    loadDashboard(true)
+  }, [loadDashboard])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -106,6 +111,13 @@ export default function StudentDashboard() {
 
           <div className="relative z-10 flex items-center gap-3 w-full md:w-auto justify-end">
             <ThemeToggle />
+            <button 
+              onClick={() => loadDashboard(false)} 
+              disabled={isSyncing}
+              className="p-3.5 bg-white/5 border border-white/10 hover:border-white/20 text-slate-350 hover:text-indigo-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+            >
+              <RefreshCw size={14} className={isSyncing ? "animate-spin text-indigo-400" : ""} />
+            </button>
             <button 
               onClick={handleLogout} 
               className="flex items-center gap-2 px-5 py-3.5 bg-white/5 border border-white/10 hover:border-red-500/30 hover:bg-red-500/10 text-slate-300 hover:text-red-400 rounded-2xl shadow-lg active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
