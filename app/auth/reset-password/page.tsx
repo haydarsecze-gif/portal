@@ -14,16 +14,20 @@ export default function ResetPassword() {
   const router = useRouter()
 
   useEffect(() => {
-    // 1. Initial check for existing active recovery session
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        setIsRecoveryFlow(true)
-      }
-    })
+    // 1. Verify if we came from a recovery link (via URL search query or hash fragment)
+    const hasParams = typeof window !== 'undefined' && (
+      window.location.search.includes('code=') ||
+      window.location.hash.includes('type=recovery') ||
+      window.location.hash.includes('access_token=')
+    )
 
-    // 2. Listen to recovery state changes in case of PKCE redirection timing
+    if (hasParams) {
+      setIsRecoveryFlow(true)
+    }
+
+    // 2. Listen specifically to the PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || session) {
+      if (event === 'PASSWORD_RECOVERY') {
         setIsRecoveryFlow(true)
       }
     })
