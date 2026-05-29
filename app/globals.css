@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
+/* Custom premium variable definitions based on the Light vs Dark premium design graphic */
 :root {
-  --background: #ffffff;
-  --foreground: #090d16;
+  --background: #F3F4F6;
+  --foreground: #0F172A;
   
-  --bg-portal: #ffffff;      /* All white light mode background */
-  --bg-card: #ffffff;        /* White cards */
-  --border-card: #f3f0ff;    /* Light purple/lavender borders */
-  --text-title: #0f0720;     /* Deep dark purple-toned titles */
-  --text-desc: #5b4f77;      /* Muted purple-toned descriptions */
+  --bg-portal: #F3F4F6;      /* Clean light gray background */
+  --bg-card: #FFFFFF;        /* Pure white cards */
+  --bg-subtle: #F9FAFB;      /* Light gray sections/table headers */
+  --border-card: #E5E7EB;    /* Light clean border */
+  --text-title: #0F172A;     /* Deep charcoal title */
+  --text-desc: #374151;      /* Slate-700 gray description */
+  --text-muted: #6B7280;     /* Muted gray subtext */
   
   /* Futuristic Purple Accent Colors */
   --purple-accent: #8b5cf6;       /* Violet 600 */
@@ -17,21 +20,23 @@
   --purple-border: #ddd6fe;       /* Violet 200 */
 }
 
-/* Futuristic Dark Mode (Black/Dark Blue with Purple accents) */
+/* Premium Futuristic Dark Theme (Charcoal / Dark Blue-Gray with Glowing Purple accents) */
 .dark {
-  --background: #03050a;
-  --foreground: #f5f3ff;
+  --background: #0D0E12;
+  --foreground: #F9FAFB;
   
-  --bg-portal: #03050a;      /* Futuristic deep black background */
-  --bg-card: #080b15;        /* Futuristic dark blue-black card */
-  --border-card: #2e2454;    /* Glowing dark purple card borders */
-  --text-title: #f5f3ff;     /* High contrast off-white/violet text */
-  --text-desc: #a78bfa;      /* Vibrant purple-toned descriptions for perfect visibility */
+  --bg-portal: #0D0E12;      /* Futuristic rich dark charcoal background */
+  --bg-card: #181920;        /* Sleek charcoal card background */
+  --bg-subtle: #20222B;      /* Slightly lighter charcoal for tables/inputs */
+  --border-card: #2A2C38;    /* Clean dark slate border outline */
+  --text-title: #FFFFFF;     /* Bright high-contrast white headers */
+  --text-desc: #E2E8F0;      /* Near-white silver for extremely easy reading */
+  --text-muted: #94A3B8;     /* Slate-400 for subtext and labels */
   
-  --purple-accent: #a78bfa;       /* Violet 400 (brighter in dark mode) */
+  --purple-accent: #a78bfa;       /* Violet 400 */
   --purple-accent-hover: #c084fc; /* Purple 400 */
-  --purple-light: #120e24;        /* Deep purple tint */
-  --purple-border: #5c3b9e;       /* Strong glowing purple border */
+  --purple-light: #201738;        /* Subtle deep purple background tint */
+  --purple-border: #4c1d95;       /* Futuristic dark purple border */
 }
 
 @theme inline {
@@ -43,6 +48,7 @@
   --color-border-card: var(--border-card);
   --color-text-title: var(--text-title);
   --color-text-desc: var(--text-desc);
+  --color-text-muted: var(--text-muted);
   
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -71,123 +77,10 @@ body {
 }
 
 /* ==========================================================================
-   GLOBAL FUTURISTIC PURPLE & ACCENT OVERRIDES
+   GLOBAL UTILITY CLASS MAPPINGS FOR PRECISE DARK MODE THEME SYSTEM
    ========================================================================== */
 
-/* 1. Accent color text overrides (forces all blue/indigo to premium purple/violet) */
-.text-indigo-600, .text-indigo-500, .text-blue-600, .text-indigo-400 {
-  color: var(--purple-accent) !important;
-}
-.dark .text-indigo-400, .dark .text-indigo-300 {
-  color: #c084fc !important; /* Brighter purple in dark mode */
-}
-
-/* 2. Accent background overrides (buttons, tags, badges) */
-.bg-indigo-600, .bg-blue-600, .bg-indigo-500,
-.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover, .hover\:from-indigo-500:hover {
-  background: var(--purple-accent) !important;
-}
-.bg-gradient-to-r.from-indigo-600.to-blue-600 {
-  background: linear-gradient(135deg, var(--purple-accent) 0%, #a855f7 100%) !important;
-}
-.hover\:from-indigo-500\:hover {
-  background: var(--purple-accent-hover) !important;
-}
-
-/* 3. Light purple badges and subtle backgrounds */
-.bg-indigo-50, .bg-blue-50, .bg-purple-50 {
-  background-color: var(--purple-light) !important;
-  color: var(--purple-accent) !important;
-}
-.bg-slate-50, .bg-gray-50, .bg-slate-50\/20, .bg-slate-50\/50 {
-  background-color: var(--purple-light) !important;
-}
-.dark .bg-slate-50, .dark .bg-gray-50, .dark .bg-slate-50\/20, .dark .bg-slate-50\/50 {
-  background-color: #120e24 !important; /* Deep dark purple-slate background for cards */
-}
-
-/* 4. Border overrides to match purple accents */
-.border-indigo-500, .border-blue-500, .border-indigo-200, .border-slate-200\/50, .border-indigo-100 {
-  border-color: var(--purple-border) !important;
-}
-.group-hover\:border-indigo-200:hover, .hover\:border-indigo-200:hover {
-  border-color: var(--purple-accent) !important;
-}
-
-/* ==========================================================================
-   DARK MODE CONTRAST & VISIBILITY OVERRIDES (CRITICAL FOR READABILITY)
-   ========================================================================= */
-
-/* Bulletproof Dark Mode Text Contrast (forces all text to be highly visible by default in dark mode) */
-.dark,
-.dark body,
-.dark div,
-.dark p,
-.dark span,
-.dark a,
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6,
-.dark td,
-.dark th,
-.dark label {
-  color: #e2daf8 !important;
-}
-
-/* Specific overrides to preserve white, purple, and muted titles/buttons */
-.dark h1,
-.dark h2,
-.dark h3,
-.dark .text-white,
-.dark .text-slate-100,
-.dark tr th,
-.dark .font-black {
-  color: #ffffff !important;
-}
-
-/* Purple text accents */
-.dark .text-indigo-600, 
-.dark .text-indigo-500, 
-.dark .text-blue-600, 
-.dark .text-indigo-400,
-.dark .text-indigo-300,
-.dark .text-purple-600 {
-  color: #c084fc !important;
-}
-
-/* Muted secondary descriptions (lavender-silver for readability) */
-.dark .text-slate-400,
-.dark .text-slate-450,
-.dark .text-slate-500,
-.dark .text-gray-400,
-.dark .text-slate-600,
-.dark .text-slate-700,
-.dark .text-slate-500\/70,
-.dark p.text-slate-400,
-.dark p.text-slate-300 {
-  color: #a79fc4 !important;
-}
-
-/* White text for buttons/badges that are dark/purple backgrounds */
-.dark button,
-.dark button span,
-.dark .bg-indigo-600,
-.dark .bg-blue-600,
-.dark .bg-purple-600,
-.dark .bg-indigo-600 span,
-.dark .bg-indigo-600 svg,
-.dark .bg-blue-600 span,
-.dark .bg-blue-600 svg,
-.dark .bg-slate-900,
-.dark .bg-slate-900 span,
-.dark .bg-slate-900 svg {
-  color: #ffffff !important;
-}
-
-/* Fix hardcoded light backgrounds in portals */
+/* Fix hardcoded page backgrounds */
 .bg-\[\#F8FAFC\], .bg-\[\#f8fafc\] {
   background-color: var(--bg-portal) !important;
 }
@@ -195,7 +88,7 @@ body {
   background-color: var(--bg-portal) !important;
 }
 
-/* Fix card backgrounds */
+/* Fix hardcoded card backgrounds */
 .bg-white {
   background-color: var(--bg-card) !important;
 }
@@ -204,12 +97,149 @@ body {
   border-color: var(--border-card) !important;
 }
 
-/* Fix generic card borders */
-.border-slate-100, .border-slate-100\/50, .border-slate-100\/80, .border-gray-100, .border-gray-50 {
+/* Map light-gray backgrounds to dark-subtle in dark mode */
+.dark .bg-slate-50, 
+.dark .bg-gray-50, 
+.dark .bg-slate-100,
+.dark .bg-gray-100,
+.dark .bg-slate-200,
+.dark .bg-gray-200,
+.dark .bg-slate-50\/20, 
+.dark .bg-slate-50\/30,
+.dark .bg-slate-50\/40,
+.dark .bg-slate-50\/50, 
+.dark .bg-gray-50\/50 {
+  background-color: var(--bg-subtle) !important;
   border-color: var(--border-card) !important;
 }
 
-/* Checkboxes, icons, inputs */
+/* Hover state overrides for subtle containers / buttons */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-slate-200:hover,
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-gray-200:hover {
+  background-color: var(--border-card) !important;
+}
+
+/* Fix borders in dark mode */
+.dark .border-slate-50,
+.dark .border-slate-100, 
+.dark .border-slate-100\/50, 
+.dark .border-slate-100\/80, 
+.dark .border-slate-200,
+.dark .border-slate-200\/50,
+.dark .border-slate-300,
+.dark .border-gray-50,
+.dark .border-gray-100, 
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: var(--border-card) !important;
+}
+
+/* ==========================================================================
+   DARK MODE TEXT CONTRAST OVERRIDES (CRITICAL FOR READABILITY)
+   ========================================================================== */
+
+/* 1. Force titles to high-contrast white in dark mode */
+.dark .text-slate-805,
+.dark .text-slate-800, 
+.dark .text-slate-850,
+.dark .text-slate-900, 
+.dark .text-gray-900, 
+.dark .text-slate-950 {
+  color: var(--text-title) !important;
+}
+
+/* 2. Force body text and medium titles to light silver-white (highly readable) */
+.dark .text-slate-600, 
+.dark .text-slate-700,
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-slate-655,
+.dark .text-slate-650 {
+  color: var(--text-desc) !important;
+}
+
+/* 3. Force muted captions and labels to clean silver-gray */
+.dark .text-slate-400, 
+.dark .text-slate-450, 
+.dark .text-slate-500, 
+.dark .text-gray-400,
+.dark .text-gray-500 {
+  color: var(--text-muted) !important;
+}
+
+/* 4. Safe semantic overrides for elements without class-based overrides */
+/* Do NOT use !important here to protect colored/styled paragraph or heading classes */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: var(--text-title);
+}
+.dark p, .dark li, .dark span:not([class*="text-"]):not([class*="bg-"]):not([class*="border-"]) {
+  color: var(--text-desc);
+}
+.dark tr th {
+  color: #FFFFFF !important;
+}
+
+/* 5. Keep strong white headers and critical content bright white */
+.dark .text-white, 
+.dark .text-slate-100,
+.dark .font-black {
+  color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   GLOBAL ACCENT & EXQUISITE PURPLE THEME MAPPINGS
+   ========================================================================== */
+
+/* 1. Purple accent texts */
+.text-indigo-600, .text-indigo-500, .text-blue-600, .text-indigo-400, .text-purple-600 {
+  color: var(--purple-accent) !important;
+}
+.dark .text-indigo-600, .dark .text-indigo-500, .dark .text-blue-600, .dark .text-indigo-400, .dark .text-purple-600, .dark .text-indigo-300 {
+  color: #C084FC !important; /* Extremely high contrast glowing purple */
+}
+
+/* 2. Purple active background badges and primary CTA buttons */
+.bg-indigo-600, .bg-blue-600, .bg-indigo-500, .bg-purple-600,
+.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover, .hover\:from-indigo-500:hover,
+.bg-gradient-to-r.from-indigo-600.to-blue-600 {
+  background: var(--purple-accent) !important;
+  color: #FFFFFF !important;
+}
+.bg-gradient-to-r.from-indigo-600.to-blue-600 {
+  background: linear-gradient(135deg, var(--purple-accent) 0%, #A855F7 100%) !important;
+}
+
+/* Make sure button contents are white */
+.dark .bg-indigo-600 *, .dark .bg-blue-600 *, .dark .bg-purple-600 *, .dark .bg-indigo-500 * {
+  color: #FFFFFF !important;
+}
+
+/* 3. Subtly tinted purple/lavender backgrounds (badges and light panels) */
+.bg-indigo-50, .bg-blue-50, .bg-purple-50 {
+  background-color: var(--purple-light) !important;
+  color: var(--purple-accent) !important;
+}
+.dark .bg-indigo-50, .dark .bg-blue-50, .dark .bg-purple-50 {
+  background-color: #201738 !important;
+  color: #C084FC !important;
+}
+
+/* 4. Active outlines and focus rings */
+.border-indigo-500, .border-blue-500, .border-indigo-200, .border-indigo-100 {
+  border-color: var(--purple-border) !important;
+}
+.group-hover\:border-indigo-200:hover, .hover\:border-indigo-200:hover {
+  border-color: var(--purple-accent) !important;
+}
+
+/* ==========================================================================
+   INPUTS, FORMS, AND SCROLLBAR CONTRAST
+   ========================================================================== */
+
 .dark input[type="text"], 
 .dark input[type="email"], 
 .dark input[type="password"], 
@@ -218,24 +248,22 @@ body {
 .dark input[type="date"], 
 .dark select,
 .dark textarea {
-  background-color: #0c0817 !important;
-  border-color: #2e2354 !important;
-  color: #f5f3ff !important;
+  background-color: var(--bg-subtle) !important;
+  border-color: var(--border-card) !important;
+  color: #FFFFFF !important;
 }
 .dark input::placeholder {
-  color: #6d5b97 !important;
+  color: #6B7280 !important;
 }
 
-/* Table body rows */
 .dark tr:hover {
-  background-color: #120e24 !important;
+  background-color: rgba(255, 255, 255, 0.02) !important;
 }
 
 /* Dashboard glowing blobs inside dark mode */
 .dark .bg-indigo-500\/10 {
-  background-color: rgba(139, 92, 246, 0.15) !important;
+  background-color: rgba(167, 139, 250, 0.08) !important;
 }
 .dark .bg-emerald-500\/5 {
-  background-color: rgba(168, 85, 247, 0.08) !important;
+  background-color: rgba(192, 132, 252, 0.04) !important;
 }
-
