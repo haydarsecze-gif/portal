@@ -57,7 +57,10 @@ export default function Login() {
       </button>
 
       {/* Auth card */}
-      <div className="bg-slate-950/40 border border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.5)] shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300">
+      <form 
+        onSubmit={(e) => { e.preventDefault(); handleLogin(); }}
+        className="bg-slate-950/40 border border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.5)] shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
+      >
         
         <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-100 mb-1">
           Login
@@ -98,7 +101,7 @@ export default function Login() {
 
         {/* Action Button */}
         <button
-          onClick={handleLogin}
+          type="submit"
           disabled={loading}
           className="w-full relative group overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 disabled:from-slate-800 disabled:to-slate-800 text-white disabled:text-slate-500 py-4.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.25em] active:scale-98 transition-all duration-300 mt-8 shadow-xl shadow-indigo-950/20 hover:shadow-indigo-500/20 flex items-center justify-center gap-2 cursor-pointer"
         >
@@ -126,7 +129,7 @@ export default function Login() {
             Forgot Password?
           </a>
         </div>
-      </div>
+      </form>
     </div>
   )
 }
