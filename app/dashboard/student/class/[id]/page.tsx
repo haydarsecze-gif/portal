@@ -2,7 +2,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, FileText, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink } from 'lucide-react'
+import { ArrowLeft, FileText, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap } from 'lucide-react'
+import ThemeToggle from '@/app/components/ThemeToggle'
 
 const STATUS_LABELS: Record<string, string> = {
   'P': 'Present', 'L': 'Late', 'X': 'Absent', 'M': 'Medical (MC)', 'V': 'Valid Reason', 'H': 'Holiday / Break', 'N': 'Not Applicable', '--': 'Unmarked'
@@ -379,42 +380,66 @@ export default function StudentClassroom() {
     <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-8 md:p-10 font-sans select-none animate-in fade-in duration-300">
       <div className="w-full max-w-[1600px] mx-auto">
         
-        {/* Navigation / Header bar */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-10">
-          <button 
-            onClick={() => router.push('/dashboard/student')} 
-            className="flex items-center gap-2 text-slate-400 hover:text-slate-800 font-black text-[10px] uppercase tracking-widest transition duration-300"
-          >
-            <ArrowLeft size={14} /> Back to Dashboard
-          </button>
-          
-          <div className="bg-white p-1.5 rounded-2xl border border-slate-100 flex shadow-sm shrink-0">
+        {/* Header Section */}
+        <header className="mb-8 flex flex-col gap-4">
+          {/* Compact Top Bar */}
+          <div className="flex justify-between items-center w-full">
             <button 
-              onClick={() => setActiveTab('content')} 
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                activeTab === 'content' ? 'bg-slate-900 text-white shadow' : 'text-slate-400 hover:text-slate-700'
-              }`}
+              onClick={() => router.push('/dashboard/student')} 
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-black text-[9px] uppercase tracking-widest transition duration-300 cursor-pointer"
             >
-              Coursework
+              <ArrowLeft size={12} /> Back to Dashboard
             </button>
-            <button 
-              onClick={() => setActiveTab('attendance')} 
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                activeTab === 'attendance' ? 'bg-slate-900 text-white shadow' : 'text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              My Attendance
-            </button>
-            <button 
-              onClick={() => setActiveTab('info')} 
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer ${
-                activeTab === 'info' ? 'bg-slate-900 text-white shadow' : 'text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              Class Info
-            </button>
+
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button 
+                onClick={fetchClassData} 
+                disabled={loading}
+                className="p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin text-indigo-600" : ""} />
+              </button>
+            </div>
           </div>
-        </div>
+
+          {/* Subject Title and Badges */}
+          <div className="flex flex-col gap-2 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
+              <GraduationCap className="text-indigo-600 shrink-0" size={24} />
+              {subject?.name || 'Classroom'}
+            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                Room {subject?.room || 'N/A'}
+              </span>
+              <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                Sem {subject?.semester || 'N/A'}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Tab Navigation Pill Bar */}
+        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
+          {[
+            { id: 'content', label: 'Coursework' },
+            { id: 'attendance', label: 'My Attendance' },
+            { id: 'info', label: 'Class Info' }
+          ].map((tab) => (
+            <button 
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)} 
+              className={`shrink-0 flex-1 sm:flex-none py-3 px-4 sm:px-6 rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${
+                activeTab === tab.id 
+                  ? 'bg-slate-900 text-white shadow' 
+                  : 'text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
 
         {/* Tab 1: Coursework */}
         {activeTab === 'content' && (
