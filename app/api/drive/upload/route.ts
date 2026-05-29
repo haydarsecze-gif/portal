@@ -37,17 +37,7 @@ export async function POST(req: Request) {
 
     let studentFolderId = listResponse.data.files?.[0]?.id;
 
-    if (studentFolderId) {
-      const existingFiles = await drive.files.list({
-        q: `'${studentFolderId}' in parents and trashed = false`,
-        fields: 'files(id)',
-      });
-      if (existingFiles.data.files) {
-        for (const file of existingFiles.data.files) {
-          await drive.files.update({ fileId: file.id!, requestBody: { trashed: true } });
-        }
-      }
-    } else {
+    if (!studentFolderId) {
       const folderRes = await drive.files.create({
         requestBody: { name: studentName, mimeType: 'application/vnd.google-apps.folder', parents: [targetFolderId] },
         fields: 'id',
