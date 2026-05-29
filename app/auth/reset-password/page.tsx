@@ -42,6 +42,29 @@ export default function ResetPassword() {
     setMessage('')
 
     try {
+      // 1. Pre-validate if the email exists in the system
+      const checkRes = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() })
+      })
+
+      if (!checkRes.ok) {
+        throw new Error('Failed to verify email address')
+      }
+
+      const { exists, error: checkError } = await checkRes.json()
+      if (checkError) {
+        throw new Error(checkError)
+      }
+
+      if (!exists) {
+        setMessage("❌ This email address does not exist in our system!")
+        setLoading(false)
+        return
+      }
+
+      // 2. If it exists, trigger recovery link
       const origin = typeof window !== 'undefined' ? window.location.origin : ''
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${origin}/auth/reset-password`

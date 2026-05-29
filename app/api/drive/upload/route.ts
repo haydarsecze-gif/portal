@@ -9,12 +9,18 @@ export async function POST(req: Request) {
     const studentName = formData.get('studentName') as string;
     const targetFolderId = formData.get('targetFolderId') as string;
 
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
-    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+    let rawKey = process.env.GOOGLE_PRIVATE_KEY || '';
+    if (rawKey.startsWith("'") || rawKey.startsWith('"')) {
+      rawKey = rawKey.substring(1, rawKey.length - 1);
+    }
+    const privateKey = rawKey.replace(/\\n/g, '\n');
+
+    const auth = new google.auth.JWT({
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: privateKey,
+      scopes: ['https://www.googleapis.com/auth/drive'],
+    });
+    const drive = google.drive({ version: 'v3', auth });
 
     // 1. Find or Create Student Folder
     const listResponse = await drive.files.list({
