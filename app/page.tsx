@@ -12,9 +12,15 @@ export default function Home() {
 
   useEffect(() => {
     const checkUser = async () => {
+      // Safety timeout of 1.5 seconds to prevent launch hangs in slow/webview environments
+      const timer = setTimeout(() => {
+        setChecking(false)
+      }, 1500)
+
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) { 
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.user) { 
+          clearTimeout(timer)
           setProfile(null)
           setChecking(false)
           return
@@ -23,13 +29,14 @@ export default function Home() {
         const { data: prof } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('id', session.user.id)
           .single()
 
         setProfile(prof)
       } catch (e) { 
         setProfile(null) 
       } finally {
+        clearTimeout(timer)
         setChecking(false)
       }
     }
