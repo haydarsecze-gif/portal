@@ -123,8 +123,19 @@ export default function StudentDirectory() {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return 'N/A'
-    const d = new Date(dateStr)
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    try {
+      const safeDateStr = dateStr.includes(' ') && !dateStr.includes('T') 
+        ? dateStr.replace(' ', 'T') 
+        : dateStr
+      const d = new Date(safeDateStr)
+      if (isNaN(d.getTime())) {
+        return 'N/A'
+      }
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    } catch (e) {
+      console.error("formatDate error:", e)
+      return 'N/A'
+    }
   }
 
   const filtered = students.filter(s => 

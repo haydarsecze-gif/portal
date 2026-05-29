@@ -142,14 +142,25 @@ export default function NotificationBell() {
   }
 
   const formatTimeElapsed = (dateStr: string) => {
-    const elapsed = Date.now() - new Date(dateStr).getTime()
-    const minutes = Math.floor(elapsed / 60000)
-    if (minutes < 1) return 'Just now'
-    if (minutes < 60) return `${minutes}m ago`
-    const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `${hours}h ago`
-    const days = Math.floor(hours / 24)
-    return `${days}d ago`
+    if (!dateStr) return 'Just now'
+    try {
+      const safeDateStr = dateStr.includes(' ') && !dateStr.includes('T') 
+        ? dateStr.replace(' ', 'T') 
+        : dateStr
+      const parsedTime = new Date(safeDateStr).getTime()
+      if (isNaN(parsedTime)) return 'Just now'
+      const elapsed = Date.now() - parsedTime
+      const minutes = Math.floor(elapsed / 60000)
+      if (isNaN(minutes) || minutes < 1) return 'Just now'
+      if (minutes < 60) return `${minutes}m ago`
+      const hours = Math.floor(minutes / 60)
+      if (hours < 24) return `${hours}h ago`
+      const days = Math.floor(hours / 24)
+      return `${days}d ago`
+    } catch (e) {
+      console.error("formatTimeElapsed error:", e)
+      return 'Just now'
+    }
   }
 
   return (

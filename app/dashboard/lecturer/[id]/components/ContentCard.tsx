@@ -13,6 +13,20 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
     ? item.file_url.split(',').map((u: string) => u.trim()).filter(Boolean) 
     : [];
 
+  const formatDeadline = (deadline?: string) => {
+    if (!deadline) return 'No Deadline'
+    try {
+      const safeDeadline = deadline.includes(' ') && !deadline.includes('T') 
+        ? deadline.replace(' ', 'T') 
+        : deadline
+      const d = new Date(safeDeadline)
+      if (isNaN(d.getTime())) return 'No Deadline'
+      return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    } catch (e) {
+      return 'No Deadline'
+    }
+  }
+
   useEffect(() => {
     let timer: any;
     if (isDeleting) {
@@ -100,7 +114,7 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
                   <>
                     <span className="text-gray-300 text-[10px] font-bold">•</span>
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                      Due: {item.deadline ? new Date(item.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'No Deadline'}
+                      Due: {formatDeadline(item.deadline)}
                     </span>
                   </>
                 )}

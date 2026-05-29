@@ -16,6 +16,20 @@ const CAMPUS_LAT = 11.5692183;
 const CAMPUS_LNG = 104.9173108; 
 const ALLOWED_RADIUS_METERS = 200; 
 
+const parseSafeDate = (dateStr?: string) => {
+  if (!dateStr) return null
+  try {
+    const safeStr = dateStr.includes(' ') && !dateStr.includes('T')
+      ? dateStr.replace(' ', 'T')
+      : dateStr
+    const d = new Date(safeStr)
+    if (isNaN(d.getTime())) return null
+    return d
+  } catch (e) {
+    return null
+  }
+} 
+
 export default function StudentClassroom() {
   const params = useParams();
   const router = useRouter();
@@ -166,9 +180,13 @@ export default function StudentClassroom() {
       setStudentAttendance(attData.data || []);
       
       setContent([
-        ...(assignments.data || []).map(a => ({ ...a, type: 'assignment' })),
-        ...(materials.data || []).map(m => ({ ...m, type: 'material' }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+        ...(assignments.data || []).map((x: any) => ({ ...x, type: 'assignment' })),
+        ...(materials.data || []).map((x: any) => ({ ...x, type: 'material' }))
+      ].sort((a, b) => {
+        const timeB = parseSafeDate(b.created_at)?.getTime() || 0
+        const timeA = parseSafeDate(a.created_at)?.getTime() || 0
+        return timeB - timeA
+      }));
     } catch (err: any) {
       console.error("Sync Failure in classroom loader:", err.message);
     } finally {
@@ -491,9 +509,9 @@ export default function StudentClassroom() {
   const getSub = (title: string) => submissions.find(s => s.assignment_name === title);
   
   const checkStatus = (item: any) => {
-    const deadline = item.deadline ? new Date(item.deadline) : null;
+    const deadline = parseSafeDate(item.deadline);
     const sub = getSub(item.title);
-    const subDate = sub ? new Date(sub.submitted_at) : null;
+    const subDate = sub ? parseSafeDate(sub.submitted_at) : null;
     return {
       isPastDeadline: deadline ? new Date() > deadline : false,
       isLate: (subDate && deadline) ? subDate > deadline : false,
@@ -805,7 +823,7 @@ export default function StudentClassroom() {
                     <div>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Start Date</p>
                       <p className="text-sm font-black text-slate-800 mt-0.5">
-                        {subject?.start_date ? new Date(subject.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                        {subject?.start_date && parseSafeDate(subject.start_date) ? parseSafeDate(subject.start_date)!.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'N/A'}
                       </p>
                     </div>
                   </div>

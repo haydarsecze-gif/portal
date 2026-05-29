@@ -12,6 +12,20 @@ interface ContentModalProps {
   initialData?: any
 }
 
+const getSafeISODateStr = (dateStr?: string) => {
+  if (!dateStr) return new Date().toISOString().slice(0, 16)
+  try {
+    const safeStr = dateStr.includes(' ') && !dateStr.includes('T')
+      ? dateStr.replace(' ', 'T')
+      : dateStr
+    const d = new Date(safeStr)
+    if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 16)
+    return d.toISOString().slice(0, 16)
+  } catch (e) {
+    return new Date().toISOString().slice(0, 16)
+  }
+}
+
 export default function ContentModal({
   classId,
   subjectName,
@@ -32,9 +46,7 @@ export default function ContentModal({
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
-    deadline: initialData?.deadline
-      ? new Date(initialData.deadline).toISOString().slice(0, 16)
-      : new Date().toISOString().slice(0, 16),
+    deadline: getSafeISODateStr(initialData?.deadline),
     allowLate: initialData?.allow_late ?? true
   })
 
