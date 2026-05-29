@@ -314,7 +314,13 @@ export default function StudentClassroom() {
       formData.append('targetFolderId', selectedItem.folder_id);
 
       const res = await fetch('/api/drive/upload', { method: 'POST', body: formData });
-      const data = await res.json();
+      const responseText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonErr) {
+        throw new Error(`Server returned an invalid response (Status ${res.status}): ${responseText.substring(0, 150)}`);
+      }
       if (data.error) throw new Error(data.error);
 
       const existingSubmission = getSub(selectedItem.title);

@@ -2,6 +2,8 @@ import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 import { Readable } from 'stream';
 
+export const maxDuration = 60; // Allow up to 60 seconds for file uploads to Google Drive to complete safely
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();

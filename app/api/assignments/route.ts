@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { Readable } from 'stream';
 import { createClient } from '@supabase/supabase-js';
 
+export const maxDuration = 60; // Allow up to 60 seconds for Google Drive attachments during edits to complete safely
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY! // Required for server-side updates
