@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import PWAClient from "./components/PWAClient";
 import InstallApp from "./components/InstallApp";
+import GlobalErrorReporter from "./components/GlobalErrorReporter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,6 +62,7 @@ export default function RootLayout({
         ` }} />
       </head>
       <body className="min-h-full flex flex-col bg-bg-portal text-text-title transition-colors duration-300">
+        <GlobalErrorReporter />
         <PWAClient />
         {children}
         <InstallApp />
