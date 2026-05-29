@@ -266,46 +266,46 @@ export default function AttendanceTab({ classId }: { classId: string }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button onClick={() => setShowHelp(true)} className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-blue-500 transition-colors shadow-sm">
-            <HelpCircle size={20} />
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          <button onClick={() => setShowHelp(true)} className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-400 hover:text-indigo-600 transition-all shadow-sm flex items-center justify-center h-11 w-11 cursor-pointer shrink-0">
+            <HelpCircle size={18} />
           </button>
           
           {!isEditing ? (
             <button 
               onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+              className="flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-900 dark:bg-slate-950 border border-slate-900 dark:border-slate-850 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all h-11 cursor-pointer shrink-0"
             >
-              <Edit3 size={14} /> Edit Mode
+              <Edit3 size={12} /> Edit Mode
             </button>
           ) : (
-            <div className="flex items-center gap-2 animate-in slide-in-from-right-4">
+            <div className="flex items-center gap-2 animate-in slide-in-from-right-4 w-full sm:w-auto">
               <button 
                 onClick={handleCancel} 
                 disabled={saving}
-                className="px-6 py-3 bg-white border border-slate-200 text-slate-400 hover:text-slate-900 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all"
+                className="px-5 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-850 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all h-11 cursor-pointer"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => setShowSaveConfirm(true)}
                 disabled={saving}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-100 active:scale-95 transition-all"
+                className="flex items-center justify-center gap-2 px-5 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all h-11 cursor-pointer"
               >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} 
-                Commit Changes
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} 
+                Commit
               </button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-visible">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm relative overflow-visible">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="p-6 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 sticky left-0 bg-white z-40 w-32 min-w-[130px] sm:w-72 sm:min-w-[280px]">Student List</th>
+                <th className="p-4 sm:p-5 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 sticky left-0 bg-white z-40 w-32 min-w-[130px] sm:w-72 sm:min-w-[280px]">Student List</th>
                 {weeks.map(w => (
                   <th key={w} className="p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 text-center min-w-[64px]">W{w}</th>
                 ))}
@@ -315,7 +315,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
               {students.length > 0 ? (
                 students.map((student) => (
                   <tr key={student.id} className="group">
-                    <td className="p-6 border-b border-slate-50 sticky left-0 bg-white group-hover:bg-slate-50/50 z-30 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)] w-32 min-w-[130px] sm:w-72 sm:min-w-[280px] max-w-[130px] sm:max-w-none">
+                    <td className="p-4 sm:p-5 border-b border-slate-50 sticky left-0 bg-white group-hover:bg-slate-50/50 z-30 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)] w-32 min-w-[130px] sm:w-72 sm:min-w-[280px] max-w-[130px] sm:max-w-none">
                       <div className="font-bold text-slate-700 text-sm truncate">{student.name}</div>
                       <div className="hidden sm:block text-[10px] text-slate-400 font-medium normal-case tracking-normal mt-0.5 truncate">{student.email || 'No Email'}</div>
                     </td>
