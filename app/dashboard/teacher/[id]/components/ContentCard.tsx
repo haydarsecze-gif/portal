@@ -95,7 +95,7 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
               <>
                 {isAssignment && (
                   <div className="text-right border-r border-gray-100 pr-5 hidden sm:block">
-                    <p className="text-blue-600 font-black text-lg leading-none">0/{studentCount}</p>
+                    <p className="text-blue-600 font-black text-lg leading-none">{item.turnedInCount || 0}/{studentCount}</p>
                     <p className="text-[9px] font-bold text-gray-400 uppercase">Turned In</p>
                   </div>
                 )}

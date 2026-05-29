@@ -85,7 +85,7 @@ export default function StudentTab({ students, classId, onRefresh }: any) {
                 </div>
               </div>
             </div>
-            <button onClick={() => removeStudent(s.student_id)} className="opacity-0 group-hover:opacity-100 p-3 text-gray-300 hover:text-red-500 transition-all">
+            <button onClick={() => removeStudent(s.student_id)} className="sm:opacity-0 group-hover:opacity-100 p-3 text-gray-300 hover:text-red-500 transition-all opacity-100 shrink-0">
               <X size={20} />
             </button>
           </div>

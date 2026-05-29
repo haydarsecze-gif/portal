@@ -102,19 +102,35 @@ export default function SubjectDetail() {
       <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-8">
         
         {/* Header Section */}
-        <header className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-          <div>
+        <header className="mb-8 flex flex-col gap-4">
+          {/* Compact Top Bar */}
+          <div className="flex justify-between items-center w-full">
             <button 
               onClick={() => router.push('/dashboard/teacher')} 
-              className="flex items-center gap-2 text-slate-400 hover:text-slate-800 font-black text-[10px] uppercase tracking-widest transition duration-300 cursor-pointer"
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-black text-[9px] uppercase tracking-widest transition duration-300 cursor-pointer"
             >
-              <ArrowLeft size={14} /> Back to dashboard
+              <ArrowLeft size={12} /> Back to dashboard
             </button>
-            <h1 className="text-3xl font-black tracking-tight text-slate-800 uppercase leading-none mt-4 flex items-center gap-3">
-              <GraduationCap className="text-indigo-600 shrink-0" size={28} />
+
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <button 
+                onClick={fetchSubjectData} 
+                disabled={loading}
+                className="p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 text-slate-400 hover:text-indigo-600 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center justify-center"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin text-indigo-600" : ""} />
+              </button>
+            </div>
+          </div>
+
+          {/* Subject Title and Badges */}
+          <div className="flex flex-col gap-2 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
+              <GraduationCap className="text-indigo-600 shrink-0" size={24} />
               {subject?.name || 'Classroom'}
             </h1>
-            <div className="flex items-center gap-2 mt-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
                 Room {subject?.room || 'N/A'}
               </span>
@@ -122,17 +138,6 @@ export default function SubjectDetail() {
                 Sem {subject?.semester || 'N/A'}
               </span>
             </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <button 
-              onClick={fetchSubjectData} 
-              disabled={loading}
-              className="p-3.5 bg-white border border-slate-100 hover:border-slate-200 text-slate-400 hover:text-indigo-600 rounded-2xl shadow-sm transition-all active:scale-95 cursor-pointer flex items-center justify-center"
-            >
-              <RefreshCw size={18} className={loading ? "animate-spin text-indigo-600" : ""} />
-            </button>
           </div>
         </header>
 
