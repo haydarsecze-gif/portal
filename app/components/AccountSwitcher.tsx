@@ -46,28 +46,30 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     }
     getUserData()
 
-    // 2. Load saved accounts from localStorage
+    // 2. Load saved accounts from localStorage — strip all legacy tokens and heal corrupt passwords
     try {
       let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
       if (!Array.isArray(saved)) {
         saved = []
       }
 
-      // Filter out invalid/corrupt entries and dynamically heal corrupt legacy password caches
+      // Sanitize every entry: remove stale tokens and corrupt/empty passwords
       saved = saved.map((acc: any) => {
         if (acc && typeof acc === 'object') {
+          // Strip legacy access/refresh tokens — they cause cross-account session contamination
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { access_token, refresh_token, ...rest } = acc as any
+
+          // Heal corrupt 'undefined'/'null' password values
           let decPassword = ''
-          if (acc.password) {
-            try {
-              decPassword = atob(acc.password)
-            } catch (e) {
-              decPassword = acc.password
-            }
+          if (rest.password) {
+            try { decPassword = atob(rest.password) } catch (e) { decPassword = rest.password }
           }
-          if (decPassword === 'undefined' || decPassword === 'null') {
-            const { password, ...rest } = acc
-            return rest
+          if (decPassword === 'undefined' || decPassword === 'null' || !decPassword) {
+            const { password: _pw, ...noPass } = rest
+            return noPass
           }
+          return rest
         }
         return acc
       }).filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
@@ -95,51 +97,30 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     setIsOpen(false)
     try {
       await supabase.auth.signOut()
-      
-      let loggedIn = false
-      let loginError = null
 
-      // 1. Try password login if password exists
-      if (targetAccount.password) {
-        let decPassword = ''
-        try {
-          decPassword = atob(targetAccount.password)
-        } catch (e) {
-          decPassword = targetAccount.password
-        }
-
-        if (decPassword && decPassword !== 'undefined' && decPassword !== 'null') {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: targetAccount.email,
-            password: decPassword
-          })
-          if (!error && data.user && data.session) {
-            loggedIn = true
-          } else {
-            loginError = error
-          }
-        }
+      // Password-only authentication — no token fallback (tokens cause cross-account contamination)
+      if (!targetAccount.password) {
+        throw new Error('No saved password. Please log in manually to re-establish this account.')
       }
 
-      // 2. Fallback to setSession if not logged in yet (supports old token-only cache or password failures)
-      if (!loggedIn && targetAccount.access_token) {
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: targetAccount.access_token,
-            refresh_token: targetAccount.refresh_token
-          })
-          if (!error && data.user && data.session) {
-            loggedIn = true
-          } else {
-            if (!loginError) loginError = error
-          }
-        } catch (e) {
-          console.warn('setSession fallback failed:', e)
-        }
+      let decPassword = ''
+      try {
+        decPassword = atob(targetAccount.password)
+      } catch (e) {
+        decPassword = targetAccount.password
       }
 
-      if (!loggedIn) {
-        throw loginError || new Error('No valid session credentials found.')
+      if (!decPassword || decPassword === 'undefined' || decPassword === 'null') {
+        throw new Error('Saved password is invalid. Please log in manually to re-establish this account.')
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: targetAccount.email,
+        password: decPassword
+      })
+
+      if (error || !data.user || !data.session) {
+        throw error || new Error('Authentication failed. Please log in manually.')
       }
 
       // Successful login
@@ -170,12 +151,15 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
 
         const role = profile?.role || targetAccount.role
 
-        // Update name/role in localStorage
+        // Update name/role in localStorage — never store tokens
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
         const idx = saved.findIndex((a: any) => a.email.toLowerCase() === targetAccount.email.toLowerCase())
         if (idx > -1) {
           saved[idx].role = role
           saved[idx].name = profile?.full_name || saved[idx].name
+          // Ensure no stale tokens persist
+          delete saved[idx].access_token
+          delete saved[idx].refresh_token
           localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
         }
 

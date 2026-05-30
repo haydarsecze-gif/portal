@@ -20,21 +20,20 @@ export default function Login() {
         saved = []
       }
 
-      // Filter out invalid/corrupt entries and dynamically heal corrupt legacy password caches
+      // Sanitize every entry: strip legacy tokens and heal corrupt passwords
       saved = saved.map((acc: any) => {
         if (acc && typeof acc === 'object') {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { access_token, refresh_token, ...rest } = acc as any
           let decPassword = ''
-          if (acc.password) {
-            try {
-              decPassword = atob(acc.password)
-            } catch (e) {
-              decPassword = acc.password
-            }
+          if (rest.password) {
+            try { decPassword = atob(rest.password) } catch (e) { decPassword = rest.password }
           }
-          if (decPassword === 'undefined' || decPassword === 'null') {
-            const { password, ...rest } = acc
-            return rest
+          if (decPassword === 'undefined' || decPassword === 'null' || !decPassword) {
+            const { password: _pw, ...noPass } = rest
+            return noPass
           }
+          return rest
         }
         return acc
       }).filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
@@ -116,70 +115,44 @@ export default function Login() {
     setMessage('')
     
     try {
-      let loggedIn = false
-      let loginError = null
-
-      // 1. Try password login if password exists
-      if (acc.password) {
-        let decPassword = ''
-        try {
-          decPassword = atob(acc.password)
-        } catch (e) {
-          decPassword = acc.password
-        }
-
-        if (decPassword && decPassword !== 'undefined' && decPassword !== 'null') {
-          const { data, error } = await supabase.auth.signInWithPassword({
-            email: acc.email,
-            password: decPassword
-          })
-          if (!error && data.user && data.session) {
-            loggedIn = true
-          } else {
-            loginError = error
-          }
-        }
+      // Password-only — token fallback removed (it causes cross-account session contamination)
+      if (!acc.password) {
+        throw new Error('No saved password for this account. Please log in manually.')
       }
 
-      // 2. Fallback to setSession if not logged in yet (supports old token-only cache or password failures)
-      if (!loggedIn && acc.access_token) {
-        try {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: acc.access_token,
-            refresh_token: acc.refresh_token
-          })
-          if (!error && data.user && data.session) {
-            loggedIn = true
-          } else {
-            if (!loginError) loginError = error
-          }
-        } catch (e) {
-          console.warn('setSession fallback failed:', e)
-        }
+      let decPassword = ''
+      try {
+        decPassword = atob(acc.password)
+      } catch (e) {
+        decPassword = acc.password
       }
 
-      if (!loggedIn) {
-        throw loginError || new Error('No valid session credentials found.')
+      if (!decPassword || decPassword === 'undefined' || decPassword === 'null') {
+        throw new Error('Saved password is invalid. Please type your password below to log in.')
       }
 
-      // Successful login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: acc.email,
+        password: decPassword
+      })
+
+      if (error || !data.user || !data.session) {
+        throw error || new Error('Authentication failed. Please enter your password below.')
+      }
+
+      // Successful login — verify the resolved user matches
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // Assert email match to prevent hijacked / legacy token mismatch login
         if (user.email && acc.email && user.email.toLowerCase() !== acc.email.toLowerCase()) {
-          console.error("Mismatch during quick login:", user.email, acc.email)
-          
-          // Clean up the corrupt saved account from localStorage so it doesn't happen again!
+          console.error('Mismatch during quick login:', user.email, acc.email)
+          await supabase.auth.signOut()
+          // Remove the corrupt entry so this never recurs
           try {
             const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
             const updated = saved.filter((a: any) => a && a.email && a.email.toLowerCase() !== acc.email.toLowerCase())
             localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
-          } catch (e) {
-            console.error('Error cleaning up mismatched account:', e)
-          }
-
-          await supabase.auth.signOut()
-          throw new Error("Mismatched session tokens. Please log in manually.")
+          } catch (e) { /* ignore */ }
+          throw new Error('Session mismatch detected. The corrupt entry has been removed. Please log in manually.')
         }
 
         const { data: profile } = await supabase
@@ -188,12 +161,14 @@ export default function Login() {
           .eq('id', user.id)
           .single()
 
-        // Keep metadata updated
+        // Keep metadata updated — never store tokens
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
         const idx = saved.findIndex((a: any) => a.email.toLowerCase() === acc.email.toLowerCase())
         if (idx > -1) {
           saved[idx].name = profile?.full_name || acc.email
           saved[idx].role = profile?.role || acc.role
+          delete saved[idx].access_token
+          delete saved[idx].refresh_token
           localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
         }
 
