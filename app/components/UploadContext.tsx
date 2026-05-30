@@ -132,7 +132,6 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('PUT', uploadUrl);
-            xhr.setRequestHeader('Content-Length', String(chunkSize));
             xhr.setRequestHeader('Content-Range', `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`);
             
             xhr.upload.onprogress = (e) => {
