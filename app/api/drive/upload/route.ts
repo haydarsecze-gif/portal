@@ -63,7 +63,7 @@ async function resolveLecturerCredentials(targetFolderId: string) {
 
 export async function POST(req: Request) {
   try {
-    const { studentName, targetFolderId, fileName, fileType, fileSize } = await req.json();
+    const { studentName, targetFolderId, fileName, fileType, fileSize, isResubmission, resubmitFolderName } = await req.json();
 
     let clientId = process.env.GOOGLE_CLIENT_ID || '';
     if (clientId.startsWith("'") || clientId.startsWith('"')) {
@@ -112,17 +112,52 @@ export async function POST(req: Request) {
       });
       studentFolderId = folderRes.data.id!;
     }
-
-    // 2. Fetch a fresh temporary Access Token
+ 
+    // 2. Resolve Upload Target Parent (Standard student folder, or new resubmit folder if resubmitting)
+    let uploadParentFolderId = studentFolderId;
+ 
+    if (isResubmission && resubmitFolderName) {
+      try {
+        const resubmitListResponse = await drive.files.list({
+          q: `name = '${resubmitFolderName.replace(/'/g, "\\'")}' and '${studentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+          fields: 'files(id)',
+          supportsAllDrives: true,
+          includeItemsFromAllDrives: true
+        });
+ 
+        let resubmitFolderId = resubmitListResponse.data.files?.[0]?.id;
+ 
+        if (!resubmitFolderId) {
+          const folderRes = await drive.files.create({
+            requestBody: { name: resubmitFolderName, mimeType: 'application/vnd.google-apps.folder', parents: [studentFolderId] },
+            fields: 'id',
+            supportsAllDrives: true
+          });
+          resubmitFolderId = folderRes.data.id!;
+          
+          // Grant anyone reader permission on the new resubmit folder
+          await drive.permissions.create({
+            fileId: resubmitFolderId,
+            requestBody: { role: 'reader', type: 'anyone' },
+            supportsAllDrives: true
+          });
+        }
+        uploadParentFolderId = resubmitFolderId;
+      } catch (folderErr) {
+        console.error('Error creating/resolving resubmission folder:', folderErr);
+      }
+    }
+ 
+    // 3. Fetch a fresh temporary Access Token
     const { token } = await oauth2Client.getAccessToken();
     if (!token) {
       throw new Error('Failed to retrieve access token from Google.');
     }
-
-    // 3. Initiate Google Resumable Upload Session
+ 
+    // 4. Initiate Google Resumable Upload Session
     const reqHost = req.headers.get('host');
     const requestOrigin = req.headers.get('origin') || (reqHost ? (reqHost.includes('localhost') ? `http://${reqHost}` : `https://${reqHost}`) : 'https://portal-three-blond.vercel.app');
-
+ 
     const initHeaders: Record<string, string> = {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json; charset=UTF-8',
@@ -132,13 +167,13 @@ export async function POST(req: Request) {
     if (requestOrigin) {
       initHeaders['Origin'] = requestOrigin;
     }
-
+ 
     const initRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
       method: 'POST',
       headers: initHeaders,
       body: JSON.stringify({
         name: fileName,
-        parents: [studentFolderId]
+        parents: [uploadParentFolderId]
       })
     });
 

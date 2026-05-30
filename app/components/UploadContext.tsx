@@ -103,6 +103,22 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       const uploadedLinks: string[] = [];
       const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 
+      const isResubmission = !!existingSubmission;
+      let resubmitFolderName = '';
+      if (isResubmission) {
+        const now = new Date();
+        const formattedTime = now.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        });
+        resubmitFolderName = `resubmit - ${formattedTime}`;
+      }
+
       for (const file of filesToUpload) {
         // 1. Prepare Google Drive resumable session
         const res = await fetch('/api/drive/upload', {
@@ -113,7 +129,9 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             targetFolderId: itemToUpload.folder_id,
             fileName: file.name,
             fileType: file.type || 'application/octet-stream',
-            fileSize: file.size
+            fileSize: file.size,
+            isResubmission,
+            resubmitFolderName
           })
         });
 
