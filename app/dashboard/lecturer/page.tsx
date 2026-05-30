@@ -6,6 +6,7 @@ import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Sett
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
+import { useUpload } from '@/app/components/UploadContext'
 
 // Helper function to format time (e.g., 08:00 -> 8:00 AM)
 const formatTime = (time: string) => {
@@ -43,6 +44,7 @@ export default function LecturerDashboard() {
   const [loading, setLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const router = useRouter()
+  const { triggerHardReload } = useUpload()
 
   useEffect(() => {
     // Check URL parameters for Drive connection status
@@ -419,7 +421,7 @@ export default function LecturerDashboard() {
               <Settings size={20} />
             </button>
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={triggerHardReload} 
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >

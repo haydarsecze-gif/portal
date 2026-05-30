@@ -41,7 +41,7 @@ export default function SubjectDetail() {
   const [loading, setLoading] = useState(true)
   const [showItemModal, setShowItemModal] = useState(false)
   const [editingItem, setEditingItem] = useState<any>(null) // State for Editing
-  const { uploadProgress, dismissProgress, uploadLecturerCoursework } = useUpload()
+  const { uploadProgress, dismissProgress, uploadLecturerCoursework, triggerHardReload } = useUpload()
   const [selectId, setSelectId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -173,7 +173,7 @@ export default function SubjectDetail() {
             <NotificationBell />
             <ThemeToggle />
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={triggerHardReload} 
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >
@@ -237,7 +237,7 @@ export default function SubjectDetail() {
                 .map(([tempId, progressItem]) => (
                   <div 
                     key={tempId}
-                    className="bg-white p-6 rounded-[2.5rem] border border-dashed border-indigo-200 shadow-sm flex flex-col gap-4 animate-pulse"
+                    className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col gap-4 glowing-upload-card"
                   >
                     <div className="flex justify-between items-center w-full">
                       <div className="flex items-center gap-4">
@@ -285,7 +285,7 @@ export default function SubjectDetail() {
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full transition-all duration-300 ${
+                          className={`h-full smooth-progress-width ${
                             progressItem.status === 'success' 
                               ? 'bg-emerald-500' 
                               : progressItem.status === 'failed'

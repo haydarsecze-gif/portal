@@ -59,7 +59,7 @@ export default function StudentClassroom() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isResubmitting, setIsResubmitting] = useState(false);
-  const { uploadProgress, setUploadProgress, uploadStudentSubmission, deleteStudentFile } = useUpload();
+  const { uploadProgress, setUploadProgress, uploadStudentSubmission, deleteStudentFile, triggerHardReload } = useUpload();
   const [profile, setProfile] = useState<any>(null);
   const [roomName, setRoomName] = useState<string>('');
   const [subjectTrueUUID, setSubjectTrueUUID] = useState<string>('');
@@ -479,7 +479,7 @@ export default function StudentClassroom() {
             <NotificationBell />
             <ThemeToggle />
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={triggerHardReload} 
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >
@@ -544,7 +544,9 @@ export default function StudentClassroom() {
                       setSelectedItem(item);
                     }
                   }} 
-                  className="bg-white p-6 rounded-[2rem] border border-slate-100/80 hover:border-indigo-200 transition-all duration-300 hover:shadow-lg shadow-sm flex flex-col gap-4 cursor-pointer"
+                  className={`bg-white p-6 rounded-[2rem] border border-slate-100/80 shadow-sm flex flex-col gap-4 cursor-pointer premium-hover-card ${
+                    uploadProgress[item.title]?.status === 'uploading' ? 'glowing-upload-card' : ''
+                  }`}
                 >
                   <div className="flex justify-between items-center w-full">
                     <div className="flex items-center gap-4">
@@ -614,7 +616,7 @@ export default function StudentClassroom() {
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full transition-all duration-300 ${
+                          className={`h-full smooth-progress-width ${
                             uploadProgress[item.title].status === 'success' 
                               ? 'bg-emerald-500' 
                               : uploadProgress[item.title].status === 'failed'

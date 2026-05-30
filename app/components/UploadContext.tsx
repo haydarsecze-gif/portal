@@ -1,6 +1,7 @@
 'use client'
 import React, { createContext, useContext, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { Loader2 } from 'lucide-react'
 
 interface UploadProgressItem {
   progress: number;
@@ -14,6 +15,7 @@ interface UploadContextType {
   uploadProgress: { [key: string]: UploadProgressItem };
   setUploadProgress: React.Dispatch<React.SetStateAction<{ [key: string]: UploadProgressItem }>>;
   dismissProgress: (key: string) => void;
+  triggerHardReload: () => void;
   uploadStudentSubmission: (params: {
     assignmentTitle: string;
     filesToUpload: File[];
@@ -49,6 +51,14 @@ const UploadContext = createContext<UploadContextType | undefined>(undefined);
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: UploadProgressItem }>({});
   const submissionQueues = React.useRef<{ [key: string]: Promise<any> }>({});
+  const [isReloading, setIsReloading] = useState(false);
+
+  const triggerHardReload = () => {
+    setIsReloading(true);
+    setTimeout(() => {
+      window.location.reload();
+    }, 600);
+  };
 
   const enqueueSubmissionAction = (assignmentTitle: string, action: () => Promise<any>) => {
     const currentQueue = submissionQueues.current[assignmentTitle] || Promise.resolve();
@@ -188,14 +198,18 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           finalLinks = [...latestSub.file_urls, ...uniqueNewLinks];
         }
 
-        const { error: submitErr } = await supabase.from('submissions').upsert({
-          id: latestSub?.id,
+        const upsertPayload: any = {
           class_id: subjectTrueUUID,
           student_id: user?.id,
           assignment_name: assignmentTitle,
           file_urls: finalLinks,
           submitted_at: new Date().toISOString()
-        });
+        };
+        if (latestSub?.id) {
+          upsertPayload.id = latestSub.id;
+        }
+
+        const { error: submitErr } = await supabase.from('submissions').upsert(upsertPayload);
         if (submitErr) throw submitErr;
 
         // 4. Notify lecturers
@@ -708,9 +722,21 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       dismissProgress,
       uploadStudentSubmission,
       deleteStudentFile,
-      uploadLecturerCoursework
+      uploadLecturerCoursework,
+      triggerHardReload
     }}>
       {children}
+      {isReloading && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/60 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in-95 duration-300 max-w-xs text-center">
+            <Loader2 className="animate-spin text-indigo-650 dark:text-indigo-400 shrink-0" size={36} />
+            <div>
+              <h4 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest text-[9px]">Syncing Portal</h4>
+              <p className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">Hard Reloading Resources...</p>
+            </div>
+          </div>
+        </div>
+      )}
     </UploadContext.Provider>
   );
 }

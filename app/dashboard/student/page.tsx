@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
+import { useUpload } from '@/app/components/UploadContext'
 
 export default function StudentDashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -13,6 +14,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const router = useRouter()
+  const { triggerHardReload } = useUpload()
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [settingsName, setSettingsName] = useState('')
@@ -227,7 +229,7 @@ export default function StudentDashboard() {
               <Settings size={20} />
             </button>
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={triggerHardReload} 
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >

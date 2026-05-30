@@ -322,3 +322,56 @@ body {
   }
 }
 
+/* ==========================================================================
+   FUTURISTIC GLOWING & MICRO-ANIMATION SYSTEMS
+   ========================================================================== */
+
+/* 1. Smooth cubic-bezier width transition for progress bar percentages */
+.smooth-progress-width {
+  transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 2. Pulsating purple glowing pulse for uploading files */
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 25px 6px rgba(139, 92, 246, 0.4);
+    border-color: rgba(139, 92, 246, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.35);
+  }
+}
+.glowing-upload-card {
+  animation: glowPulse 2.5s infinite ease-in-out !important;
+  border-style: solid !important;
+  border-width: 1px !important;
+}
+
+/* 3. Infinite micro-float animation for interactive badges and sparkles */
+@keyframes microFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.animate-micro-float {
+  animation: microFloat 3s infinite ease-in-out;
+}
+
+/* 4. Elegant scale-tap hover micro-interactions for all system cards */
+.premium-hover-card {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.premium-hover-card:hover {
+  transform: translateY(-5px) scale(1.018) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08) !important;
+}
+.dark .premium-hover-card:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
+  border-color: var(--purple-accent) !important;
+}
+
+

@@ -14,12 +14,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   
   const [isAdminChecking, setIsAdminChecking] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
+  const verifiedUserIdRef = React.useRef<string | null>(null)
 
   const verifyAdminSession = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
+        verifiedUserIdRef.current = null
+        setIsAuthorized(false)
         router.push('/auth/login')
+        return
+      }
+
+      // If we already verified this user, skip database fetch to prevent loop
+      if (verifiedUserIdRef.current === user.id && isAuthorized) {
+        setIsAdminChecking(false)
         return
       }
 
@@ -31,6 +40,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       if (error || !profile || profile.role !== 'admin') {
         console.warn("Access Denied: User role is not admin.", profile?.role)
+        verifiedUserIdRef.current = null
+        setIsAuthorized(false)
         if (profile?.role === 'teacher') {
           router.push('/dashboard/lecturer')
         } else if (profile?.role === 'student') {
@@ -41,9 +52,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return
       }
 
+      verifiedUserIdRef.current = user.id
       setIsAuthorized(true)
     } catch (err) {
       console.error("Verification failed:", err)
+      verifiedUserIdRef.current = null
+      setIsAuthorized(false)
       router.push('/auth/login')
     } finally {
       setIsAdminChecking(false)
@@ -54,16 +68,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     verifyAdminSession()
 
     // Listen for auth state changes to dynamically catch switcher updates
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
-        verifyAdminSession()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        const sessionUserId = session?.user?.id || null
+        if (sessionUserId !== verifiedUserIdRef.current) {
+          verifyAdminSession()
+        }
       }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [router])
+  }, [router, isAuthorized])
 
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean;
