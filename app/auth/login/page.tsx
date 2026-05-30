@@ -20,9 +20,27 @@ export default function Login() {
         saved = []
       }
 
-      // Filter out invalid/corrupt entries
-      saved = saved.filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
+      // Filter out invalid/corrupt entries and dynamically heal corrupt legacy password caches
+      saved = saved.map((acc: any) => {
+        if (acc && typeof acc === 'object') {
+          let decPassword = ''
+          if (acc.password) {
+            try {
+              decPassword = atob(acc.password)
+            } catch (e) {
+              decPassword = acc.password
+            }
+          }
+          if (decPassword === 'undefined' || decPassword === 'null') {
+            const { password, ...rest } = acc
+            return rest
+          }
+        }
+        return acc
+      }).filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
+
       setSavedAccounts(saved)
+      localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
     } catch (e) {
       console.error(e)
     }
@@ -63,11 +81,13 @@ export default function Login() {
       try {
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
         const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
-        const newAcc = {
+        const newAcc: any = {
           email: email.toLowerCase(),
-          password: btoa(password),
           role: profile?.role || 'student',
           name: profile?.full_name || email
+        }
+        if (password) {
+          newAcc.password = btoa(password)
         }
         if (index > -1) {
           saved[index] = newAcc
@@ -87,7 +107,7 @@ export default function Login() {
       
       setTimeout(() => {
         window.location.href = targetUrl
-      }, 150)
+      }, 500)
     }
   }
 
@@ -108,7 +128,7 @@ export default function Login() {
           decPassword = acc.password
         }
 
-        if (decPassword && decPassword !== 'undefined') {
+        if (decPassword && decPassword !== 'undefined' && decPassword !== 'null') {
           const { data, error } = await supabase.auth.signInWithPassword({
             email: acc.email,
             password: decPassword
@@ -121,8 +141,8 @@ export default function Login() {
         }
       }
 
-      // 2. Fallback to setSession ONLY if no password exists in saved credentials (supports old token-only cache)
-      if (!loggedIn && !acc.password && acc.access_token) {
+      // 2. Fallback to setSession if not logged in yet (supports old token-only cache or password failures)
+      if (!loggedIn && acc.access_token) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: acc.access_token,
@@ -148,6 +168,16 @@ export default function Login() {
         // Assert email match to prevent hijacked / legacy token mismatch login
         if (user.email && acc.email && user.email.toLowerCase() !== acc.email.toLowerCase()) {
           console.error("Mismatch during quick login:", user.email, acc.email)
+          
+          // Clean up the corrupt saved account from localStorage so it doesn't happen again!
+          try {
+            const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+            const updated = saved.filter((a: any) => a && a.email && a.email.toLowerCase() !== acc.email.toLowerCase())
+            localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
+          } catch (e) {
+            console.error('Error cleaning up mismatched account:', e)
+          }
+
           await supabase.auth.signOut()
           throw new Error("Mismatched session tokens. Please log in manually.")
         }
@@ -175,7 +205,7 @@ export default function Login() {
         
         setTimeout(() => {
           window.location.href = targetUrl
-        }, 150)
+        }, 500)
       }
     } catch (err: any) {
       setMessage('❌ Quick login failed: ' + (err.message || 'Please log in manually.'))

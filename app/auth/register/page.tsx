@@ -138,11 +138,13 @@ export default function Register() {
             // Save lecturer credentials securely to Multi-Account Switcher for 1-click test switching
             const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
             const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
-            const newAcc = {
+            const newAcc: any = {
               email: email.toLowerCase(),
-              password: btoa(password),
               role: 'teacher',
               name: fullName
+            }
+            if (password) {
+              newAcc.password = btoa(password)
             }
             if (index > -1) {
               saved[index] = newAcc

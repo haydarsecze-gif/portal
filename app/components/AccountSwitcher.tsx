@@ -53,10 +53,27 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         saved = []
       }
 
-      // Filter out invalid/corrupt entries
-      saved = saved.filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
+      // Filter out invalid/corrupt entries and dynamically heal corrupt legacy password caches
+      saved = saved.map((acc: any) => {
+        if (acc && typeof acc === 'object') {
+          let decPassword = ''
+          if (acc.password) {
+            try {
+              decPassword = atob(acc.password)
+            } catch (e) {
+              decPassword = acc.password
+            }
+          }
+          if (decPassword === 'undefined' || decPassword === 'null') {
+            const { password, ...rest } = acc
+            return rest
+          }
+        }
+        return acc
+      }).filter((acc: any) => acc && typeof acc === 'object' && typeof acc.email === 'string' && acc.email.trim() !== '')
 
       setSavedAccounts(saved)
+      localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
     } catch (e) {
       console.error('Failed to parse saved accounts:', e)
     }
@@ -91,7 +108,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
           decPassword = targetAccount.password
         }
 
-        if (decPassword && decPassword !== 'undefined') {
+        if (decPassword && decPassword !== 'undefined' && decPassword !== 'null') {
           const { data, error } = await supabase.auth.signInWithPassword({
             email: targetAccount.email,
             password: decPassword
@@ -104,8 +121,8 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         }
       }
 
-      // 2. Fallback to setSession ONLY if no password exists in saved credentials (supports old token-only cache)
-      if (!loggedIn && !targetAccount.password && targetAccount.access_token) {
+      // 2. Fallback to setSession if not logged in yet (supports old token-only cache or password failures)
+      if (!loggedIn && targetAccount.access_token) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: targetAccount.access_token,
@@ -131,6 +148,16 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         // Assert email match to prevent hijacked / legacy token mismatch login
         if (user.email && targetAccount.email && user.email.toLowerCase() !== targetAccount.email.toLowerCase()) {
           console.error("Mismatch during switch login:", user.email, targetAccount.email)
+          
+          // Clean up the corrupt saved account from localStorage so it doesn't happen again!
+          try {
+            const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+            const updated = saved.filter((a: any) => a && a.email && a.email.toLowerCase() !== targetAccount.email.toLowerCase())
+            localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
+          } catch (e) {
+            console.error('Error cleaning up mismatched account:', e)
+          }
+
           await supabase.auth.signOut()
           throw new Error("Mismatched session tokens. Please log in manually.")
         }
@@ -160,7 +187,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         
         setTimeout(() => {
           window.location.href = targetUrl
-        }, 150)
+        }, 500)
       }
     } catch (err: any) {
       setAlertConfig({

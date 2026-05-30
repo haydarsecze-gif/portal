@@ -22,7 +22,7 @@ export default function LecturerDashboardLayout({
       setIsSigningOut(true)
       verifiedUserIdRef.current = null
       await supabase.auth.signOut()
-      router.push('/auth/login')
+      window.location.href = '/auth/login'
     } catch (e) {
       console.error('Error signing out:', e)
       setIsSigningOut(false)
@@ -131,7 +131,7 @@ export default function LecturerDashboardLayout({
             console.log('Lecturer profile deleted in real-time!', payload)
             verifiedUserIdRef.current = null
             await supabase.auth.signOut()
-            router.push('/auth/login?reason=deleted')
+            window.location.href = '/auth/login?reason=deleted'
           } else if (payload.eventType === 'UPDATE') {
             const updatedProfile = payload.new
             console.log('Lecturer profile updated in real-time!', updatedProfile)
@@ -139,9 +139,9 @@ export default function LecturerDashboardLayout({
               // If role changed or no longer a teacher, redirect them out
               if (updatedProfile.role !== 'teacher') {
                 verifiedUserIdRef.current = null
-                if (updatedProfile.role === 'admin') router.push('/admin/students')
-                else if (updatedProfile.role === 'student') router.push('/dashboard/student')
-                else router.push('/auth/login')
+                if (updatedProfile.role === 'admin') window.location.href = '/admin/students'
+                else if (updatedProfile.role === 'student') window.location.href = '/dashboard/student'
+                else window.location.href = '/auth/login'
                 return
               }
               setIsApproved(!!updatedProfile.is_approved)
@@ -180,15 +180,15 @@ export default function LecturerDashboardLayout({
                 if (payload.eventType === 'DELETE') {
                   verifiedUserIdRef.current = null
                   await supabase.auth.signOut()
-                  router.push('/auth/login?reason=deleted')
+                  window.location.href = '/auth/login?reason=deleted'
                 } else if (payload.eventType === 'UPDATE') {
                   const updatedProfile = payload.new
                   if (updatedProfile && active) {
                     if (updatedProfile.role !== 'teacher') {
                       verifiedUserIdRef.current = null
-                      if (updatedProfile.role === 'admin') router.push('/admin/students')
-                      else if (updatedProfile.role === 'student') router.push('/dashboard/student')
-                      else router.push('/auth/login')
+                      if (updatedProfile.role === 'admin') window.location.href = '/admin/students'
+                      else if (updatedProfile.role === 'student') window.location.href = '/dashboard/student'
+                      else window.location.href = '/auth/login'
                       return
                     }
                     setIsApproved(!!updatedProfile.is_approved)
