@@ -293,11 +293,19 @@ export default function LecturerDashboard() {
                 <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <KeyRound size={14} className="text-indigo-500" /> Google Drive Folder ID
                 </label>
-                <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 p-3.5 rounded-2xl">
+                <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 p-4.5 rounded-2xl space-y-3">
                   <p className="text-[8.5px] font-black uppercase text-indigo-700 dark:text-indigo-350 tracking-wider">Sharing Instructions</p>
-                  <p className="text-[9.5px] font-bold text-indigo-600 dark:text-indigo-400/90 leading-normal mt-1">
+                  
+                  <div className="bg-white/40 dark:bg-slate-950/40 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/20">
+                    <p className="text-[8.5px] font-black uppercase tracking-widest text-indigo-650 dark:text-indigo-350">💡 Auto-Organization</p>
+                    <p className="text-[9px] font-bold text-indigo-600/90 dark:text-indigo-400/90 leading-normal mt-1">
+                      You only need to create <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">one main root folder</strong>. The system will automatically organize and create subfolders inside it for your <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">Subjects</strong>, coursework <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">Assignments/Materials</strong>, and nested folders with <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">Student Names</strong> for submissions.
+                    </p>
+                  </div>
+
+                  <p className="text-[9.5px] font-bold text-indigo-600 dark:text-indigo-400/90 leading-normal">
                     Your personal Drive folder must remain shared with Editor permissions to our service email: 
-                    <span className="block font-black select-all mt-1 bg-white dark:bg-slate-950 p-1.5 rounded-lg border border-indigo-100 dark:border-indigo-900/60 break-all">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span>
+                    <span className="block font-black select-all mt-1.5 bg-white dark:bg-slate-950 p-1.5 rounded-lg border border-indigo-100 dark:border-indigo-900/60 break-all text-indigo-600 dark:text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span>
                   </p>
                 </div>
                 <input

@@ -243,11 +243,19 @@ export default function Register() {
           {/* Drive Folder ID field (Lecturer only) */}
           {role === 'teacher' && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
-              <div className="bg-indigo-950/20 border border-indigo-900/60 p-4 rounded-2xl">
-                <p className="text-[9px] font-black uppercase text-indigo-300 tracking-wider">Required Google Drive Setup</p>
-                <ol className="text-[9.5px] font-bold text-indigo-400/90 leading-relaxed list-decimal pl-4 mt-2 space-y-1">
-                  <li>Create a coursework folder in your personal Google Drive.</li>
-                  <li>Share it with Editor access to our service email: <span className="underline font-black select-all text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span></li>
+              <div className="bg-indigo-950/20 border border-indigo-900/60 p-5 rounded-2xl space-y-3">
+                <p className="text-[9.5px] font-black uppercase text-indigo-300 tracking-wider">Required Google Drive Setup</p>
+                
+                <div className="bg-indigo-950/40 p-3 rounded-xl border border-indigo-900/30">
+                  <p className="text-[8.5px] font-black uppercase tracking-widest text-indigo-300">💡 Auto-Organization</p>
+                  <p className="text-[9px] font-medium text-indigo-400/95 leading-normal mt-1">
+                    You only need to create <strong className="font-extrabold text-indigo-300">one main root folder</strong>. The portal will automatically create subfolders inside it for each of your <strong className="font-extrabold text-indigo-300">Subjects</strong>, folders for each <strong className="font-extrabold text-indigo-300">Assignment/Material</strong>, and nested folders with the <strong className="font-extrabold text-indigo-300">Student's Name</strong> for their submissions.
+                  </p>
+                </div>
+
+                <ol className="text-[9.5px] font-bold text-indigo-400/90 leading-relaxed list-decimal pl-4 space-y-1.5">
+                  <li>Create <strong className="font-extrabold text-indigo-300">1 main folder</strong> (e.g. <i>"Limkokwing Coursework"</i>) in your personal Google Drive.</li>
+                  <li>Share it with Editor access to our service email: <span className="block font-black select-all mt-1 bg-white/5 dark:bg-slate-950/50 p-1.5 rounded-lg border border-indigo-900/40 break-all text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span></li>
                   <li>Copy the Folder ID from the URL (the string after <code className="bg-indigo-950 px-1 py-0.5 rounded">folders/</code>) and paste it below.</li>
                 </ol>
               </div>
