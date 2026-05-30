@@ -51,6 +51,7 @@ export default function AdminCurriculum() {
   const [showSaveConfirm, setShowSaveConfirm] = useState(false)
   // Toast notification system
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [deletingSubjectId, setDeletingSubjectId] = useState<string | null>(null)
 
   useEffect(() => {
     if (notification) {
@@ -298,7 +299,7 @@ export default function AdminCurriculum() {
     setEditingId(subject.id); setName(subject.name || ''); setRoom(subject.room || ''); setSemester(String(subject.semester || '1')); setStartDate(subject.start_date || ''); setStartTime(subject.class_start_time || ''); setEndTime(subject.class_end_time || ''); setSelectedLecturers(subject.lecturer_names || []); setIsModalOpen(true);
   }
 
-  const handleDeleteSubject = async (s: any) => {
+  const handleDeleteSubject = (s: any) => {
     setAlertConfig({
       isOpen: true,
       title: "Delete Subject",
@@ -306,35 +307,30 @@ export default function AdminCurriculum() {
       type: "warning",
       isConfirm: true,
       onConfirm: async () => {
-        setAlertConfig(prev => ({ ...prev, isOpen: false }))
+        setDeletingSubjectId(s.id)
         try {
-          // 1. Delete dependent submissions
-          const { error: subErr } = await supabase.from('submissions').delete().eq('class_id', s.id)
-          if (subErr) throw subErr
+          // 1. Delete dependent tables in parallel to minimize network latency round-trips
+          const [subRes, assignRes, matRes, attRes, scRes] = await Promise.all([
+            supabase.from('submissions').delete().eq('class_id', s.id),
+            supabase.from('assignments').delete().eq('class_id', s.id),
+            supabase.from('materials').delete().eq('class_id', s.id),
+            supabase.from('attendance').delete().eq('class_id', s.id),
+            supabase.from('student_classes').delete().eq('subject_id', s.id)
+          ])
 
-          // 2. Delete dependent assignments
-          const { error: assignErr } = await supabase.from('assignments').delete().eq('class_id', s.id)
-          if (assignErr) throw assignErr
+          if (subRes.error) throw subRes.error
+          if (assignRes.error) throw assignRes.error
+          if (matRes.error) throw matRes.error
+          if (attRes.error) throw attRes.error
+          if (scRes.error) throw scRes.error
 
-          // Delete dependent materials
-          const { error: matErr } = await supabase.from('materials').delete().eq('class_id', s.id)
-          if (matErr) throw matErr
-
-          // 3. Delete dependent attendance records
-          const { error: attErr } = await supabase.from('attendance').delete().eq('class_id', s.id)
-          if (attErr) throw attErr
-
-          // 4. Delete student enrollments
-          const { error: scErr } = await supabase.from('student_classes').delete().eq('subject_id', s.id)
-          if (scErr) throw scErr
-
-          // 5. Delete matching class
+          // 2. Delete classes row
           const { error: clsErr } = await supabase.from('classes').delete().eq('id', s.id)
           if (clsErr) throw clsErr
 
-          // 6. Finally, delete the subject itself
-          const { error } = await supabase.from('subjects').delete().eq('id', s.id)
-          if (error) throw error
+          // 3. Finally, delete the subject itself
+          const { error: subjErr } = await supabase.from('subjects').delete().eq('id', s.id)
+          if (subjErr) throw subjErr
 
           try {
             let adminName = "Administrator"
@@ -369,6 +365,9 @@ export default function AdminCurriculum() {
           } catch (err) {
             console.error("Error creating deletion notification:", err)
           }
+
+          setNotification({ message: `Successfully deleted subject: "${s.name}"`, type: 'success' })
+          setAlertConfig(prev => ({ ...prev, isOpen: false }))
           fetchSubjects()
         } catch (err: any) {
           setAlertConfig({
@@ -377,6 +376,8 @@ export default function AdminCurriculum() {
             message: "Failed to delete subject: " + err.message,
             type: "error"
           })
+        } finally {
+          setDeletingSubjectId(null)
         }
       },
       onCancel: () => {
@@ -568,10 +569,17 @@ export default function AdminCurriculum() {
                 <Pencil size={16} />
               </button>
               <button 
+                disabled={deletingSubjectId !== null}
                 onClick={() => handleDeleteSubject(s)} 
-                className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl active:scale-95 transition-all cursor-pointer"
+                className={`p-3 rounded-2xl active:scale-95 transition-all cursor-pointer ${
+                  deletingSubjectId === s.id ? 'text-indigo-500 bg-indigo-50' : 'text-slate-300 hover:text-red-500 hover:bg-red-50'
+                }`}
               >
-                <Trash2 size={16} />
+                {deletingSubjectId === s.id ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <Trash2 size={16} />
+                )}
               </button>
             </div>
           </div>
@@ -875,25 +883,35 @@ export default function AdminCurriculum() {
                 {alertConfig.isConfirm ? (
                   <>
                     <button 
+                      disabled={deletingSubjectId !== null}
                       onClick={() => {
                         if (alertConfig.onCancel) alertConfig.onCancel();
                         else setAlertConfig(prev => ({ ...prev, isOpen: false }));
                       }}
-                      className="flex-1 py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer border border-slate-100"
+                      className="flex-1 py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer border border-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Cancel
                     </button>
                     <button 
+                      disabled={deletingSubjectId !== null}
                       onClick={() => {
                         if (alertConfig.onConfirm) alertConfig.onConfirm();
                       }}
-                      className={`flex-1 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer shadow-lg ${
+                      className={`flex-1 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer shadow-lg flex items-center justify-center gap-2 ${
+                        deletingSubjectId !== null ? 'bg-slate-400 shadow-none cursor-not-allowed' :
                         alertConfig.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/10' :
                         alertConfig.type === 'error' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/10' :
                         'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/10'
                       }`}
                     >
-                      Confirm
+                      {deletingSubjectId !== null ? (
+                        <>
+                          <Loader2 className="animate-spin" size={12} />
+                          Deleting...
+                        </>
+                      ) : (
+                        'Confirm'
+                      )}
                     </button>
                   </>
                 ) : (
