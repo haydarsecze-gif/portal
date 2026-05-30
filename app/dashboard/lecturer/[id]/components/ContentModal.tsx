@@ -153,6 +153,47 @@ export default function ContentModal({
           }
 
           const promise = (async () => {
+            // 0. Try to resolve via existing materials/assignments in the database first
+            try {
+              const { data: mats } = await supabase
+                .from('materials')
+                .select('folder_id')
+                .eq('class_id', subjId)
+                .not('folder_id', 'is', null)
+                .limit(1)
+              
+              let existingFolderId = mats?.[0]?.folder_id
+              
+              if (!existingFolderId) {
+                const { data: assigns } = await supabase
+                  .from('assignments')
+                  .select('folder_id')
+                  .eq('class_id', subjId)
+                  .not('folder_id', 'is', null)
+                  .limit(1)
+                existingFolderId = assigns?.[0]?.folder_id
+              }
+              
+              if (existingFolderId) {
+                const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${existingFolderId}?fields=parents&supportsAllDrives=true`, {
+                  method: 'GET',
+                  headers: {
+                    'Authorization': `Bearer ${accToken}`
+                  }
+                })
+                if (metaRes.ok) {
+                  const fileMeta = await metaRes.json()
+                  if (fileMeta && fileMeta.parents && fileMeta.parents.length > 0) {
+                    const resolvedParentId = fileMeta.parents[0]
+                    console.log(`Successfully resolved existing subject folder ID from database: ${resolvedParentId}`)
+                    return resolvedParentId
+                  }
+                }
+              }
+            } catch (dbErr) {
+              console.warn("Failed to check database for existing subject folder reference:", dbErr)
+            }
+
             const parentToSearch = parentId || 'root'
             const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${finalSubjName.replace(/'/g, "\\'")}' and '${parentToSearch}' in parents and trashed = false`
             const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
