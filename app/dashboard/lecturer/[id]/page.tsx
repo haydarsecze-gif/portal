@@ -268,7 +268,7 @@ export default function SubjectDetail() {
                             ? 'text-emerald-600' 
                             : progressItem.status === 'failed'
                               ? 'text-red-550'
-                              : 'text-indigo-650'
+                              : 'text-indigo-600'
                         }`}>
                            {progressItem.status === 'success' && '✅ Upload Successful! saving log...'}
                            {progressItem.status === 'failed' && `❌ Upload Failed: ${progressItem.error}`}
@@ -290,7 +290,7 @@ export default function SubjectDetail() {
                               ? 'bg-emerald-500' 
                               : progressItem.status === 'failed'
                                 ? 'bg-red-500'
-                                : 'bg-indigo-650 animate-pulse'
+                                : 'bg-indigo-600 animate-pulse'
                           }`}
                           style={{ width: `${progressItem.progress}%` }}
                         />

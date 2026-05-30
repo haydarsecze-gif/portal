@@ -600,7 +600,7 @@ export default function StudentClassroom() {
                             ? 'text-emerald-600 dark:text-emerald-450' 
                             : uploadProgress[item.title].status === 'failed'
                               ? 'text-red-500 dark:text-red-450'
-                              : 'text-indigo-650 dark:text-indigo-400'
+                              : 'text-indigo-600 dark:text-indigo-400'
                         }`}>
                           {uploadProgress[item.title].status === 'success' && '✅ Submission Uploaded Successfully!'}
                           {uploadProgress[item.title].status === 'failed' && `❌ Upload Failed: ${uploadProgress[item.title].error}`}
@@ -626,7 +626,7 @@ export default function StudentClassroom() {
                               ? 'bg-emerald-500' 
                               : uploadProgress[item.title].status === 'failed'
                                 ? 'bg-red-500'
-                                : 'bg-indigo-650 animate-pulse'
+                                : 'bg-indigo-600 animate-pulse'
                           }`}
                           style={{ width: `${uploadProgress[item.title].progress}%` }}
                         />

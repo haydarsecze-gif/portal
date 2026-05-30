@@ -288,7 +288,7 @@ export default function Login() {
 
         {savedAccounts.length > 0 && (
           <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-900/60">
-            <p className="text-center text-[9px] font-black text-indigo-650 dark:text-indigo-400 uppercase tracking-widest mb-4">
+            <p className="text-center text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">
               Saved Accounts
             </p>
             <div className="grid gap-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
