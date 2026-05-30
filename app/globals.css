@@ -28,9 +28,9 @@
   --foreground: #F9FAFB;
   
   --bg-portal: #0D0E12;      /* Futuristic rich dark charcoal background */
-  --bg-card: #181920;        /* Sleek charcoal card background */
-  --bg-subtle: #20222B;      /* Slightly lighter charcoal for tables/inputs */
-  --border-card: #2A2C38;    /* Clean dark slate border outline */
+  --bg-card: #1E2030;        /* Sleek visible charcoal-blue card background */
+  --bg-subtle: #26293C;      /* Slightly lighter charcoal-blue for tables/inputs */
+  --border-card: #3C405C;    /* Clean visible slate-blue border outline */
   --text-title: #FFFFFF;     /* Bright high-contrast white headers */
   --text-desc: #E2E8F0;      /* Near-white silver for extremely easy reading */
   --text-muted: #94A3B8;     /* Slate-400 for subtext and labels */
@@ -99,6 +99,16 @@ body {
   border-color: var(--border-card) !important;
 }
 
+/* Fix translucent glass/dark backgrounds to use theme colors with transparency */
+.dark .bg-slate-950\/40,
+.dark .bg-slate-900\/40,
+.dark .bg-slate-950\/50,
+.dark .bg-slate-900\/50,
+.dark .bg-white\/5,
+.dark .bg-white\/10 {
+  background-color: rgba(30, 32, 48, 0.4) !important;
+}
+
 /* Map light-gray backgrounds to dark-subtle in dark mode */
 .dark .bg-slate-50, 
 .dark .bg-gray-50, 
@@ -133,10 +143,17 @@ body {
 .dark .border-slate-200,
 .dark .border-slate-200\/50,
 .dark .border-slate-300,
+.dark .border-slate-800,
+.dark .border-slate-800\/50,
+.dark .border-slate-900,
+.dark .border-slate-900\/50,
+.dark .border-slate-950,
 .dark .border-gray-50,
 .dark .border-gray-100, 
 .dark .border-gray-200,
-.dark .border-gray-300 {
+.dark .border-gray-300,
+.dark .border-gray-800,
+.dark .border-gray-900 {
   border-color: var(--border-card) !important;
 }
 
@@ -287,10 +304,10 @@ body {
   
   /* Fallback to high-performance solid color backgrounds for cards and modals */
   .bg-slate-950\/40 {
-    background-color: #05070e !important;
+    background-color: #1E2030 !important;
   }
   .bg-white\/5 {
-    background-color: #1a1e36 !important;
+    background-color: #26293C !important;
   }
 
   /* Disable expensive background blur filters and decoration glow blobs on mobile to eliminate paint/redraw lag */

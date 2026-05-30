@@ -22,18 +22,9 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 });
 
 async function run() {
-  console.log('=== SUBJECTS ===');
-  const { data: subjects } = await supabase.from('subjects').select('*');
-  console.log(subjects);
-
-  console.log('\n=== STUDENT_CLASSES ===');
-  const { data: studentClasses } = await supabase.from('student_classes').select('*');
-  console.log(studentClasses);
-
-  console.log('\n=== RECENT NOTIFICATIONS ===');
-  const { data: notifications, error: nErr } = await supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(10);
-  if (nErr) console.error("Error fetching notifications:", nErr);
-  else console.log(notifications);
+  const { data: profiles, error } = await supabase.from('profiles').select('id, full_name, role, drive_folder_id').eq('role', 'teacher');
+  if (error) console.error(error);
+  else console.log(profiles);
 }
 
 run();

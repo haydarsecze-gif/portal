@@ -149,7 +149,7 @@ export default function ResetPassword() {
         /* STAGE 2: Password Update Form */
         <form 
           onSubmit={handleReset}
-          className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
+          className="bg-bg-card border border-border-card p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-350 dark:hover:border-slate-800 transition-all duration-500 animate-in zoom-in-95 duration-300"
         >
           <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-800 dark:text-slate-100 mb-1">
             Reset Pass
@@ -220,7 +220,7 @@ export default function ResetPassword() {
         /* STAGE 1: Request Recovery Link Form */
         <form 
           onSubmit={handleSendResetLink}
-          className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
+          className="bg-bg-card border border-border-card p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-350 dark:hover:border-slate-800 transition-all duration-500 animate-in zoom-in-95 duration-300"
         >
           <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-800 dark:text-slate-100 mb-1">
             Recovery

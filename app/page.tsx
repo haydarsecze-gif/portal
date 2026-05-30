@@ -93,7 +93,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Glassmorphic Portal Gateway Container */}
-      <div className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.4)] dark:shadow-indigo-950/10 w-full max-w-[380px] text-center relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300">
+      <div className="bg-bg-card border border-border-card p-10 md:p-12 rounded-[3.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.45)] w-full max-w-[380px] text-center relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300">
         
         {/* Glow behind logo */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-indigo-600/25 rounded-full blur-xl pointer-events-none" />
