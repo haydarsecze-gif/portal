@@ -849,6 +849,70 @@ export default function AdminCurriculum() {
         </div>
       )}
 
+      {/* Dynamic Confirmation/Alert Modal */}
+      {alertConfig.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-[9999] animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-md shadow-2xl relative border border-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                alertConfig.type === 'warning' ? 'bg-amber-50 text-amber-500' :
+                alertConfig.type === 'error' ? 'bg-red-50 text-red-500' :
+                alertConfig.type === 'success' ? 'bg-emerald-50 text-emerald-500' :
+                'bg-blue-50 text-blue-500'
+              }`}>
+                {alertConfig.type === 'warning' ? <ShieldAlert size={28} /> :
+                 alertConfig.type === 'error' ? <AlertCircle size={28} /> :
+                 alertConfig.type === 'success' ? <CheckCircle2 size={28} /> :
+                 <BookOpen size={28} />}
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{alertConfig.title}</h3>
+                <p className="text-xs font-bold text-slate-500 mt-2 leading-relaxed">{alertConfig.message}</p>
+              </div>
+
+              <div className="flex gap-3 w-full mt-4">
+                {alertConfig.isConfirm ? (
+                  <>
+                    <button 
+                      onClick={() => {
+                        if (alertConfig.onCancel) alertConfig.onCancel();
+                        else setAlertConfig(prev => ({ ...prev, isOpen: false }));
+                      }}
+                      className="flex-1 py-4 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer border border-slate-100"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (alertConfig.onConfirm) alertConfig.onConfirm();
+                      }}
+                      className={`flex-1 py-4 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer shadow-lg ${
+                        alertConfig.type === 'warning' ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/10' :
+                        alertConfig.type === 'error' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/10' :
+                        'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/10'
+                      }`}
+                    >
+                      Confirm
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      if (alertConfig.onConfirm) alertConfig.onConfirm();
+                      else setAlertConfig(prev => ({ ...prev, isOpen: false }));
+                    }}
+                    className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all cursor-pointer"
+                  >
+                    Acknowledge
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modern custom notification toast overlay */}
       {notification && (
         <div className="fixed bottom-8 right-8 z-[10000] animate-in slide-in-from-bottom-5 fade-in duration-300">
