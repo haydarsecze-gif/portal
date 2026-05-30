@@ -35,14 +35,6 @@ const client = createClient(
   }
 )
 
-// Wrap the original signOut to automatically run nukeSession!
-const originalSignOut = client.auth.signOut.bind(client.auth)
-client.auth.signOut = async (options?: any) => {
-  const res = await originalSignOut(options)
-  nukeSession()
-  return res
-}
-
 export const supabase = client
 
 /**

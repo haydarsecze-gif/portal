@@ -97,7 +97,6 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     setIsOpen(false)
     try {
       await supabase.auth.signOut()
-      nukeSession() // Completely nuke leftover cookies/tokens to prevent cross-account contamination!
 
       // Password-only authentication — no token fallback (tokens cause cross-account contamination)
       if (!targetAccount.password) {
