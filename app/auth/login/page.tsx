@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '../../../lib/supabase'
+import { supabase, nukeSession } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Loader2, Mail, Lock, LogIn, ArrowLeft, RefreshCw } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
@@ -61,6 +61,7 @@ export default function Login() {
     setLoading(true)
     setMessage('')
     
+    nukeSession() // Completely nuke leftover cookies/tokens BEFORE signing in as a different user!
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     
     if (error) {
@@ -131,6 +132,7 @@ export default function Login() {
         throw new Error('Saved password is invalid. Please type your password below to log in.')
       }
 
+      nukeSession() // Completely nuke leftover cookies/tokens BEFORE signing in as a different user!
       const { data, error } = await supabase.auth.signInWithPassword({
         email: acc.email,
         password: decPassword

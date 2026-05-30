@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, nukeSession } from '@/lib/supabase'
 import { User, Users, LogOut, Loader2, Plus, Trash2, Check, Sparkles, ChevronDown } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -97,6 +97,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     setIsOpen(false)
     try {
       await supabase.auth.signOut()
+      nukeSession() // Completely nuke leftover cookies/tokens to prevent cross-account contamination!
 
       // Password-only authentication — no token fallback (tokens cause cross-account contamination)
       if (!targetAccount.password) {
@@ -197,11 +198,13 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
 
   const handleAddNewAccount = async () => {
     await supabase.auth.signOut()
+    nukeSession() // Completely nuke leftover cookies/tokens
     window.location.href = '/auth/login'
   }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    nukeSession() // Completely nuke leftover cookies/tokens
     window.location.href = '/auth/login'
   }
 

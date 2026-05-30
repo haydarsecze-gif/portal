@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 
 // Safe fallbacks to prevent Next.js build-time module evaluation crashes on Vercel if variables are missing
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
@@ -9,10 +9,64 @@ const resolvedUrl = typeof window !== 'undefined'
   ? `${window.location.origin}/_supabase` 
   : supabaseUrl
 
-// ✅ Only public client (safe for browser)
-export const supabase = createBrowserClient(
+// Explicitly use the real project ref derived from standard Supabase URL
+// aqvpwhubbytjzcdsfvhc is the project ref for https://aqvpwhubbytjzcdsfvhc.supabase.co
+const projectRef = 'aqvpwhubbytjzcdsfvhc'
+
+// ✅ Only public client (safe for browser) using clean localStorage-based session tracking
+export const supabase = createClient(
   resolvedUrl,
-  supabaseAnonKey
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: `sb-${projectRef}-auth-token`,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  }
 )
 
-// We will create admin functions later using Server Components / API Routes
+/**
+ * Completely purges all possible Supabase session storage, cookies, and tokens
+ * from the browser client to prevent cross-account session contamination.
+ */
+export const nukeSession = () => {
+  if (typeof window === 'undefined') return
+  
+  // 1. Clear all localStorage keys starting with 'sb-' or containing 'supabase'
+  try {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('sb-') || key.toLowerCase().includes('supabase')) {
+        localStorage.removeItem(key)
+      }
+    })
+  } catch (e) {
+    console.error('Error clearing localStorage:', e)
+  }
+
+  // 2. Clear all sessionStorage keys starting with 'sb-' or containing 'supabase'
+  try {
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('sb-') || key.toLowerCase().includes('supabase')) {
+        sessionStorage.removeItem(key)
+      }
+    })
+  } catch (e) {
+    console.error('Error clearing sessionStorage:', e)
+  }
+
+  // 3. Clear all browser cookies starting with 'sb-' or containing 'supabase'
+  try {
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0]
+      if (name.startsWith("sb-") || name.toLowerCase().includes("supabase")) {
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname};`
+      }
+    })
+  } catch (e) {
+    console.error('Error clearing cookies:', e)
+  }
+}

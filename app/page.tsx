@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase, nukeSession } from '@/lib/supabase'
 import { Loader2, Database, ArrowRight, LogOut, RefreshCw, Share, PlusSquare, Smartphone, X } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
@@ -56,6 +56,7 @@ export default function Home() {
     setChecking(true)
     try {
       await supabase.auth.signOut()
+      nukeSession() // Completely nuke leftover cookies/tokens
       setProfile(null)
     } catch (e) {
       console.error("Sign out error:", e)
