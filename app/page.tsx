@@ -2,13 +2,14 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, Database, ArrowRight, User, LogOut, RefreshCw } from 'lucide-react'
+import { Loader2, Database, ArrowRight, User, LogOut, RefreshCw, Share, PlusSquare, Smartphone, X } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
   const [profile, setProfile] = useState<any>(null)
+  const [showIosInstructions, setShowIosInstructions] = useState(false)
 
   useEffect(() => {
     const checkUser = async () => {
@@ -168,7 +169,93 @@ export default function Home() {
         <p className="mt-10 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
           Secured Campus Network System
         </p>
+
+        <button
+          onClick={() => setShowIosInstructions(true)}
+          className="mt-6 text-[9px] font-black text-indigo-400/80 hover:text-indigo-300 uppercase tracking-widest cursor-pointer underline decoration-indigo-500/20 hover:decoration-indigo-500 transition duration-300 block mx-auto"
+        >
+          Want it as an app on iOS?
+        </button>
       </div>
+
+      {showIosInstructions && (
+        <div 
+          className="fixed inset-0 bg-[#020308]/80 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" 
+          onClick={() => setShowIosInstructions(false)}
+        >
+          <div 
+            className="bg-slate-950/90 border border-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] w-full max-w-sm relative text-center shadow-2xl shadow-indigo-950/20 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowIosInstructions(false)}
+              className="absolute top-5 right-5 text-slate-500 hover:text-slate-200 p-2 rounded-xl transition duration-200 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/5">
+              <Smartphone size={22} />
+            </div>
+
+            <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider mb-1">Install on iOS (iPhone)</h3>
+            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6">Run as a Standalone App</p>
+
+            <div className="space-y-4 text-left mb-6">
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  1
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Open in Safari Browser</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Ensure you are visiting this portal in Apple's native Safari browser.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  2
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
+                    Tap the Share Button <Share size={12} className="text-indigo-400 shrink-0" />
+                  </p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Tap the Share icon at the bottom of the screen (or top on iPad).</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  3
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
+                    Select Add to Home Screen <PlusSquare size={12} className="text-indigo-400 shrink-0" />
+                  </p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Scroll down the share list and select "Add to Home Screen".</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  4
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Tap "Add" in the Corner</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-555 font-bold uppercase tracking-wider mt-0.5 leading-normal">Confirm the app name and tap Add in the top-right corner to install.</p>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowIosInstructions(false)}
+              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition shadow-md cursor-pointer"
+            >
+              Got It
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
