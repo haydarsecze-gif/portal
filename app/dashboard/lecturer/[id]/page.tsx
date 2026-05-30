@@ -248,20 +248,43 @@ export default function SubjectDetail() {
             formDataPayload.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
             formDataPayload.append('file', f)
 
-            const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`
-              },
-              body: formDataPayload
+            const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
+              const xhr = new XMLHttpRequest()
+              xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart')
+              xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`)
+              
+              xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                  const fileUploaded = e.loaded
+                  const currentTotal = totalUploaded + fileUploaded
+                  const pct = Math.min(Math.round((currentTotal / totalSize) * 98), 98)
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [tempId]: { ...prev[tempId], progress: pct }
+                  }))
+                }
+              }
+
+              xhr.onload = () => {
+                resolve({
+                  status: xhr.status,
+                  ok: xhr.status >= 200 && xhr.status < 300,
+                  responseText: xhr.responseText
+                })
+              }
+
+              xhr.onerror = () => {
+                reject(new Error(`Network upload failed for "${f.name}".`))
+              }
+
+              xhr.send(formDataPayload)
             })
 
-            if (!uploadRes.ok) {
-              const errText = await uploadRes.text()
-              throw new Error(`File upload failed for "${f.name}": ${errText}`)
+            if (!uploadResult.ok) {
+              throw new Error(`File upload failed for "${f.name}" (Status ${uploadResult.status}): ${uploadResult.responseText}`)
             }
 
-            const uploadData = await uploadRes.json()
+            const uploadData = JSON.parse(uploadResult.responseText)
             const fileId = uploadData.id
 
             // Set anyone reader permission
@@ -631,9 +654,9 @@ export default function SubjectDetail() {
                             ? 'text-red-550'
                             : 'text-indigo-650'
                       }`}>
-                        {progressItem.status === 'success' && '✅ Upload Successful! saving log...'}
-                        {progressItem.status === 'failed' && `❌ Upload Failed: ${progressItem.error}`}
-                        {progressItem.status === 'uploading' && `⚡ Background Uploading (${progressItem.progress}%)`}
+                         {progressItem.status === 'success' && '✅ Upload Successful! saving log...'}
+                         {progressItem.status === 'failed' && `❌ Upload Failed: ${progressItem.error}`}
+                         {progressItem.status === 'uploading' && `⚡ Uploading... (${progressItem.progress}%)`}
                       </span>
                       {progressItem.status === 'failed' && (
                         <button 

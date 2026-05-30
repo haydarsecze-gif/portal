@@ -439,16 +439,40 @@ export default function StudentClassroom() {
             const chunkBlob = file.slice(uploadedBytes, chunkEnd);
             const chunkSize = chunkBlob.size;
 
-            const uploadRes = await fetch(uploadUrl, {
-              method: 'PUT',
-              headers: {
-                'Content-Length': String(chunkSize),
-                'Content-Range': `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`
-              },
-              body: chunkBlob
+            const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
+              const xhr = new XMLHttpRequest();
+              xhr.open('PUT', uploadUrl);
+              xhr.setRequestHeader('Content-Length', String(chunkSize));
+              xhr.setRequestHeader('Content-Range', `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`);
+              
+              xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                  const chunkUploaded = e.loaded;
+                  const currentTotal = totalUploadedBytes + chunkUploaded;
+                  const pct = Math.min(Math.round((currentTotal / totalSize) * 98), 98);
+                  setUploadProgress(prev => ({
+                    ...prev,
+                    [assignmentTitle]: { progress: pct, status: 'uploading' }
+                  }));
+                }
+              };
+
+              xhr.onload = () => {
+                resolve({
+                  status: xhr.status,
+                  ok: xhr.status >= 200 && xhr.status < 300,
+                  responseText: xhr.responseText
+                });
+              };
+
+              xhr.onerror = () => {
+                reject(new Error('Network upload failed.'));
+              };
+
+              xhr.send(chunkBlob);
             });
 
-            if (uploadRes.status === 308) {
+            if (uploadResult.status === 308) {
               // Intermediate chunk uploaded successfully!
               totalUploadedBytes += chunkSize;
               const pct = Math.round((totalUploadedBytes / totalSize) * 98);
@@ -457,7 +481,7 @@ export default function StudentClassroom() {
                 [assignmentTitle]: { progress: pct, status: 'uploading' }
               }));
               uploadedBytes = chunkEnd;
-            } else if (uploadRes.ok) {
+            } else if (uploadResult.ok) {
               // Final chunk uploaded successfully!
               totalUploadedBytes += chunkSize;
               const pct = Math.round((totalUploadedBytes / totalSize) * 98);
@@ -465,7 +489,7 @@ export default function StudentClassroom() {
                 ...prev,
                 [assignmentTitle]: { progress: pct, status: 'uploading' }
               }));
-              const uploadData = await uploadRes.json();
+              const uploadData = JSON.parse(uploadResult.responseText);
               const fileId = uploadData.id;
 
               // Set permission to anyone reader
@@ -501,8 +525,8 @@ export default function StudentClassroom() {
               uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
               uploadedBytes = totalBytes; // Complete
             } else {
-              const errText = await uploadRes.text();
-              throw new Error(`Chunk upload failed at byte ${uploadedBytes} (Status ${uploadRes.status}): ${errText}`);
+              const errText = uploadResult.responseText;
+              throw new Error(`Chunk upload failed at byte ${uploadedBytes} (Status ${uploadResult.status}): ${errText}`);
             }
           }
         }
@@ -758,7 +782,7 @@ export default function StudentClassroom() {
                         }`}>
                           {uploadProgress[item.title].status === 'success' && '✅ Submission Uploaded Successfully!'}
                           {uploadProgress[item.title].status === 'failed' && `❌ Upload Failed: ${uploadProgress[item.title].error}`}
-                          {uploadProgress[item.title].status === 'uploading' && `⚡ Background Uploading (${uploadProgress[item.title].progress}%)`}
+                          {uploadProgress[item.title].status === 'uploading' && `⚡ Uploading... (${uploadProgress[item.title].progress}%)`}
                         </span>
                         {uploadProgress[item.title].status !== 'uploading' && (
                           <button 
