@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, User, KeyRound, ArrowLeft, UserCheck, RefreshCw } from 'lucide-react'
+import { Loader2, Mail, Lock, User, KeyRound, ArrowLeft, UserCheck, RefreshCw, HelpCircle, X, Smartphone, Share, PlusSquare } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Register() {
@@ -14,6 +14,7 @@ export default function Register() {
   const [driveFolderId, setDriveFolderId] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [showDriveInstructions, setShowDriveInstructions] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -243,24 +244,15 @@ export default function Register() {
           {/* Drive Folder ID field (Lecturer only) */}
           {role === 'teacher' && (
             <div className="space-y-3 animate-in fade-in slide-in-from-top-3 duration-300">
-              <div className="bg-indigo-950/20 border border-indigo-900/60 p-5 rounded-2xl space-y-3">
-                <p className="text-[9.5px] font-black uppercase text-indigo-300 tracking-wider">Required Google Drive Setup</p>
-                
-                <div className="bg-indigo-950/40 p-3 rounded-xl border border-indigo-900/30">
-                  <p className="text-[8.5px] font-black uppercase tracking-widest text-indigo-300">💡 Auto-Organization</p>
-                  <p className="text-[9px] font-medium text-indigo-400/95 leading-normal mt-1">
-                    You only need to create <strong className="font-extrabold text-indigo-300">one main root folder</strong>. The portal will automatically create subfolders inside it for each of your <strong className="font-extrabold text-indigo-300">Subjects</strong>, folders for each <strong className="font-extrabold text-indigo-300">Assignment/Material</strong>, and nested folders with the <strong className="font-extrabold text-indigo-300">Student's Name</strong> for their submissions.
-                  </p>
-                </div>
-
-                <ol className="text-[9.5px] font-bold text-indigo-400/90 leading-relaxed list-decimal pl-4 space-y-1.5">
-                  <li>Create <strong className="font-extrabold text-indigo-300">1 main folder</strong> (e.g. <i>"Limkokwing Coursework"</i>) in your personal or work Google Drive.</li>
-                  <li>Share it with Editor access to our service email: <span className="block font-black select-all mt-1 bg-white/5 dark:bg-slate-950/50 p-1.5 rounded-lg border border-indigo-900/40 break-all text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span></li>
-                  <li>Copy the Folder ID from the URL (the string after <code className="bg-indigo-950 px-1 py-0.5 rounded">folders/</code>) and paste it below.</li>
-                </ol>
-                <p className="text-[8px] font-black text-indigo-500 uppercase tracking-wider leading-normal mt-2">
-                  ⚠️ Note: If your work/school Drive restricts sharing with outside accounts, please use a personal Google Drive instead.
-                </p>
+              <div className="flex justify-between items-center px-1">
+                <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">Google Drive Folder ID</span>
+                <button
+                  type="button"
+                  onClick={() => setShowDriveInstructions(true)}
+                  className="text-[9px] font-black text-indigo-400 hover:text-indigo-350 uppercase tracking-widest flex items-center gap-1 cursor-pointer bg-indigo-950/40 border border-indigo-900/40 px-2.5 py-1 rounded-lg transition"
+                >
+                  <HelpCircle size={10} /> Setup Guide
+                </button>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-400 group-focus-within:text-indigo-350 transition-colors">
@@ -324,6 +316,91 @@ export default function Register() {
           Joined before? <a href="/auth/login" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors ml-1 font-black">Sign In</a>
         </p>
       </form>
+
+      {showDriveInstructions && (
+        <div 
+          className="fixed inset-0 bg-[#020308]/85 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" 
+          onClick={() => setShowDriveInstructions(false)}
+        >
+          <div 
+            className="bg-slate-950/95 border border-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] w-full max-w-md relative text-center shadow-2xl shadow-indigo-950/20 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowDriveInstructions(false)}
+              className="absolute top-5 right-5 text-slate-500 hover:text-slate-200 p-2 rounded-xl transition duration-200 cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+
+            <div className="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/5">
+              <Smartphone size={22} />
+            </div>
+
+            <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider mb-1">Required Google Drive Setup</h3>
+            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6">Lecturer Folder Configuration</p>
+
+            <div className="bg-indigo-950/40 p-4 rounded-xl border border-indigo-900/30 text-left mb-5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-300">💡 Auto-Organization</p>
+              <p className="text-[9.5px] font-medium text-indigo-400/90 leading-relaxed mt-1">
+                You only need to create <strong className="font-extrabold text-indigo-300">one main root folder</strong>. The system will automatically create and organize subfolders inside it for your <strong className="font-extrabold text-indigo-300">Subjects</strong>, coursework <strong className="font-extrabold text-indigo-300">Assignments/Materials</strong>, and nested folders with <strong className="font-extrabold text-indigo-300">Student Names</strong> for submissions.
+              </p>
+            </div>
+
+            <div className="space-y-4 text-left mb-6">
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  1
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Create 1 Main Folder</p>
+                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
+                    Create exactly one folder (e.g. <i>"Limkokwing Coursework"</i>) in your personal or work Google Drive.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  2
+                </div>
+                <div className="w-full min-w-0">
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Share as Editor</p>
+                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
+                    Share this folder with Editor access to our secure service email:
+                  </p>
+                  <span className="block font-black select-all bg-indigo-950 p-2 rounded-lg border border-indigo-900/60 break-all text-indigo-300 text-[8.5px] leading-tight font-mono">
+                    student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                  3
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Paste Folder ID</p>
+                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
+                    Copy the ID string from your folder's browser URL (the long code after <code className="bg-indigo-950 px-1 py-0.5 rounded text-[8px]">folders/</code>) and paste it into the field.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[8.5px] font-bold text-amber-500 uppercase tracking-wide leading-normal text-left mb-6 bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl">
+              ⚠️ Note: If your work/school Drive restricts sharing with outside accounts, please use a personal Google Drive instead.
+            </p>
+
+            <button 
+              onClick={() => setShowDriveInstructions(false)}
+              className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition shadow-md cursor-pointer"
+            >
+              Close Setup Guide
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
