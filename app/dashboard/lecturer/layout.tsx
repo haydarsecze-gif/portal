@@ -15,6 +15,7 @@ export default function LecturerDashboardLayout({
   const [isApproved, setIsApproved] = useState<boolean | null>(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const verifiedUserIdRef = useRef<string | null>(null)
+  const isCheckingRef = useRef(false)
 
   const handleSignOut = async () => {
     try {
@@ -29,6 +30,8 @@ export default function LecturerDashboardLayout({
   }
 
   const verifyLecturerSession = async (active = true) => {
+    if (isCheckingRef.current) return verifiedUserIdRef.current
+    isCheckingRef.current = true
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.user) {
@@ -102,6 +105,8 @@ export default function LecturerDashboardLayout({
         setLoading(false)
       }
       return null
+    } finally {
+      isCheckingRef.current = false
     }
   }
 
