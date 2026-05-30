@@ -107,6 +107,7 @@ export default function LecturerDashboard() {
   }
 
   useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData(true) 
   }, [fetchData])
 
@@ -381,7 +382,7 @@ export default function LecturerDashboard() {
                 <div>
                   <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Create 1 Main Folder</p>
                   <p className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
-                    Create exactly one folder (e.g. <i>"Limkokwing Coursework"</i>) in your personal or work Google Drive.
+                    Create exactly one folder (e.g. <i>&quot;Limkokwing Coursework&quot;</i>) in your personal or work Google Drive.
                   </p>
                 </div>
               </div>
@@ -408,7 +409,7 @@ export default function LecturerDashboard() {
                 <div>
                   <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Paste Folder ID</p>
                   <p className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
-                    Copy the ID string from your folder's browser URL (the long code after <code className="bg-indigo-50 dark:bg-indigo-950 px-1 py-0.5 rounded text-[8px]">folders/</code>) and paste it into the field.
+                    Copy the ID string from your folder&apos;s browser URL (the long code after <code className="bg-indigo-50 dark:bg-indigo-950 px-1 py-0.5 rounded text-[8px]">folders/</code>) and paste it into the field.
                   </p>
                 </div>
               </div>

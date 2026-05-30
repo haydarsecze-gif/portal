@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 import { 
@@ -68,38 +68,8 @@ export default function AttendanceTab({ classId }: { classId: string }) {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (classId) fetchData()
-  }, [classId])
-
-  useEffect(() => {
-    function handleScrollOrClickOutside(event: Event) {
-      if (!activeDropdown) return
-
-      // If it's a mousedown event, check if we clicked inside the portal dropdown
-      if (event.type === 'mousedown') {
-        const mouseEvent = event as MouseEvent
-        const dropdownEl = document.getElementById('attendance-dropdown-portal')
-        if (dropdownEl && dropdownEl.contains(mouseEvent.target as Node)) {
-          return
-        }
-      }
-      setActiveDropdown(null)
-    }
-
-    document.addEventListener("mousedown", handleScrollOrClickOutside)
-    window.addEventListener("scroll", handleScrollOrClickOutside, true) // capture phase to catch horizontal table scroll too
-    window.addEventListener("resize", handleScrollOrClickOutside)
-
-    return () => {
-      document.removeEventListener("mousedown", handleScrollOrClickOutside)
-      window.removeEventListener("scroll", handleScrollOrClickOutside, true)
-      window.removeEventListener("resize", handleScrollOrClickOutside)
-    }
-  }, [activeDropdown])
-
   // FIXED: Fetches roster from student_classes mapping to prevent out-of-sync loads
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       // 1. Fetch cross-reference student IDs enrolled in this subject track UUID
@@ -158,7 +128,39 @@ export default function AttendanceTab({ classId }: { classId: string }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [classId])
+
+  useEffect(() => {
+    if (classId) fetchData()
+  }, [classId, fetchData])
+
+  useEffect(() => {
+    function handleScrollOrClickOutside(event: Event) {
+      if (!activeDropdown) return
+
+      // If it's a mousedown event, check if we clicked inside the portal dropdown
+      if (event.type === 'mousedown') {
+        const mouseEvent = event as MouseEvent
+        const dropdownEl = document.getElementById('attendance-dropdown-portal')
+        if (dropdownEl && dropdownEl.contains(mouseEvent.target as Node)) {
+          return
+        }
+      }
+      setActiveDropdown(null)
+    }
+
+    document.addEventListener("mousedown", handleScrollOrClickOutside)
+    window.addEventListener("scroll", handleScrollOrClickOutside, true) // capture phase to catch horizontal table scroll too
+    window.addEventListener("resize", handleScrollOrClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleScrollOrClickOutside)
+      window.removeEventListener("scroll", handleScrollOrClickOutside, true)
+      window.removeEventListener("resize", handleScrollOrClickOutside)
+    }
+  }, [activeDropdown])
+
+
 
   const handleStatusChange = (studentId: string, week: number, newStatus: string) => {
     setAttendanceData(prev => ({

@@ -798,7 +798,7 @@ export default function StudentClassroom() {
                   <div>
                     <p className="text-[9px] font-black uppercase text-amber-700 tracking-wider">Required Location Settings</p>
                     <p className="text-[10px] font-bold text-amber-600 leading-normal mt-0.5">
-                      When your system prompts, you **must** select <span className="underline font-black">Precise (Exact Location)</span> and choose <span className="underline font-black">Allow while visiting the site</span>. Choosing "Approximate" will fail the 200m campus verification.
+                      When your system prompts, you **must** select <span className="underline font-black">Precise (Exact Location)</span> and choose <span className="underline font-black">Allow while visiting the site</span>. Choosing &quot;Approximate&quot; will fail the 200m campus verification.
                     </p>
                   </div>
                 </div>

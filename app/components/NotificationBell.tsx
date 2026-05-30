@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X } from 'lucide-react'
@@ -11,6 +11,23 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
   const [userId, setUserId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const fetchNotifications = useCallback(async (uId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .or(`user_id.eq.${uId},user_id.is.null`)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) throw error
+      setNotifications(data || [])
+      setUnreadCount((data || []).filter((n: any) => !n.is_read).length)
+    } catch (err) {
+      console.error('Error fetching notifications:', err)
+    }
+  }, [])
 
   useEffect(() => {
     // 1. Get current logged in user profile
@@ -31,7 +48,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [fetchNotifications])
 
   useEffect(() => {
     if (!userId) return
@@ -86,24 +103,9 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
       fetchNotifications(userId)
     }, 10000)
     return () => clearInterval(interval)
-  }, [userId])
+  }, [userId, fetchNotifications])
 
-  const fetchNotifications = async (uId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .or(`user_id.eq.${uId},user_id.is.null`)
-        .order('created_at', { ascending: false })
-        .limit(20)
 
-      if (error) throw error
-      setNotifications(data || [])
-      setUnreadCount((data || []).filter((n: any) => !n.is_read).length)
-    } catch (err) {
-      console.error('Error fetching notifications:', err)
-    }
-  }
 
   const handleToggle = () => {
     setIsOpen(!isOpen)

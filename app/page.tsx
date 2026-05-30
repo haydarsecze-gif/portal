@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Loader2, Database, ArrowRight, User, LogOut, RefreshCw, Share, PlusSquare, Smartphone, X } from 'lucide-react'
+import { Loader2, Database, ArrowRight, LogOut, RefreshCw, Share, PlusSquare, Smartphone, X } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Home() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null)
   const [showIosInstructions, setShowIosInstructions] = useState(false)
 
@@ -34,7 +35,7 @@ export default function Home() {
           .single()
 
         setProfile(prof)
-      } catch (e) { 
+      } catch { 
         setProfile(null) 
       } finally {
         clearTimeout(timer)
@@ -208,7 +209,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Open in Safari Browser</p>
-                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Ensure you are visiting this portal in Apple's native Safari browser.</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Ensure you are visiting this portal in Apple&apos;s native Safari browser.</p>
                 </div>
               </div>
 
@@ -232,7 +233,7 @@ export default function Home() {
                   <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
                     Select Add to Home Screen <PlusSquare size={12} className="text-indigo-400 shrink-0" />
                   </p>
-                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Scroll down the share list and select "Add to Home Screen".</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-normal">Scroll down the share list and select &quot;Add to Home Screen&quot;.</p>
                 </div>
               </div>
 
@@ -241,7 +242,7 @@ export default function Home() {
                   4
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Tap "Add" in the Corner</p>
+                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Tap &quot;Add&quot; in the Corner</p>
                   <p className="text-[9px] text-slate-400 dark:text-slate-555 font-bold uppercase tracking-wider mt-0.5 leading-normal">Confirm the app name and tap Add in the top-right corner to install.</p>
                 </div>
               </div>
