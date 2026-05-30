@@ -162,39 +162,43 @@ export default function ContentModal({
           subjectFolderId = await trySearchAndCreate(targetParentId)
         } catch (e: any) {
           if (e.message === 'access_denied' && targetParentId !== parentFolderId) {
-            console.warn(`Lecturer folder ${targetParentId} is inaccessible. Falling back to default app folder.`)
-            fallbackUsed = true
-            targetParentId = parentFolderId
-            subjectFolderId = await trySearchAndCreate(parentFolderId)
+            console.warn(`Lecturer folder ${targetParentId} is inaccessible. Attempting synchronous repair...`)
+            let repairedId = null
+            
+            if (user) {
+              try {
+                const { data: p } = await supabase.from('profiles').select('full_name, email').eq('id', user.id).single()
+                if (p && p.email) {
+                  const autoRes = await fetch('/api/drive/setup-lecturer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lecturerName: p.full_name, lecturerEmail: p.email })
+                  })
+                  const autoData = await autoRes.json()
+                  if (autoRes.ok && autoData.folderId) {
+                    await supabase
+                      .from('profiles')
+                      .update({ drive_folder_id: autoData.folderId })
+                      .eq('id', user.id)
+                    repairedId = autoData.folderId
+                    console.log(`Successfully repaired inaccessible drive folder ID for lecturer ${p.full_name}. New folder: ${repairedId}`)
+                  }
+                }
+              } catch (repairErr) {
+                console.error("Failed to synchronously repair lecturer drive:", repairErr)
+              }
+            }
+
+            if (repairedId) {
+              targetParentId = repairedId
+            } else {
+              targetParentId = parentFolderId
+            }
+
+            subjectFolderId = await trySearchAndCreate(targetParentId)
           } else {
             throw e
           }
-        }
-
-        if (fallbackUsed && user) {
-          // Trigger background auto-setup to repair their drive_folder_id for future uploads!
-          (async () => {
-            try {
-              const { data: p } = await supabase.from('profiles').select('full_name, email').eq('id', user.id).single()
-              if (p && p.email) {
-                const autoRes = await fetch('/api/drive/setup-lecturer', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ lecturerName: p.full_name, lecturerEmail: p.email })
-                })
-                const autoData = await autoRes.json()
-                if (autoRes.ok && autoData.folderId) {
-                  await supabase
-                    .from('profiles')
-                    .update({ drive_folder_id: autoData.folderId })
-                    .eq('id', user.id)
-                  console.log(`Successfully repaired inaccessible drive folder ID for lecturer ${p.full_name}. New folder: ${autoData.folderId}`)
-                }
-              }
-            } catch (repairErr) {
-              console.error("Failed to automatically repair lecturer drive:", repairErr)
-            }
-          })()
         }
 
         // If we found or created the subject folder, nest the coursework folder inside it
