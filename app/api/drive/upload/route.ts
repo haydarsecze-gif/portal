@@ -1,8 +1,65 @@
+import { createClient } from '@supabase/supabase-js';
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
-import { Readable } from 'stream';
 
 export const maxDuration = 60; // Allow up to 60 seconds for file uploads to Google Drive to complete safely
+
+async function resolveLecturerCredentials(targetFolderId: string) {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+
+    // 1. Try to find in assignments
+    const { data: assignment } = await supabase
+      .from('assignments')
+      .select('class_id')
+      .eq('folder_id', targetFolderId)
+      .maybeSingle();
+
+    let classId = assignment?.class_id;
+
+    // 2. If not found in assignments, try materials
+    if (!classId) {
+      const { data: material } = await supabase
+        .from('materials')
+        .select('class_id')
+        .eq('folder_id', targetFolderId)
+        .maybeSingle();
+      classId = material?.class_id;
+    }
+
+    if (classId) {
+      // 3. Find the teacher from the classes table
+      const { data: classRecord } = await supabase
+        .from('classes')
+        .select('teacher_id')
+        .eq('id', classId)
+        .maybeSingle();
+
+      if (classRecord?.teacher_id) {
+        // 4. Retrieve the lecturer's profile
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('google_refresh_token, drive_folder_id')
+          .eq('id', classRecord.teacher_id)
+          .maybeSingle();
+
+        if (profile && profile.google_refresh_token) {
+          return {
+            refreshToken: profile.google_refresh_token,
+            parentFolderId: profile.drive_folder_id
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error resolving lecturer credentials:', err);
+  }
+  return null;
+}
 
 export async function POST(req: Request) {
   try {
@@ -16,9 +73,17 @@ export async function POST(req: Request) {
     if (clientSecret.startsWith("'") || clientSecret.startsWith('"')) {
       clientSecret = clientSecret.substring(1, clientSecret.length - 1);
     }
-    let refreshToken = process.env.GOOGLE_REFRESH_TOKEN || '';
-    if (refreshToken.startsWith("'") || refreshToken.startsWith('"')) {
-      refreshToken = refreshToken.substring(1, refreshToken.length - 1);
+
+    // Dynamic credentials lookup
+    let refreshToken = '';
+    const lecturerCreds = await resolveLecturerCredentials(targetFolderId);
+    if (lecturerCreds && lecturerCreds.refreshToken) {
+      refreshToken = lecturerCreds.refreshToken;
+    } else {
+      refreshToken = process.env.GOOGLE_REFRESH_TOKEN || '';
+      if (refreshToken.startsWith("'") || refreshToken.startsWith('"')) {
+        refreshToken = refreshToken.substring(1, refreshToken.length - 1);
+      }
     }
 
     if (!clientId || !clientSecret || !refreshToken) {

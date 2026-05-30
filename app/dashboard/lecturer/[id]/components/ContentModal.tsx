@@ -70,7 +70,13 @@ export default function ContentModal({
 
       if (files.length > 0) {
         // 1. Fetch OAuth2 access token and root folder ID
-        const tokenRes = await fetch('/api/drive/token')
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+        const headers: HeadersInit = {}
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+        const tokenRes = await fetch('/api/drive/token', { headers })
         const tokenData = await tokenRes.json()
         if (!tokenRes.ok || tokenData.error) {
           throw new Error(tokenData.error || 'Failed to retrieve Google Drive upload session.')

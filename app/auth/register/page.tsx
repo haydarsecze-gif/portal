@@ -374,76 +374,76 @@ export default function Register() {
 
       {showDriveInstructions && (
         <div 
-          className="fixed inset-0 bg-[#020308]/85 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" 
+          className="fixed inset-0 bg-[#020308]/60 dark:bg-[#020308]/85 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" 
           onClick={() => setShowDriveInstructions(false)}
         >
           <div 
-            className="bg-slate-950/95 border border-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] w-full max-w-md relative text-center shadow-2xl shadow-indigo-950/20 animate-in zoom-in-95 duration-200"
+            className="bg-white/95 dark:bg-slate-950/95 border border-slate-150 dark:border-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] w-full max-w-md relative text-center shadow-2xl shadow-indigo-950/5 dark:shadow-indigo-950/20 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               onClick={() => setShowDriveInstructions(false)}
-              className="absolute top-5 right-5 text-slate-500 hover:text-slate-200 p-2 rounded-xl transition duration-200 cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-xl transition duration-200 cursor-pointer"
             >
               <X size={16} />
             </button>
 
-            <div className="w-12 h-12 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/5">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/5">
               <Smartphone size={22} />
             </div>
 
-            <h3 className="text-sm font-black text-slate-100 uppercase tracking-wider mb-1">Required Google Drive Setup</h3>
-            <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-[0.2em] mb-6">Lecturer Folder Configuration</p>
+            <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-1">Required Google Drive Setup</h3>
+            <p className="text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] mb-6">Lecturer Folder Configuration</p>
 
-            <div className="bg-indigo-950/40 p-4 rounded-xl border border-indigo-900/30 text-left mb-5">
-              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-300">💡 Auto-Organization</p>
-              <p className="text-[9.5px] font-medium text-indigo-400/90 leading-relaxed mt-1">
-                You only need to create <strong className="font-extrabold text-indigo-300">one main root folder</strong>. The system will automatically create and organize subfolders inside it for your <strong className="font-extrabold text-indigo-300">Subjects</strong>, coursework <strong className="font-extrabold text-indigo-300">Assignments/Materials</strong>, and nested folders with <strong className="font-extrabold text-indigo-300">Student Names</strong> for submissions.
+            <div className="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 text-left mb-5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300">💡 Auto-Organization</p>
+              <p className="text-[9.5px] font-medium text-indigo-600/90 dark:text-indigo-400/90 leading-relaxed mt-1">
+                You only need to create <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">one main root folder</strong>. The system will automatically create and organize subfolders inside it for your <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">Subjects</strong>, coursework <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">Assignments/Materials</strong>, and nested folders with <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">Student Names</strong> for submissions.
               </p>
             </div>
 
             <div className="space-y-4 text-left mb-6">
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
                   1
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Create 1 Main Folder</p>
-                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
+                  <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Create 1 Main Folder</p>
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5 leading-normal">
                     Create exactly one folder (e.g. <i>"Limkokwing Coursework"</i>) in your personal or work Google Drive.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
                   2
                 </div>
                 <div className="w-full min-w-0">
-                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Share as Editor</p>
-                  <p className="text-[9px] text-slate-455 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
+                  <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Share as Editor</p>
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
                     Share this folder with Editor access to our secure service email:
                   </p>
-                  <span className="block font-black select-all bg-indigo-950 p-2 rounded-lg border border-indigo-900/60 break-all text-indigo-300 text-[8.5px] leading-tight font-mono">
+                  <span className="block font-black select-all bg-indigo-50 dark:bg-indigo-950 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900/60 break-all text-indigo-600 dark:text-indigo-300 text-[8.5px] leading-tight font-mono">
                     {connectedDriveEmail || 'student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com'}
                   </span>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
                   3
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Paste Folder ID</p>
-                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
-                    Copy the ID string from your folder's browser URL (the long code after <code className="bg-indigo-950 px-1 py-0.5 rounded text-[8px]">folders/</code>) and paste it into the field.
+                  <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Paste Folder ID</p>
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5 leading-normal">
+                    Copy the ID string from your folder's browser URL (the long code after <code className="bg-indigo-50 dark:bg-indigo-950 px-1 py-0.5 rounded text-[8px]">folders/</code>) and paste it into the field.
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="text-[8.5px] font-bold text-amber-500 uppercase tracking-wide leading-normal text-left mb-6 bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl">
+            <p className="text-[8.5px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-wide leading-normal text-left mb-6 bg-amber-50 dark:bg-amber-500/5 border border-amber-250 dark:border-amber-500/20 p-3 rounded-xl">
               ⚠️ Note: If your work/school Drive restricts sharing with outside accounts, please use a personal Google Drive instead.
             </p>
 

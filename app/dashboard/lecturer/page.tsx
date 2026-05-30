@@ -59,6 +59,21 @@ export default function LecturerDashboard() {
       }
     }
     fetchDriveEmail()
+
+    // Check URL parameters for Drive connection status
+    const params = new URLSearchParams(window.location.search)
+    const driveConnected = params.get('drive_connected')
+    const driveError = params.get('error')
+
+    if (driveConnected === 'true') {
+      setSettingsMessage('✅ Google Drive connected successfully! Your coursework files are now hosted on your own personal Drive.')
+      setShowSettingsModal(true)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (driveConnected === 'false') {
+      setSettingsMessage(`❌ Drive connection failed: ${driveError || 'Unknown error'}`)
+      setShowSettingsModal(true)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
   }, [])
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -132,6 +147,35 @@ export default function LecturerDashboard() {
       setSettingsMessage('✅ Folder created and shared successfully! Save Settings to apply.')
     } catch (err: any) {
       setSettingsMessage('❌ ' + (err.message || 'Folder setup failed.'))
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
+  const handleConnectGoogleDrive = () => {
+    if (!profile?.id) return
+    window.location.href = `/api/auth/google?userId=${profile.id}`
+  }
+
+  const handleDisconnectGoogleDrive = async () => {
+    if (!profile?.id) return
+    setSettingsLoading(true)
+    setSettingsMessage('⚡ Disconnecting Google Drive...')
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          google_refresh_token: null,
+          drive_folder_id: null
+        })
+        .eq('id', profile.id)
+
+      if (error) throw error
+      setSettingsDrive('')
+      setSettingsMessage('✅ Google Drive successfully disconnected.')
+      fetchData(false)
+    } catch (err: any) {
+      setSettingsMessage('❌ Disconnection failed: ' + (err.message || err))
     } finally {
       setSettingsLoading(false)
     }
@@ -568,6 +612,57 @@ export default function LecturerDashboard() {
                 />
               </div>
 
+              {/* Google Drive Connection Card */}
+              <div className="space-y-3 p-5 bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-slate-900/60 shadow-xs">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    🔌 Google Drive Integration
+                  </label>
+                  {profile?.google_refresh_token ? (
+                    <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/45 px-2 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-900/40 uppercase tracking-wider">
+                      Connected
+                    </span>
+                  ) : (
+                    <span className="text-[8px] font-black text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/45 px-2 py-0.5 rounded-lg border border-amber-100 dark:border-amber-900/40 uppercase tracking-wider">
+                      Not Connected
+                    </span>
+                  )}
+                </div>
+                
+                <p className="text-[9.5px] font-medium text-slate-550 dark:text-slate-400/90 leading-relaxed">
+                  {profile?.google_refresh_token 
+                    ? 'Connected to your personal Google Drive! Coursework files and student submissions will go directly to your personal Drive folder with zero manual sharing.'
+                    : 'Link your personal or work Google Drive account to automatically create and host all subject folders and student submissions on your own Drive.'
+                  }
+                </p>
+
+                {profile?.email && profile?.google_refresh_token && (
+                  <div className="text-[8.5px] font-mono text-indigo-600 dark:text-indigo-300 select-all bg-indigo-50/50 dark:bg-indigo-950/20 p-2.5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/40 break-all leading-tight font-bold">
+                    Connected Drive Account: {profile.email}
+                  </div>
+                )}
+
+                <div className="pt-1.5">
+                  {profile?.google_refresh_token ? (
+                    <button
+                      type="button"
+                      onClick={handleDisconnectGoogleDrive}
+                      className="w-full text-center bg-red-50 hover:bg-red-100/70 dark:bg-red-950/20 dark:hover:bg-red-950/40 text-red-650 dark:text-red-400 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition border border-red-100 dark:border-red-900/40 cursor-pointer"
+                    >
+                      Disconnect Account
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleConnectGoogleDrive}
+                      className="w-full text-center bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition shadow-md shadow-indigo-500/10 cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      ⚡ Connect Google Drive
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* New Password field (Optional) */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -752,21 +847,21 @@ export default function LecturerDashboard() {
 
       {showDriveInstructions && (
         <div 
-          className="fixed inset-0 bg-[#020308]/85 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" 
+          className="fixed inset-0 bg-[#020308]/60 dark:bg-[#020308]/85 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-200" 
           onClick={() => setShowDriveInstructions(false)}
         >
           <div 
-            className="bg-slate-950/95 border border-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] w-full max-w-md relative text-center shadow-2xl shadow-indigo-950/20 animate-in zoom-in-95 duration-200"
+            className="bg-white/95 dark:bg-slate-950/95 border border-slate-150 dark:border-slate-900/60 backdrop-blur-2xl p-8 rounded-[2.5rem] w-full max-w-md relative text-center shadow-2xl shadow-indigo-950/5 dark:shadow-indigo-950/20 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               onClick={() => setShowDriveInstructions(false)}
-              className="absolute top-5 right-5 text-slate-500 hover:text-slate-200 p-2 rounded-xl transition duration-200 cursor-pointer"
+              className="absolute top-5 right-5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-xl transition duration-200 cursor-pointer"
             >
               <X size={16} />
             </button>
 
-            <div className="w-12 h-12 bg-indigo-50/10 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/5">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-indigo-500/5">
               <Smartphone size={22} />
             </div>
 
@@ -774,32 +869,32 @@ export default function LecturerDashboard() {
             <p className="text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.2em] mb-6">Lecturer Folder Configuration</p>
 
             <div className="bg-indigo-50 dark:bg-indigo-950/40 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/30 text-left mb-5">
-              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-650 dark:text-indigo-300">💡 Auto-Organization</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-300">💡 Auto-Organization</p>
               <p className="text-[9.5px] font-medium text-indigo-600/90 dark:text-indigo-400/90 leading-relaxed mt-1">
-                You only need to create <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">one main root folder</strong>. The system will automatically create and organize subfolders inside it for your <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">Subjects</strong>, coursework <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">Assignments/Materials</strong>, and nested folders with <strong className="font-extrabold text-indigo-750 dark:text-indigo-300">Student Names</strong> for submissions.
+                You only need to create <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">one main root folder</strong>. The system will automatically create and organize subfolders inside it for your <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">Subjects</strong>, coursework <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">Assignments/Materials</strong>, and nested folders with <strong className="font-extrabold text-indigo-700 dark:text-indigo-300">Student Names</strong> for submissions.
               </p>
             </div>
 
             <div className="space-y-4 text-left mb-6">
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-indigo-50/10 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
                   1
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Create 1 Main Folder</p>
-                  <p className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5 leading-normal">
                     Create exactly one folder (e.g. <i>&quot;Limkokwing Coursework&quot;</i>) in your personal or work Google Drive.
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-indigo-50/10 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
                   2
                 </div>
                 <div className="w-full min-w-0">
                   <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Share as Editor</p>
-                  <p className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
                     Share this folder with Editor access to our secure service email:
                   </p>
                   <span className="block font-black select-all bg-indigo-50 dark:bg-indigo-950 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900/60 break-all text-indigo-600 dark:text-indigo-300 text-[8.5px] leading-tight font-mono">
@@ -809,19 +904,19 @@ export default function LecturerDashboard() {
               </div>
 
               <div className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-indigo-50/10 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black text-[10px] flex items-center justify-center shrink-0">
                   3
                 </div>
                 <div>
                   <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wide">Paste Folder ID</p>
-                  <p className="text-[9px] text-slate-500 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal">
+                  <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5 leading-normal">
                     Copy the ID string from your folder&apos;s browser URL (the long code after <code className="bg-indigo-50 dark:bg-indigo-950 px-1 py-0.5 rounded text-[8px]">folders/</code>) and paste it into the field.
                   </p>
                 </div>
               </div>
             </div>
 
-            <p className="text-[8.5px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wide leading-normal text-left mb-6 bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl">
+            <p className="text-[8.5px] font-bold text-amber-700 dark:text-amber-500 uppercase tracking-wide leading-normal text-left mb-6 bg-amber-50 dark:bg-amber-500/5 border border-amber-250 dark:border-amber-500/20 p-3 rounded-xl">
               ⚠️ Note: If your work/school Drive restricts sharing with outside accounts, please use a personal Google Drive instead.
             </p>
 

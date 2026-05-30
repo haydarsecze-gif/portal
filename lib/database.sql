@@ -86,3 +86,7 @@ END $$;
 
 -- 6. Reload the database schema cache to apply immediately
 NOTIFY pgrst, 'reload schema';
+
+-- 7. Add google_refresh_token column to profiles table
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS google_refresh_token TEXT;
+NOTIFY pgrst, 'reload schema';

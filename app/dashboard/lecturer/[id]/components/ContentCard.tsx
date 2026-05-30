@@ -75,7 +75,13 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
     try {
       // 1. IF REQUESTED, DELETE FROM GOOGLE DRIVE DIRECTLY
       if (deleteFromDrive && item.folder_id) {
-        const tokenRes = await fetch('/api/drive/token')
+        const { data: { session } } = await supabase.auth.getSession()
+        const token = session?.access_token
+        const headers: HeadersInit = {}
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+        const tokenRes = await fetch('/api/drive/token', { headers })
         const tokenData = await tokenRes.json()
         if (!tokenRes.ok || tokenData.error) {
           throw new Error(tokenData.error || 'Failed to retrieve Google Drive delete session.')
