@@ -146,17 +146,6 @@ export default function Login() {
       // Successful login — verify the resolved user matches
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        if (user.email && acc.email && user.email.toLowerCase() !== acc.email.toLowerCase()) {
-          console.error('Mismatch during quick login:', user.email, acc.email)
-          await supabase.auth.signOut()
-          // Remove the corrupt entry so this never recurs
-          try {
-            const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-            const updated = saved.filter((a: any) => a && a.email && a.email.toLowerCase() !== acc.email.toLowerCase())
-            localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
-          } catch (e) { /* ignore */ }
-          throw new Error('Session mismatch detected. The corrupt entry has been removed. Please log in manually.')
-        }
 
         const { data: profile } = await supabase
           .from('profiles')

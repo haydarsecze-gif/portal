@@ -127,22 +127,6 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
       // Successful login
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        // Assert email match to prevent hijacked / legacy token mismatch login
-        if (user.email && targetAccount.email && user.email.toLowerCase() !== targetAccount.email.toLowerCase()) {
-          console.error("Mismatch during switch login:", user.email, targetAccount.email)
-          
-          // Clean up the corrupt saved account from localStorage so it doesn't happen again!
-          try {
-            const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-            const updated = saved.filter((a: any) => a && a.email && a.email.toLowerCase() !== targetAccount.email.toLowerCase())
-            localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
-          } catch (e) {
-            console.error('Error cleaning up mismatched account:', e)
-          }
-
-          await supabase.auth.signOut()
-          throw new Error("Mismatched session tokens. Please log in manually.")
-        }
 
         const { data: profile } = await supabase
           .from('profiles')
