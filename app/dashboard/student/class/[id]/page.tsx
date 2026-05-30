@@ -621,7 +621,9 @@ export default function StudentClassroom() {
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full smooth-progress-width ${
+                          className={`h-full ${
+                            uploadProgress[item.title].status === 'uploading' ? '' : 'smooth-progress-width'
+                          } ${
                             uploadProgress[item.title].status === 'success' 
                               ? 'bg-emerald-500' 
                               : uploadProgress[item.title].status === 'failed'

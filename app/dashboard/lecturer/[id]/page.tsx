@@ -285,7 +285,9 @@ export default function SubjectDetail() {
                       </div>
                       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full smooth-progress-width ${
+                          className={`h-full ${
+                            progressItem.status === 'uploading' ? '' : 'smooth-progress-width'
+                          } ${
                             progressItem.status === 'success' 
                               ? 'bg-emerald-500' 
                               : progressItem.status === 'failed'
