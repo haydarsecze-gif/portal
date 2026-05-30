@@ -58,6 +58,17 @@ export default function StudentDirectory() {
   const [selectedClassId, setSelectedClassId] = useState<string>('')
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
+  // Premium Alert/Confirm Dialog Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'error' | 'success' | 'warning';
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    isConfirm?: boolean;
+  }>({ isOpen: false, title: '', message: '', type: 'info' })
+
   const fetchData = async () => {
     setLoading(true)
     setDebugInfo(null)
@@ -129,34 +140,63 @@ export default function StudentDirectory() {
   }, [])
 
   const deleteStudent = async (id: string) => {
-    if(!confirm("Are you sure? This will delete the student's profile permanently.")) return
-    
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        alert("Unauthorized: No active session.")
-        return
+    const targetStudent = students.find(s => (s.student_id || s.id) === id)
+    const studentName = targetStudent?.full_name || "Student"
+
+    setAlertConfig({
+      isOpen: true,
+      title: "Delete Student Profile",
+      message: `Are you sure you want to permanently delete student account "${studentName}"? This will erase all their class track enrollments, grades, and attendance logs.`,
+      type: "warning",
+      isConfirm: true,
+      onConfirm: async () => {
+        setAlertConfig(prev => ({ ...prev, isOpen: false }))
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (!session) {
+            setAlertConfig({
+              isOpen: true,
+              title: "Session Expired",
+              message: "Unauthorized: No active session.",
+              type: "error"
+            })
+            return
+          }
+
+          const res = await fetch('/api/auth/delete-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ userId: id })
+          })
+
+          const resData = await res.json()
+          if (!res.ok) {
+            setAlertConfig({
+              isOpen: true,
+              title: "Deletion Failed",
+              message: "Failed to delete student: " + (resData.error || "Unknown serverless exception."),
+              type: "error"
+            })
+            return
+          }
+
+          fetchData()
+        } catch (err: any) {
+          setAlertConfig({
+            isOpen: true,
+            title: "Database Error",
+            message: err.message,
+            type: "error"
+          })
+        }
+      },
+      onCancel: () => {
+        setAlertConfig(prev => ({ ...prev, isOpen: false }))
       }
-
-      const res = await fetch('/api/auth/delete-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ userId: id })
-      })
-
-      const resData = await res.json()
-      if (!res.ok) {
-        alert("Error: " + (resData.error || "Failed to delete student account."))
-        return
-      }
-
-      fetchData()
-    } catch (err: any) {
-      alert("Error: " + err.message)
-    }
+    })
   }
 
   const handleSaveStudentClass = async () => {
@@ -238,7 +278,12 @@ export default function StudentDirectory() {
       setIsEditModalOpen(false)
       fetchData()
     } catch (err: any) {
-      alert("Failed to assign class: " + err.message)
+      setAlertConfig({
+        isOpen: true,
+        title: "Assignment Failed",
+        message: "Failed to assign student class track: " + err.message,
+        type: "error"
+      })
     }
   }
 
@@ -472,6 +517,61 @@ export default function StudentDirectory() {
                 <Save size={12} />
                 <span>Save Track</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Alert/Confirm Dialog Modal */}
+      {alertConfig.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-sm shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300 font-sans">
+            <div>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                alertConfig.type === 'error' 
+                  ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-450'
+                  : alertConfig.type === 'warning'
+                    ? 'bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-450'
+                    : 'bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              }`}>
+                {alertConfig.type === 'error' ? 'System Alert' : alertConfig.type === 'warning' ? 'User Confirmation' : 'Notification'}
+              </span>
+              <h3 className="text-xl font-black text-slate-850 dark:text-white uppercase tracking-tight mt-2 leading-none">
+                {alertConfig.title}
+              </h3>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-450 mt-3 leading-relaxed">
+                {alertConfig.message}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              {alertConfig.isConfirm ? (
+                <>
+                  <button
+                    onClick={alertConfig.onCancel}
+                    className="flex-1 py-3.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-350 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={alertConfig.onConfirm}
+                    className={`flex-1 py-3.5 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all cursor-pointer ${
+                      alertConfig.type === 'error'
+                        ? 'bg-rose-600 hover:bg-rose-500'
+                        : 'bg-indigo-600 hover:bg-indigo-500'
+                    }`}
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                  className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-950/10 active:scale-95 transition-all cursor-pointer"
+                >
+                  OK
+                </button>
+              )}
             </div>
           </div>
         </div>
