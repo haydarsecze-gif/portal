@@ -531,6 +531,7 @@ export default function StudentClassroom() {
             .from('profiles')
             .select('id')
             .eq('role', 'teacher')
+            .eq('is_approved', true)
             .in('full_name', subject?.lecturer_names || [])
 
           if (lecturers && lecturers.length > 0) {

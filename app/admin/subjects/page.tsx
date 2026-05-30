@@ -76,7 +76,7 @@ export default function AdminCurriculum() {
 
   useEffect(() => {
     const fetchTeachers = async () => {
-      let query = supabase.from('profiles').select('full_name').eq('role', 'teacher')
+      let query = supabase.from('profiles').select('full_name').eq('role', 'teacher').eq('is_approved', true)
       if (teacherSearch) query = query.ilike('full_name', `%${teacherSearch}%`)
       const { data } = await query.limit(50)
       setAllTeachers(data || [])
