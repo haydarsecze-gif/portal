@@ -42,10 +42,10 @@ export default function LecturerDashboardLayout({
 
         const currentUserId = session.user.id
 
-        // Verify profile exists and check approval status
+        // Verify profile exists and check role & approval status
         const { data: profile, error: profErr } = await supabase
           .from('profiles')
-          .select('id, is_approved')
+          .select('id, role, is_approved')
           .eq('id', currentUserId)
           .single()
 
@@ -54,6 +54,16 @@ export default function LecturerDashboardLayout({
           if (active) {
             router.push('/auth/login?reason=deleted')
           }
+          return
+        }
+
+        // Redirect non-teacher roles to their correct panels immediately
+        if (profile.role === 'admin') {
+          router.push('/admin/students')
+          return
+        }
+        if (profile.role === 'student') {
+          router.push('/dashboard/student')
           return
         }
 
@@ -79,6 +89,13 @@ export default function LecturerDashboardLayout({
               const updatedProfile = payload.new
               console.log('Lecturer profile updated in real-time!', updatedProfile)
               if (updatedProfile && active) {
+                // If role changed or no longer a teacher, redirect them out
+                if (updatedProfile.role !== 'teacher') {
+                  if (updatedProfile.role === 'admin') router.push('/admin/students')
+                  else if (updatedProfile.role === 'student') router.push('/dashboard/student')
+                  else router.push('/auth/login')
+                  return
+                }
                 setIsApproved(!!updatedProfile.is_approved)
               }
             }
@@ -105,12 +122,16 @@ export default function LecturerDashboardLayout({
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, is_approved')
+          .select('id, role, is_approved')
           .eq('id', session.user.id)
           .single()
         if (!profile) {
           await supabase.auth.signOut()
           router.push('/auth/login?reason=deleted')
+        } else if (profile.role === 'admin') {
+          router.push('/admin/students')
+        } else if (profile.role === 'student') {
+          router.push('/dashboard/student')
         } else if (active) {
           setIsApproved(!!profile.is_approved)
         }
@@ -123,12 +144,16 @@ export default function LecturerDashboardLayout({
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, is_approved')
+          .select('id, role, is_approved')
           .eq('id', session.user.id)
           .single()
         if (!profile) {
           await supabase.auth.signOut()
           router.push('/auth/login?reason=deleted')
+        } else if (profile.role === 'admin') {
+          router.push('/admin/students')
+        } else if (profile.role === 'student') {
+          router.push('/dashboard/student')
         } else if (active) {
           setIsApproved(!!profile.is_approved)
         }
