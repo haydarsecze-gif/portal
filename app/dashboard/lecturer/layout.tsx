@@ -39,7 +39,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          router.push('/auth/login')
+          window.location.href = '/auth/login'
         }
         return null
       }
@@ -68,7 +68,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          router.push('/auth/login?reason=deleted')
+          window.location.href = '/auth/login?reason=deleted'
         }
         return null
       }
@@ -79,7 +79,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          router.push('/admin/students')
+          window.location.href = '/admin/students'
         }
         return currentUserId
       }
@@ -88,7 +88,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          router.push('/dashboard/student')
+          window.location.href = '/dashboard/student'
         }
         return currentUserId
       }

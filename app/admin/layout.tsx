@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (!user) {
         verifiedUserIdRef.current = null
         setIsAuthorized(false)
-        router.push('/auth/login')
+        window.location.href = '/auth/login'
         return null
       }
 
@@ -46,11 +46,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         verifiedUserIdRef.current = null
         setIsAuthorized(false)
         if (profile?.role === 'teacher') {
-          router.push('/dashboard/lecturer')
+          window.location.href = '/dashboard/lecturer'
         } else if (profile?.role === 'student') {
-          router.push('/dashboard/student')
+          window.location.href = '/dashboard/student'
         } else {
-          router.push('/auth/login')
+          window.location.href = '/auth/login'
         }
         return null
       }
@@ -62,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       console.error("Verification failed:", err)
       verifiedUserIdRef.current = null
       setIsAuthorized(false)
-      router.push('/auth/login')
+      window.location.href = '/auth/login'
       return null
     } finally {
       isCheckingRef.current = false
