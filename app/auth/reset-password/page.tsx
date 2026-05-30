@@ -138,7 +138,7 @@ export default function ResetPassword() {
       {/* Back button */}
       <button 
         onClick={() => router.push('/auth/login')}
-        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-white/40 dark:bg-slate-955/40 border border-slate-200/50 dark:border-slate-900 hover:border-slate-300 dark:hover:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-md cursor-pointer"
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-white/40 dark:bg-slate-950/40 border border-slate-200/50 dark:border-slate-900 hover:border-slate-300 dark:hover:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-md cursor-pointer"
       >
         <ArrowLeft size={14} />
         <span className="text-[9px] font-black uppercase tracking-widest">Back</span>
@@ -149,7 +149,7 @@ export default function ResetPassword() {
         /* STAGE 2: Password Update Form */
         <form 
           onSubmit={handleReset}
-          className="bg-white/85 dark:bg-slate-955/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
+          className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
         >
           <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-800 dark:text-slate-100 mb-1">
             Reset Pass
@@ -220,7 +220,7 @@ export default function ResetPassword() {
         /* STAGE 1: Request Recovery Link Form */
         <form 
           onSubmit={handleSendResetLink}
-          className="bg-white/85 dark:bg-slate-955/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
+          className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
         >
           <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-800 dark:text-slate-100 mb-1">
             Recovery

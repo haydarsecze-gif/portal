@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 /* Custom premium variable definitions based on the Light vs Dark premium design graphic */
 :root {
   --background: #F3F4F6;
