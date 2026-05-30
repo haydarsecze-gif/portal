@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { UserPlus, X, Search, Mail, User, Loader2, AlertCircle } from 'lucide-react'
 
-export default function StudentTab({ students, classId, onRefresh }: any) {
+export default function StudentTab({ students, classId, subjectName, onRefresh }: any) {
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
   const [allProfiles, setAllProfiles] = useState<any[]>([])
@@ -50,6 +50,33 @@ export default function StudentTab({ students, classId, onRefresh }: any) {
     try {
       const { error } = await supabase.from('student_classes').insert({ student_id: studentId, subject_id: classId })
       if (error) throw error
+
+      // Notify the added student
+      try {
+        let lecturerName = "Lecturer"
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+          if (prof?.full_name) {
+            lecturerName = prof.full_name
+          }
+        }
+
+        await supabase.from('notifications').insert({
+          user_id: studentId,
+          title: "Added to Subject Class",
+          message: `You have been added to the subject "${subjectName || 'Classroom'}" by lecturer ${lecturerName}.`,
+          type: "system",
+          link: `/dashboard/student/class/${classId}`
+        })
+      } catch (notifErr) {
+        console.error("Error creating student enrollment notification:", notifErr)
+      }
+
       await onRefresh()
       setShowModal(false)
     } catch (err: any) {

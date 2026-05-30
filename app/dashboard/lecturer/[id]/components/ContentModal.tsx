@@ -452,10 +452,32 @@ export default function ContentModal({
             .eq('subject_id', classId)
 
           if (mappings && mappings.length > 0) {
+            // Resolve Lecturer Name
+            let lecturerName = "Lecturer"
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              const { data: prof } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', user.id)
+                .single()
+              if (prof?.full_name) {
+                lecturerName = prof.full_name
+              }
+            }
+
+            const formattedDeadline = type === 'assignment' && formData.deadline
+              ? new Date(formData.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+              : ''
+
+            const message = type === 'assignment'
+              ? `${lecturerName} added a new assignment: "${formData.title}" in the subject "${subjectName || 'Classroom'}"${formattedDeadline ? ` (Due: ${formattedDeadline})` : ''}.`
+              : `${lecturerName} added a new material: "${formData.title}" in the subject "${subjectName || 'Classroom'}".`
+
             const notificationsToInsert = mappings.map(m => ({
               user_id: m.student_id,
               title: type === 'assignment' ? "New Assignment Added" : "New Material Added",
-              message: `Lecturer added a new ${type}: "${formData.title}" in ${subjectName}`,
+              message: message,
               type: type
             }))
 

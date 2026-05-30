@@ -327,6 +327,7 @@ export default function SubjectDetail() {
             <StudentTab 
               students={students} 
               classId={subjectId} 
+              subjectName={subject?.name}
               onRefresh={fetchSubjectData} 
             />
           </div>

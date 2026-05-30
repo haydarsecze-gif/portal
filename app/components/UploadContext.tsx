@@ -780,8 +780,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               : '';
 
             const message = type === 'assignment'
-              ? `${lecturerName} added a new assignment: "${formData.title}" in ${subjectName || 'Classroom'} at ${currentTime}. Due: ${formattedDeadline}.`
-              : `${lecturerName} added a new material: "${formData.title}" in ${subjectName || 'Classroom'} at ${currentTime}.`;
+              ? `${lecturerName} added a new assignment: "${formData.title}" in the subject "${subjectName || 'Classroom'}"${formattedDeadline ? ` (Due: ${formattedDeadline})` : ''}.`
+              : `${lecturerName} added a new material: "${formData.title}" in the subject "${subjectName || 'Classroom'}".`;
 
             const linkPath = `/dashboard/student/class/${classId}?select=${insertedId}`;
 
