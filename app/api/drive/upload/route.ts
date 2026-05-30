@@ -117,14 +117,22 @@ export async function POST(req: Request) {
     }
 
     // 3. Initiate Google Resumable Upload Session
+    const reqHost = req.headers.get('host');
+    const requestOrigin = req.headers.get('origin') || (reqHost ? (reqHost.includes('localhost') ? `http://${reqHost}` : `https://${reqHost}`) : 'https://portal-three-blond.vercel.app');
+
+    const initHeaders: Record<string, string> = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json; charset=UTF-8',
+      'X-Upload-Content-Type': fileType || 'application/octet-stream',
+      'X-Upload-Content-Length': String(fileSize)
+    };
+    if (requestOrigin) {
+      initHeaders['Origin'] = requestOrigin;
+    }
+
     const initRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json; charset=UTF-8',
-        'X-Upload-Content-Type': fileType || 'application/octet-stream',
-        'X-Upload-Content-Length': String(fileSize)
-      },
+      headers: initHeaders,
       body: JSON.stringify({
         name: fileName,
         parents: [studentFolderId]
