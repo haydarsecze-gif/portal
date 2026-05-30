@@ -161,7 +161,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-[#05070e] via-[#0b0e1e] to-[#040508] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
+    <div className="min-h-screen bg-gradient-to-tr from-[#f3f4f6] via-[#e5e7eb] to-[#f5f3ff] dark:from-[#05070e] dark:via-[#0b0e1e] dark:to-[#040508] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
       
       {/* Theme and Refresh Controls */}
       <div className="absolute top-6 right-6 flex items-center gap-2 z-50">
@@ -182,7 +182,7 @@ export default function Login() {
       {/* Back button */}
       <button 
         onClick={() => router.push('/')}
-        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-slate-950/40 border border-slate-900 hover:border-slate-800 text-slate-400 hover:text-slate-200 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-md cursor-pointer"
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2.5 bg-white/40 dark:bg-slate-950/40 border border-slate-200/50 dark:border-slate-900 hover:border-slate-300 dark:hover:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-2xl shadow-lg transition-all duration-300 backdrop-blur-md cursor-pointer"
       >
         <ArrowLeft size={14} />
         <span className="text-[9px] font-black uppercase tracking-widest">Back</span>
@@ -191,13 +191,13 @@ export default function Login() {
       {/* Auth card */}
       <form 
         onSubmit={(e) => { e.preventDefault(); handleLogin(); }}
-        className="bg-slate-950/40 border border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.5)] shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
+        className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300"
       >
         
-        <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-100 mb-1">
+        <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-800 dark:text-slate-100 mb-1">
           Login
         </h1>
-        <p className="text-center text-[9px] font-black text-indigo-400 uppercase tracking-[0.25em] mb-10">
+        <p className="text-center text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.25em] mb-10">
           Access Authorized Gateway
         </p>
 
@@ -212,7 +212,7 @@ export default function Login() {
               placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full pl-12 pr-6 py-4.5 bg-slate-900/30 group-hover:bg-slate-900/50 border border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
+              className="w-full pl-12 pr-6 py-4.5 bg-slate-100/50 dark:bg-slate-900/30 group-hover:bg-slate-150/50 dark:group-hover:bg-slate-900/50 border border-slate-200/50 dark:border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-800 dark:text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
             />
           </div>
           
@@ -226,7 +226,7 @@ export default function Login() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-12 pr-6 py-4.5 bg-slate-900/30 group-hover:bg-slate-900/50 border border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
+              className="w-full pl-12 pr-6 py-4.5 bg-slate-100/50 dark:bg-slate-900/30 group-hover:bg-slate-150/50 dark:group-hover:bg-slate-900/50 border border-slate-200/50 dark:border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-800 dark:text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
             />
           </div>
         </div>
@@ -254,17 +254,17 @@ export default function Login() {
         )}
 
         <div className="mt-10 flex flex-col items-center gap-2">
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            New here? <a href="/auth/register" className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors ml-1 font-black">Create Account</a>
+          <p className="text-[10px] font-bold text-slate-550 dark:text-slate-500 uppercase tracking-widest">
+            New here? <a href="/auth/register" className="text-indigo-500 dark:text-indigo-400 hover:text-indigo-400 hover:underline transition-colors ml-1 font-black">Create Account</a>
           </p>
-          <a href="/auth/reset-password" className="text-[9px] font-black text-slate-500 hover:text-slate-300 uppercase tracking-widest transition-colors mt-2">
+          <a href="/auth/reset-password" className="text-[9px] font-black text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 uppercase tracking-widest transition-colors mt-2">
             Forgot Password?
           </a>
         </div>
 
         {savedAccounts.length > 0 && (
-          <div className="mt-8 pt-8 border-t border-slate-900/60">
-            <p className="text-center text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-4">
+          <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-900/60">
+            <p className="text-center text-[9px] font-black text-indigo-650 dark:text-indigo-400 uppercase tracking-widest mb-4">
               Saved Accounts
             </p>
             <div className="grid gap-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
@@ -273,22 +273,22 @@ export default function Login() {
                   key={index}
                   type="button"
                   onClick={() => handleQuickLogin(acc)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-900/20 hover:bg-slate-900/50 border border-slate-900 hover:border-indigo-500/20 text-left rounded-2xl cursor-pointer active:scale-98 transition-all duration-300 group"
+                  className="w-full flex items-center justify-between p-3 bg-slate-100/50 dark:bg-slate-900/20 hover:bg-slate-150/50 dark:hover:bg-slate-900/50 border border-slate-200/60 dark:border-slate-900 hover:border-indigo-500/20 text-left rounded-2xl cursor-pointer active:scale-98 transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 bg-slate-900 border border-slate-800 text-slate-400 text-[10px] font-black uppercase rounded-xl flex items-center justify-center group-hover:border-indigo-500/10 transition-colors">
+                    <div className="w-8 h-8 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-650 dark:text-slate-400 text-[10px] font-black uppercase rounded-xl flex items-center justify-center group-hover:border-indigo-500/10 transition-colors">
                       {acc.name ? acc.name.substring(0, 2).toUpperCase() : acc.email.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-black text-slate-200 uppercase truncate leading-none">
+                      <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate leading-none">
                         {acc.name}
                       </p>
-                      <p className="text-[8px] font-bold text-slate-500 truncate mt-1.5 leading-none">
+                      <p className="text-[8px] font-bold text-slate-500 dark:text-slate-500 truncate mt-1.5 leading-none">
                         {acc.email} • {acc.role === 'admin' ? 'Admin' : acc.role === 'teacher' ? 'Lecturer' : 'Student'}
                       </p>
                     </div>
                   </div>
-                  <div className="text-[7.5px] font-black uppercase tracking-widest text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
+                  <div className="text-[7.5px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
                     Switch →
                   </div>
                 </button>

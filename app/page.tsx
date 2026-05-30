@@ -74,7 +74,7 @@ export default function Home() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-[#05070e] via-[#0b0e1e] to-[#040508] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
+    <div className="min-h-screen bg-gradient-to-tr from-[#f3f4f6] via-[#e5e7eb] to-[#f5f3ff] dark:from-[#05070e] dark:via-[#0b0e1e] dark:to-[#040508] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
       
       {/* Theme and Refresh Controls */}
       <div className="absolute top-6 right-6 flex items-center gap-2 z-50">
@@ -93,7 +93,7 @@ export default function Home() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Glassmorphic Portal Gateway Container */}
-      <div className="bg-slate-950/40 border border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.4)] shadow-indigo-950/10 w-full max-w-[380px] text-center relative z-10 hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300">
+      <div className="bg-white/85 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-900 backdrop-blur-2xl p-10 md:p-12 rounded-[3.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.4)] dark:shadow-indigo-950/10 w-full max-w-[380px] text-center relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300">
         
         {/* Glow behind logo */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-indigo-600/25 rounded-full blur-xl pointer-events-none" />
@@ -103,10 +103,10 @@ export default function Home() {
           <Database size={26} className="text-slate-100" />
         </div>
 
-        <h1 className="text-2xl font-black text-slate-100 uppercase tracking-tight leading-none mb-1">
+        <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">
           Limkokwing
         </h1>
-        <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.25em] mb-1">
+        <p className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.25em] mb-1">
           Student Portal
         </p>
         <div className="w-10 h-[2px] bg-indigo-500/30 mx-auto mt-3 mb-8 rounded-full" />
@@ -114,15 +114,15 @@ export default function Home() {
         {profile ? (
           /* Stored active session details and action buttons */
           <div className="space-y-4">
-            <div className="bg-indigo-500/5 border border-indigo-500/10 p-4 rounded-2xl text-left">
-              <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-2">Active Session</p>
+            <div className="bg-slate-100/50 dark:bg-indigo-500/5 border border-slate-200/50 dark:border-indigo-500/10 p-4 rounded-2xl text-left">
+              <p className="text-[8px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest leading-none mb-2">Active Session</p>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white text-[10px] font-black uppercase shrink-0">
                   {profile.full_name?.charAt(0) || 'U'}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-slate-200 text-[11px] font-black uppercase tracking-tight truncate leading-tight">{profile.full_name}</p>
-                  <p className="text-indigo-400 text-[9px] font-bold uppercase tracking-widest mt-0.5 leading-none">
+                  <p className="text-slate-800 dark:text-slate-200 text-[11px] font-black uppercase tracking-tight truncate leading-tight">{profile.full_name}</p>
+                  <p className="text-indigo-600 dark:text-indigo-400 text-[9px] font-bold uppercase tracking-widest mt-0.5 leading-none">
                     {profile.role === 'teacher' ? 'lecturer' : profile.role}
                   </p>
                 </div>
@@ -140,7 +140,7 @@ export default function Home() {
               
               <button 
                 onClick={handleSignOut}
-                className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 hover:text-red-300 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-500 hover:text-red-400 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut size={12} />
                 <span>Switch Account</span>
@@ -160,14 +160,14 @@ export default function Home() {
             
             <button 
               onClick={() => router.push('/auth/register')}
-              className="w-full bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.04] hover:border-white/[0.08] text-slate-400 hover:text-slate-200 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300 cursor-pointer"
+              className="w-full bg-slate-100/50 hover:bg-slate-200/50 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] border border-slate-200/60 dark:border-white/[0.04] dark:hover:border-white/[0.08] text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-98 transition-all duration-300 cursor-pointer"
             >
               Create Account
             </button>
           </div>
         )}
 
-        <p className="mt-10 text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+        <p className="mt-10 text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           Secured Campus Network System
         </p>
 
