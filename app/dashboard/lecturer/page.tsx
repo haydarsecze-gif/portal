@@ -32,6 +32,17 @@ export default function LecturerDashboard() {
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState('')
 
+  // Create Subject modal states
+  const [showCreateSubjectModal, setShowCreateSubjectModal] = useState(false)
+  const [newSubjName, setNewSubjName] = useState('')
+  const [newSubjSemester, setNewSubjSemester] = useState('1')
+  const [newSubjRoom, setNewSubjRoom] = useState('')
+  const [newSubjStartDate, setNewSubjStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [newSubjStartTime, setNewSubjStartTime] = useState('08:00')
+  const [newSubjEndTime, setNewSubjEndTime] = useState('11:30')
+  const [createSubjLoading, setCreateSubjLoading] = useState(false)
+  const [createSubjMessage, setCreateSubjMessage] = useState('')
+
   const fetchData = useCallback(async (showFullLoader = false) => {
     if (showFullLoader) setLoading(true)
     else setIsSyncing(true)
@@ -87,6 +98,7 @@ export default function LecturerDashboard() {
         .from('profiles')
         .update({
           full_name: settingsName.trim(),
+          email: settingsEmail.toLowerCase().trim(),
           drive_folder_id: settingsDrive.trim()
         })
         .eq('id', user.id)
@@ -103,6 +115,107 @@ export default function LecturerDashboard() {
       setSettingsMessage('❌ ' + (e.message || 'Update failed.'))
     } finally {
       setSettingsLoading(false)
+    }
+  }
+
+  const handleCreateSubject = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newSubjName.trim() || !newSubjSemester || !newSubjRoom.trim()) {
+      setCreateSubjMessage('❌ Subject Name, Semester, and Room are required.')
+      return
+    }
+    setCreateSubjLoading(true)
+    setCreateSubjMessage('')
+    try {
+      if (!profile) {
+        throw new Error('Lecturer profile not loaded.')
+      }
+
+      // Generate the lecturer names array (including name and email if available)
+      const lecturerNamesArray = [
+        profile.full_name?.trim(),
+        profile.email?.trim() ? `email:${profile.email.trim()}` : null
+      ].filter(Boolean)
+
+      // 1. Insert into 'subjects' table
+      const { data: insertedSubject, error: subjectError } = await supabase
+        .from('subjects')
+        .insert({
+          name: newSubjName.trim(),
+          room: newSubjRoom.trim(),
+          semester: parseInt(newSubjSemester),
+          start_date: newSubjStartDate || null,
+          class_start_time: newSubjStartTime ? `${newSubjStartTime}:00` : null,
+          class_end_time: newSubjEndTime ? `${newSubjEndTime}:00` : null,
+          lecturer_names: lecturerNamesArray
+        })
+        .select()
+        .single()
+
+      if (subjectError) throw subjectError
+      if (!insertedSubject) throw new Error('Failed to create subject record.')
+
+      // 2. Insert corresponding record into 'classes' table
+      const { error: classError } = await supabase
+        .from('classes')
+        .insert({
+          id: insertedSubject.id,
+          name: newSubjName.trim(),
+          subject_name: newSubjName.trim(),
+          semester: parseInt(newSubjSemester),
+          room: newSubjRoom.trim(),
+          start_time: newSubjStartTime ? `${newSubjStartTime}:00` : '08:00:00',
+          end_time: newSubjEndTime ? `${newSubjEndTime}:00` : '11:30:00',
+          class_date: newSubjStartDate || new Date().toISOString().split('T')[0],
+          teacher_id: profile.id,
+          lecture_name: profile.full_name
+        })
+
+      if (classError) throw classError
+
+      // 3. Notify admins of the new subject
+      try {
+        const { data: adminProfiles } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'admin')
+
+        if (adminProfiles && adminProfiles.length > 0) {
+          const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+          const adminNotifs = adminProfiles.map(adm => ({
+            user_id: adm.id,
+            title: "New Subject Created",
+            message: `Lecturer ${profile.full_name} created subject "${newSubjName.trim()}" at ${currentTime}.`,
+            type: "approval",
+            link: "/admin/subjects"
+          }))
+          await supabase.from('notifications').insert(adminNotifs)
+        }
+      } catch (notifErr) {
+        console.error('Error creating notifications:', notifErr)
+      }
+
+      setCreateSubjMessage('✅ Subject created successfully!')
+      
+      // Refresh dashboard list
+      fetchData(false)
+      
+      // Clear inputs
+      setNewSubjName('')
+      setNewSubjRoom('')
+      setNewSubjSemester('1')
+      setNewSubjStartDate(new Date().toISOString().split('T')[0])
+      setNewSubjStartTime('08:00')
+      setNewSubjEndTime('11:30')
+
+      setTimeout(() => {
+        setShowCreateSubjectModal(false)
+        setCreateSubjMessage('')
+      }, 2000)
+    } catch (err: any) {
+      setCreateSubjMessage('❌ ' + (err.message || 'Creation failed.'))
+    } finally {
+      setCreateSubjLoading(false)
     }
   }
 
@@ -187,11 +300,17 @@ export default function LecturerDashboard() {
         </div>
 
         {/* Section Title */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
           <div>
             <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Active Lecturing Matrix</h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Manage attendance logs & subject materials</p>
           </div>
+          <button
+            onClick={() => setShowCreateSubjectModal(true)}
+            className="flex items-center gap-2 px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-md hover:shadow-indigo-500/10 cursor-pointer"
+          >
+            <PlusSquare size={14} /> Create Subject
+          </button>
         </div>
 
         {/* Subjects Grid */}
@@ -337,6 +456,144 @@ export default function LecturerDashboard() {
                   <><Loader2 className="animate-spin" size={14} /> Saving...</>
                 ) : (
                   'Save Settings'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Create Subject Modal */}
+      {showCreateSubjectModal && (
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[999] p-4">
+          <form 
+            onSubmit={handleCreateSubject}
+            className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-900 rounded-[2.5rem] p-8 md:p-10 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Create Subject</h2>
+                <p className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-1">Add a new subject to the lecturing matrix</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => { setShowCreateSubjectModal(false); setCreateSubjMessage(''); }}
+                className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 transition-colors font-black text-[10px] uppercase tracking-widest cursor-pointer bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {/* Subject Name */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <BookOpen size={14} className="text-indigo-500" /> Subject Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newSubjName}
+                  onChange={e => setNewSubjName(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  placeholder="e.g. Advanced Web Programming"
+                />
+              </div>
+
+              {/* Semester & Room Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Semester
+                  </label>
+                  <select
+                    value={newSubjSemester}
+                    onChange={e => setNewSubjSemester(e.target.value)}
+                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                      <option key={sem} value={sem.toString()}>Sem {sem}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Room
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newSubjRoom}
+                    onChange={e => setNewSubjRoom(e.target.value)}
+                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                    placeholder="e.g. 601"
+                  />
+                </div>
+              </div>
+
+              {/* Start Date */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newSubjStartDate}
+                  onChange={e => setNewSubjStartDate(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              {/* Start Time & End Time Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={newSubjStartTime}
+                    onChange={e => setNewSubjStartTime(e.target.value)}
+                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={newSubjEndTime}
+                    onChange={e => setNewSubjEndTime(e.target.value)}
+                    className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {createSubjMessage && (
+              <p className={`mt-6 text-center text-xs font-black py-3 px-4 rounded-xl leading-tight uppercase tracking-wide border ${
+                createSubjMessage.includes('✅') 
+                  ? 'text-emerald-550 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/60' 
+                  : 'text-red-550 dark:text-red-450 bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/60'
+              }`}>
+                {createSubjMessage}
+              </p>
+            )}
+
+            <div className="pt-6 border-t border-slate-50 dark:border-slate-900 mt-6 flex justify-end">
+              <button
+                type="submit"
+                disabled={createSubjLoading}
+                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:text-slate-400 px-6 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-md shadow-indigo-500/10 cursor-pointer"
+              >
+                {createSubjLoading ? (
+                  <><Loader2 className="animate-spin" size={14} /> Creating...</>
+                ) : (
+                  'Create Subject'
                 )}
               </button>
             </div>

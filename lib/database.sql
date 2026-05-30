@@ -9,8 +9,9 @@
 --   "SQL Editor", click "New query", paste this code, and click "Run".
 -- ====================================================================
 
--- 0. Add drive_folder_id column to profiles table if it doesn't exist
+-- 0. Add drive_folder_id and email columns to profiles table if they don't exist
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS drive_folder_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
 
 -- 1. Create the notifications table in the public schema if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.notifications (

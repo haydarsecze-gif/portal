@@ -79,6 +79,7 @@ export default function Register() {
           role: userRole,
           status: status,
           class_id: classId,
+          email: email.toLowerCase().trim(),
           drive_folder_id: role === 'teacher' ? driveFolderId.trim() : null
         })
 
