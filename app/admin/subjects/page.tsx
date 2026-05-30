@@ -15,6 +15,8 @@ const ATTENDANCE_STATUSES = [
   { code: 'N', label: 'Not Applicable', className: 'bg-slate-100 text-slate-500 font-black border border-slate-300' }
 ]
 
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export default function AdminCurriculum() {
   const [subjects, setSubjects] = useState<any[]>([])
   const [allTeachers, setAllTeachers] = useState<any[]>([])
@@ -30,6 +32,17 @@ export default function AdminCurriculum() {
   const [activeRoster, setActiveRoster] = useState<any[]>([])
   const [loadingRoster, setLoadingRoster] = useState(false)
   const [isSavingAttendance, setIsSavingAttendance] = useState(false)
+
+  // Premium Alert/Confirm Dialog Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'error' | 'success' | 'warning';
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    isConfirm?: boolean;
+  }>({ isOpen: false, title: '', message: '', type: 'info' })
 
   // Local state changes staging buffer cache
   const [pendingChanges, setPendingChanges] = useState<{ [key: string]: string }>({})
@@ -193,10 +206,13 @@ export default function AdminCurriculum() {
       return
     }
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
     if (!uuidRegex.test(selectedSubject.id)) {
-      alert(`⚠️ Schema Protection Blocked: The subject identifier "${selectedSubject.id}" is an invalid UUID format.`);
+      setAlertConfig({
+        isOpen: true,
+        title: "Schema Protection",
+        message: `Schema Protection Blocked: The subject identifier "${selectedSubject.id}" is an invalid UUID format.`,
+        type: "error"
+      })
       return;
     }
 
@@ -283,52 +299,77 @@ export default function AdminCurriculum() {
   }
 
   const handleDeleteSubject = async (s: any) => {
-    if (!confirm(`Delete subject completely from system: "${s.name}"?`)) return
-    try {
-      const { error } = await supabase.from('subjects').delete().eq('id', s.id)
-      if (!error) {
+    setAlertConfig({
+      isOpen: true,
+      title: "Delete Subject",
+      message: `Are you sure you want to permanently delete subject completely from the system: "${s.name}"?`,
+      type: "warning",
+      isConfirm: true,
+      onConfirm: async () => {
+        setAlertConfig(prev => ({ ...prev, isOpen: false }))
         try {
-          let adminName = "Administrator"
-          const { data: { user: adminUser } } = await supabase.auth.getUser()
-          if (adminUser) {
-            const { data: prof } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', adminUser.id)
-              .single()
-            if (prof?.full_name) adminName = prof.full_name
+          const { error } = await supabase.from('subjects').delete().eq('id', s.id)
+          if (!error) {
+            try {
+              let adminName = "Administrator"
+              const { data: { user: adminUser } } = await supabase.auth.getUser()
+              if (adminUser) {
+                const { data: prof } = await supabase
+                  .from('profiles')
+                  .select('full_name')
+                  .eq('id', adminUser.id)
+                  .single()
+                if (prof?.full_name) adminName = prof.full_name
+              }
+
+              const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+              // Notify all admins
+              const { data: adminProfiles } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'admin')
+
+              if (adminProfiles && adminProfiles.length > 0) {
+                const adminNotifs = adminProfiles.map(adm => ({
+                  user_id: adm.id,
+                  title: "Subject Class Deleted",
+                  message: `${adminName} deleted subject class "${s.name}" at ${currentTime}.`,
+                  type: "approval",
+                  link: "/admin/subjects"
+                }))
+                await supabase.from('notifications').insert(adminNotifs)
+              }
+            } catch (err) {
+              console.error("Error creating deletion notification:", err)
+            }
           }
-
-          const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-
-          // Notify all admins
-          const { data: adminProfiles } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'admin')
-
-          if (adminProfiles && adminProfiles.length > 0) {
-            const adminNotifs = adminProfiles.map(adm => ({
-              user_id: adm.id,
-              title: "Subject Class Deleted",
-              message: `${adminName} deleted subject class "${s.name}" at ${currentTime}.`,
-              type: "approval",
-              link: "/admin/subjects"
-            }))
-            await supabase.from('notifications').insert(adminNotifs)
-          }
-        } catch (err) {
-          console.error("Error creating deletion notification:", err)
+          fetchSubjects()
+        } catch (err: any) {
+          setAlertConfig({
+            isOpen: true,
+            title: "Deletion Failed",
+            message: "Failed to delete subject: " + err.message,
+            type: "error"
+          })
         }
+      },
+      onCancel: () => {
+        setAlertConfig(prev => ({ ...prev, isOpen: false }))
       }
-      fetchSubjects()
-    } catch (err: any) {
-      alert("Failed to delete subject: " + err.message)
-    }
+    })
   }
 
   const handleSaveSubject = async () => {
-    if (!name || !semester) return alert("Please fill in the Subject Name and Semester!")
+    if (!name || !semester) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Required Fields",
+        message: "Please fill in the Subject Name and Semester!",
+        type: "warning"
+      })
+      return
+    }
     const payload = { name, room, semester: parseInt(semester), start_date: startDate || null, class_start_time: startTime || null, class_end_time: endTime || null, lecturer_names: selectedLecturers }
     try {
       let activeSubjectId = editingId
@@ -416,7 +457,14 @@ export default function AdminCurriculum() {
       }
 
       setIsModalOpen(false); fetchSubjects()
-    } catch (err: any) { alert("Failed to save: " + err.message) }
+    } catch (err: any) {
+      setAlertConfig({
+        isOpen: true,
+        title: "Save Failed",
+        message: "Failed to save: " + err.message,
+        type: "error"
+      })
+    }
   }
 
   if (loading) return (

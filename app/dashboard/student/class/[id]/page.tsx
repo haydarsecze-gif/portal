@@ -99,6 +99,17 @@ export default function StudentClassroom() {
   const [geoSuccess, setGeoSuccess] = useState(false);
   const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false);
 
+  // Premium Alert/Confirm Dialog Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'error' | 'success' | 'warning';
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    isConfirm?: boolean;
+  }>({ isOpen: false, title: '', message: '', type: 'info' })
+
   const fetchClassData = useCallback(async () => {
     setLoading(true);
     try {
@@ -564,20 +575,28 @@ export default function StudentClassroom() {
     })();
   };
 
-  const handleRemoveExistingFile = async (fileStringToRemove: string) => {
-    if (!confirm("Are you sure you want to delete this submitted file?")) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    const activeSub = getSub(selectedItem.title);
-    if (!activeSub) return;
+  const handleRemoveExistingFile = (fileStringToRemove: string) => {
+    setAlertConfig({
+      isOpen: true,
+      title: 'Delete Submitted File',
+      message: 'Are you sure you want to delete this submitted file?',
+      type: 'warning',
+      isConfirm: true,
+      onConfirm: async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        const activeSub = getSub(selectedItem.title);
+        if (!activeSub) return;
 
-    const updatedUrls = activeSub.file_urls.filter((url: string) => url !== fileStringToRemove);
+        const updatedUrls = activeSub.file_urls.filter((url: string) => url !== fileStringToRemove);
 
-    if (updatedUrls.length === 0) {
-      await supabase.from('submissions').delete().eq('id', activeSub.id); // Fix: Delete precisely by primary key ID
-    } else {
-      await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', activeSub.id); // Fix: Update precisely by primary key ID
-    }
-    fetchClassData();
+        if (updatedUrls.length === 0) {
+          await supabase.from('submissions').delete().eq('id', activeSub.id); // Fix: Delete precisely by primary key ID
+        } else {
+          await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', activeSub.id); // Fix: Update precisely by primary key ID
+        }
+        fetchClassData();
+      }
+    });
   };
 
   const getSub = (title: string) => submissions.find(s => s.assignment_name === title);
@@ -1138,7 +1157,12 @@ export default function StudentClassroom() {
                                     const MAX_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
                                     for (const file of filesArray) {
                                       if (file.size > MAX_SIZE) {
-                                        alert(`File "${file.name}" exceeds the maximum 2GB size limit.`);
+                                        setAlertConfig({
+                                          isOpen: true,
+                                          title: 'File Too Large',
+                                          message: `File "${file.name}" exceeds the maximum 2GB size limit.`,
+                                          type: 'error'
+                                        });
                                         return;
                                       }
                                     }
@@ -1169,6 +1193,70 @@ export default function StudentClassroom() {
                 </>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Premium custom alert/confirm glassmorphic modal */}
+      {alertConfig.isOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-sm shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
+            <div>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                alertConfig.type === 'error' 
+                  ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-100 dark:border-rose-900/30 text-rose-600 dark:text-rose-400'
+                  : alertConfig.type === 'warning'
+                    ? 'bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 text-amber-600 dark:text-amber-400'
+                    : 'bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+              }`}>
+                {alertConfig.type === 'error' ? 'System Alert' : alertConfig.type === 'warning' ? 'User Confirmation' : 'Notification'}
+              </span>
+              <h3 className="text-xl font-black text-slate-850 dark:text-white uppercase tracking-tight mt-2 leading-none">
+                {alertConfig.title}
+              </h3>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+                {alertConfig.message}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              {alertConfig.isConfirm ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setAlertConfig(prev => ({ ...prev, isOpen: false }))
+                      if (alertConfig.onCancel) alertConfig.onCancel()
+                    }}
+                    className="flex-1 py-3.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAlertConfig(prev => ({ ...prev, isOpen: false }))
+                      if (alertConfig.onConfirm) alertConfig.onConfirm()
+                    }}
+                    className={`flex-1 py-3.5 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all cursor-pointer ${
+                      alertConfig.type === 'error'
+                        ? 'bg-rose-600 hover:bg-rose-500'
+                        : 'bg-indigo-600 hover:bg-indigo-500'
+                    }`}
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    setAlertConfig(prev => ({ ...prev, isOpen: false }))
+                    if (alertConfig.onConfirm) alertConfig.onConfirm()
+                  }}
+                  className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-950/10 active:scale-95 transition-all cursor-pointer"
+                >
+                  OK
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
