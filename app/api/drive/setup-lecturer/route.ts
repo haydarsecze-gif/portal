@@ -34,17 +34,32 @@ export async function POST(req: Request) {
     let targetFolderId = folderId;
 
     if (!targetFolderId) {
-      // 1. Create a new folder named after the lecturer inside the parent root folder
       const folderName = `Lecturer - ${lecturerName || 'Unnamed'}`;
-      const folderRes = await drive.files.create({
-        requestBody: {
-          name: folderName,
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: [parentFolderId]
-        },
-        fields: 'id'
-      });
-      targetFolderId = folderRes.data.id;
+      
+      try {
+        const listRes = await drive.files.list({
+          q: `name = '${folderName.replace(/'/g, "\\'")}' and '${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+          fields: 'files(id)'
+        });
+        if (listRes.data.files && listRes.data.files.length > 0) {
+          targetFolderId = listRes.data.files[0].id;
+        }
+      } catch (searchErr) {
+        console.warn(`Could not search for existing lecturer folder:`, searchErr);
+      }
+
+      if (!targetFolderId) {
+        // 1. Create a new folder named after the lecturer inside the parent root folder
+        const folderRes = await drive.files.create({
+          requestBody: {
+            name: folderName,
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [parentFolderId]
+          },
+          fields: 'id'
+        });
+        targetFolderId = folderRes.data.id;
+      }
     }
 
     // 2. Share the folder with the lecturer's email address as writer (editor)

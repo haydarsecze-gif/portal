@@ -48,17 +48,33 @@ export async function GET(request: NextRequest) {
     const userInfo = await oauth2.userinfo.get();
     const driveEmail = userInfo.data.email || '';
 
-    // Create a new root folder "Limkokwing Coursework" in their personal drive
+    // Create or reuse the root folder "Limkokwing Coursework" in their personal drive
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
-    const folderRes = await drive.files.create({
-      requestBody: {
-        name: 'Limkokwing Coursework',
-        mimeType: 'application/vnd.google-apps.folder',
-      },
-      fields: 'id',
-    });
+    let personalFolderId = null;
 
-    const personalFolderId = folderRes.data.id;
+    try {
+      const listRes = await drive.files.list({
+        q: "name = 'Limkokwing Coursework' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false",
+        fields: 'files(id)',
+        spaces: 'drive'
+      });
+      if (listRes.data.files && listRes.data.files.length > 0) {
+        personalFolderId = listRes.data.files[0].id;
+      }
+    } catch (searchErr) {
+      console.warn("Could not search for existing root coursework folder in Google Drive:", searchErr);
+    }
+
+    if (!personalFolderId) {
+      const folderRes = await drive.files.create({
+        requestBody: {
+          name: 'Limkokwing Coursework',
+          mimeType: 'application/vnd.google-apps.folder',
+        },
+        fields: 'id',
+      });
+      personalFolderId = folderRes.data.id;
+    }
 
     if (!personalFolderId) {
       throw new Error('Failed to create personal coursework root folder on your Google Drive.');

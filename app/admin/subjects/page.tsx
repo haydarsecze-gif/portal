@@ -308,41 +308,66 @@ export default function AdminCurriculum() {
       onConfirm: async () => {
         setAlertConfig(prev => ({ ...prev, isOpen: false }))
         try {
+          // 1. Delete dependent submissions
+          const { error: subErr } = await supabase.from('submissions').delete().eq('class_id', s.id)
+          if (subErr) throw subErr
+
+          // 2. Delete dependent assignments
+          const { error: assignErr } = await supabase.from('assignments').delete().eq('class_id', s.id)
+          if (assignErr) throw assignErr
+
+          // Delete dependent materials
+          const { error: matErr } = await supabase.from('materials').delete().eq('class_id', s.id)
+          if (matErr) throw matErr
+
+          // 3. Delete dependent attendance records
+          const { error: attErr } = await supabase.from('attendance').delete().eq('class_id', s.id)
+          if (attErr) throw attErr
+
+          // 4. Delete student enrollments
+          const { error: scErr } = await supabase.from('student_classes').delete().eq('subject_id', s.id)
+          if (scErr) throw scErr
+
+          // 5. Delete matching class
+          const { error: clsErr } = await supabase.from('classes').delete().eq('id', s.id)
+          if (clsErr) throw clsErr
+
+          // 6. Finally, delete the subject itself
           const { error } = await supabase.from('subjects').delete().eq('id', s.id)
-          if (!error) {
-            try {
-              let adminName = "Administrator"
-              const { data: { user: adminUser } } = await supabase.auth.getUser()
-              if (adminUser) {
-                const { data: prof } = await supabase
-                  .from('profiles')
-                  .select('full_name')
-                  .eq('id', adminUser.id)
-                  .single()
-                if (prof?.full_name) adminName = prof.full_name
-              }
+          if (error) throw error
 
-              const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-
-              // Notify all admins
-              const { data: adminProfiles } = await supabase
+          try {
+            let adminName = "Administrator"
+            const { data: { user: adminUser } } = await supabase.auth.getUser()
+            if (adminUser) {
+              const { data: prof } = await supabase
                 .from('profiles')
-                .select('id')
-                .eq('role', 'admin')
-
-              if (adminProfiles && adminProfiles.length > 0) {
-                const adminNotifs = adminProfiles.map(adm => ({
-                  user_id: adm.id,
-                  title: "Subject Class Deleted",
-                  message: `${adminName} deleted subject class "${s.name}" at ${currentTime}.`,
-                  type: "approval",
-                  link: "/admin/subjects"
-                }))
-                await supabase.from('notifications').insert(adminNotifs)
-              }
-            } catch (err) {
-              console.error("Error creating deletion notification:", err)
+                .select('full_name')
+                .eq('id', adminUser.id)
+                .single()
+              if (prof?.full_name) adminName = prof.full_name
             }
+
+            const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+            // Notify all admins
+            const { data: adminProfiles } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('role', 'admin')
+
+            if (adminProfiles && adminProfiles.length > 0) {
+              const adminNotifs = adminProfiles.map(adm => ({
+                user_id: adm.id,
+                title: "Subject Class Deleted",
+                message: `${adminName} deleted subject class "${s.name}" at ${currentTime}.`,
+                type: "approval",
+                link: "/admin/subjects"
+              }))
+              await supabase.from('notifications').insert(adminNotifs)
+            }
+          } catch (err) {
+            console.error("Error creating deletion notification:", err)
           }
           fetchSubjects()
         } catch (err: any) {

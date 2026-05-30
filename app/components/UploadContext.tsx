@@ -357,12 +357,57 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
+        // If targetParentId is still falsy, dynamically search or create "Limkokwing Coursework" folder in the root
+        if (!targetParentId) {
+          try {
+            const listRootRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent("name = 'Limkokwing Coursework' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false")}&fields=files(id)`, {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            if (listRootRes.ok) {
+              const listRootData = await listRootRes.json();
+              if (listRootData.files && listRootData.files.length > 0) {
+                targetParentId = listRootData.files[0].id;
+              }
+            }
+            if (!targetParentId) {
+              const createRootRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  name: 'Limkokwing Coursework',
+                  mimeType: 'application/vnd.google-apps.folder'
+                })
+              });
+              if (createRootRes.ok) {
+                const rootFolderData = await createRootRes.json();
+                targetParentId = rootFolderData.id;
+              }
+            }
+            // Save the newly resolved folder ID to the lecturer's profile
+            if (targetParentId && user) {
+              await supabase
+                .from('profiles')
+                .update({ drive_folder_id: targetParentId })
+                .eq('id', user.id);
+            }
+          } catch (rootErr) {
+            console.error("Failed to dynamically search or create root coursework folder:", rootErr);
+          }
+        }
+
+        const finalSubjectName = subjectName?.trim() || 'Classroom';
+
         // A. Search/Create the Subject/Class Folder inside targetParentId dynamically
         let subjectFolderId = null;
 
         const trySearchAndCreate = async (parentId: string) => {
+          const parentToSearch = parentId || 'root';
           // Try searching first
-          const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${subjectName?.replace(/'/g, "\\'")}' and '${parentId}' in parents and trashed = false`;
+          const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${finalSubjectName.replace(/'/g, "\\'")}' and '${parentToSearch}' in parents and trashed = false`;
           const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
             method: 'GET',
             headers: {
@@ -390,9 +435,9 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              name: subjectName?.trim(),
+              name: finalSubjectName,
               mimeType: 'application/vnd.google-apps.folder',
-              parents: [parentId]
+              parents: [parentToSearch]
             })
           });
 
