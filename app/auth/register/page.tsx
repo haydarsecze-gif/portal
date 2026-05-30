@@ -254,10 +254,13 @@ export default function Register() {
                 </div>
 
                 <ol className="text-[9.5px] font-bold text-indigo-400/90 leading-relaxed list-decimal pl-4 space-y-1.5">
-                  <li>Create <strong className="font-extrabold text-indigo-300">1 main folder</strong> (e.g. <i>"Limkokwing Coursework"</i>) in your personal Google Drive.</li>
+                  <li>Create <strong className="font-extrabold text-indigo-300">1 main folder</strong> (e.g. <i>"Limkokwing Coursework"</i>) in your personal or work Google Drive.</li>
                   <li>Share it with Editor access to our service email: <span className="block font-black select-all mt-1 bg-white/5 dark:bg-slate-950/50 p-1.5 rounded-lg border border-indigo-900/40 break-all text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span></li>
                   <li>Copy the Folder ID from the URL (the string after <code className="bg-indigo-950 px-1 py-0.5 rounded">folders/</code>) and paste it below.</li>
                 </ol>
+                <p className="text-[8px] font-black text-indigo-500 uppercase tracking-wider leading-normal mt-2">
+                  ⚠️ Note: If your work/school Drive restricts sharing with outside accounts, please use a personal Google Drive instead.
+                </p>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-400 group-focus-within:text-indigo-350 transition-colors">

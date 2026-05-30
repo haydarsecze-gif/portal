@@ -304,8 +304,11 @@ export default function LecturerDashboard() {
                   </div>
 
                   <p className="text-[9.5px] font-bold text-indigo-600 dark:text-indigo-400/90 leading-normal">
-                    Your personal Drive folder must remain shared with Editor permissions to our service email: 
+                    Your personal or work Drive folder must remain shared with Editor permissions to our service email: 
                     <span className="block font-black select-all mt-1.5 bg-white dark:bg-slate-950 p-1.5 rounded-lg border border-indigo-100 dark:border-indigo-900/60 break-all text-indigo-600 dark:text-indigo-300">student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com</span>
+                  </p>
+                  <p className="text-[8px] font-black text-indigo-650 dark:text-indigo-500 uppercase tracking-wider leading-normal mt-1">
+                    ⚠️ Note: If your work/school Drive restricts sharing with outside accounts, please use a personal Google Drive instead.
                   </p>
                 </div>
                 <input
