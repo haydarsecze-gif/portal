@@ -14,6 +14,7 @@ export default function Login() {
   const router = useRouter()
 
   useEffect(() => {
+    nukeSession() // Nuke any stale session cookies/tokens immediately upon visiting the login screen!
     try {
       let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
       if (!Array.isArray(saved)) {

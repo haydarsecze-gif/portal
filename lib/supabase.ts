@@ -14,7 +14,7 @@ const resolvedUrl = typeof window !== 'undefined'
 const projectRef = 'aqvpwhubbytjzcdsfvhc'
 
 // ✅ Only public client (safe for browser) using clean localStorage-based session tracking
-export const supabase = createClient(
+const client = createClient(
   resolvedUrl,
   supabaseAnonKey,
   {
@@ -26,6 +26,16 @@ export const supabase = createClient(
     }
   }
 )
+
+// Wrap the original signOut to automatically run nukeSession!
+const originalSignOut = client.auth.signOut.bind(client.auth)
+client.auth.signOut = async (options?: any) => {
+  const res = await originalSignOut(options)
+  nukeSession()
+  return res
+}
+
+export const supabase = client
 
 /**
  * Completely purges all possible Supabase session storage, cookies, and tokens
