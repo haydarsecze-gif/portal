@@ -1,0 +1,679 @@
+'use client'
+import React, { createContext, useContext, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+
+interface UploadProgressItem {
+  progress: number;
+  status: 'uploading' | 'success' | 'failed';
+  error?: string;
+  title: string;
+  type?: 'assignment' | 'material' | 'submission_upload' | 'submission_delete';
+}
+
+interface UploadContextType {
+  uploadProgress: { [key: string]: UploadProgressItem };
+  setUploadProgress: React.Dispatch<React.SetStateAction<{ [key: string]: UploadProgressItem }>>;
+  dismissProgress: (key: string) => void;
+  uploadStudentSubmission: (params: {
+    assignmentTitle: string;
+    filesToUpload: File[];
+    itemToUpload: any;
+    subjectTrueUUID: string;
+    studentName: string;
+    profile: any;
+    accessToken: string;
+    existingSubmission: any;
+    onComplete?: () => void;
+  }) => Promise<void>;
+  deleteStudentFile: (params: {
+    fileStringToRemove: string;
+    assignmentTitle: string;
+    existingSubmission: any;
+    subjectTrueUUID: string;
+    onComplete?: () => void;
+  }) => Promise<void>;
+  uploadLecturerCoursework: (params: {
+    tempId: string;
+    formData: any;
+    type: 'assignment' | 'material';
+    files: File[];
+    subjectName: string;
+    classId: string;
+    initialData?: any;
+    onComplete?: () => void;
+  }) => Promise<void>;
+}
+
+const UploadContext = createContext<UploadContextType | undefined>(undefined);
+
+export function UploadProvider({ children }: { children: React.ReactNode }) {
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: UploadProgressItem }>({});
+
+  const dismissProgress = (key: string) => {
+    setUploadProgress(prev => {
+      const copy = { ...prev };
+      delete copy[key];
+      return copy;
+    });
+  };
+
+  const uploadStudentSubmission = async ({
+    assignmentTitle,
+    filesToUpload,
+    itemToUpload,
+    subjectTrueUUID,
+    studentName,
+    profile,
+    accessToken,
+    existingSubmission,
+    onComplete
+  }: any) => {
+    const totalSize = filesToUpload.reduce((sum: number, f: File) => sum + f.size, 0);
+    let totalUploadedBytes = 0;
+
+    setUploadProgress(prev => ({
+      ...prev,
+      [assignmentTitle]: { title: assignmentTitle, progress: 0, status: 'uploading', type: 'submission_upload' }
+    }));
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const uploadedLinks: string[] = [];
+      const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+
+      for (const file of filesToUpload) {
+        // 1. Prepare Google Drive resumable session
+        const res = await fetch('/api/drive/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            studentName,
+            targetFolderId: itemToUpload.folder_id,
+            fileName: file.name,
+            fileType: file.type || 'application/octet-stream',
+            fileSize: file.size
+          })
+        });
+
+        const initData = await res.json();
+        if (initData.error) throw new Error(initData.error);
+
+        const { uploadUrl } = initData;
+        let uploadedBytes = 0;
+        const totalBytes = file.size;
+
+        while (uploadedBytes < totalBytes) {
+          const chunkEnd = Math.min(uploadedBytes + CHUNK_SIZE, totalBytes);
+          const chunkBlob = file.slice(uploadedBytes, chunkEnd);
+          const chunkSize = chunkBlob.size;
+
+          const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Length', String(chunkSize));
+            xhr.setRequestHeader('Content-Range', `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`);
+            
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const pct = Math.min(Math.round(((totalUploadedBytes + e.loaded) / totalSize) * 98), 98);
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [assignmentTitle]: { ...prev[assignmentTitle], progress: pct }
+                }));
+              }
+            };
+
+            xhr.onload = () => resolve({ status: xhr.status, ok: xhr.status >= 200 && xhr.status < 300, responseText: xhr.responseText });
+            xhr.onerror = () => reject(new Error('Network upload failed.'));
+            xhr.send(chunkBlob);
+          });
+
+          if (uploadResult.status === 308) {
+            totalUploadedBytes += chunkSize;
+            uploadedBytes = chunkEnd;
+          } else if (uploadResult.ok) {
+            totalUploadedBytes += chunkSize;
+            const uploadData = JSON.parse(uploadResult.responseText);
+            const fileId = uploadData.id;
+
+            // Set permission to anyone reader
+            await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'reader', type: 'anyone' })
+            });
+
+            // Fetch file webViewLink
+            const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink,name`, {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${accessToken}` }
+            });
+            const fileMeta = await metaRes.json();
+            uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
+            uploadedBytes = totalBytes;
+          } else {
+            throw new Error(`Upload failed (Status ${uploadResult.status}): ${uploadResult.responseText}`);
+          }
+        }
+      }
+
+      // 3. Save to database
+      let finalLinks = uploadedLinks;
+      if (existingSubmission && existingSubmission.file_urls) {
+        finalLinks = [...existingSubmission.file_urls, ...uploadedLinks];
+      }
+
+      const { error: submitErr } = await supabase.from('submissions').upsert({
+        id: existingSubmission?.id,
+        class_id: subjectTrueUUID,
+        student_id: user?.id,
+        assignment_name: assignmentTitle,
+        file_urls: finalLinks,
+        submitted_at: new Date().toISOString()
+      });
+      if (submitErr) throw submitErr;
+
+      // 4. Notify lecturers
+      try {
+        const { data: lecturers } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'teacher')
+          .eq('is_approved', true);
+        
+        if (lecturers && lecturers.length > 0) {
+          const notificationsToInsert = lecturers.map(lec => ({
+            user_id: lec.id,
+            title: "New Assignment Submission",
+            message: `${studentName} submitted the assignment "${assignmentTitle}".`,
+            type: "submission"
+          }));
+          await supabase.from('notifications').insert(notificationsToInsert);
+        }
+      } catch (err) {
+        console.error("Error creating notifications:", err);
+      }
+
+      setUploadProgress(prev => ({
+        ...prev,
+        [assignmentTitle]: { ...prev[assignmentTitle], progress: 100, status: 'success' }
+      }));
+
+      if (onComplete) onComplete();
+    } catch (err: any) {
+      console.error("Global upload failed:", err);
+      setUploadProgress(prev => ({
+        ...prev,
+        [assignmentTitle]: { ...prev[assignmentTitle], progress: 0, status: 'failed', error: err.message || 'Upload failed.' }
+      }));
+    }
+  };
+
+  const deleteStudentFile = async ({
+    fileStringToRemove,
+    assignmentTitle,
+    existingSubmission,
+    subjectTrueUUID,
+    onComplete
+  }: any) => {
+    setUploadProgress(prev => ({
+      ...prev,
+      [assignmentTitle]: { title: assignmentTitle, progress: 30, status: 'uploading', type: 'submission_delete' }
+    }));
+
+    try {
+      if (!existingSubmission) return;
+
+      const updatedUrls = existingSubmission.file_urls.filter((url: string) => url !== fileStringToRemove);
+
+      if (updatedUrls.length === 0) {
+        await supabase.from('submissions').delete().eq('id', existingSubmission.id);
+      } else {
+        await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', existingSubmission.id);
+      }
+
+      setUploadProgress(prev => ({
+        ...prev,
+        [assignmentTitle]: { ...prev[assignmentTitle], progress: 100, status: 'success' }
+      }));
+
+      if (onComplete) onComplete();
+    } catch (err: any) {
+      setUploadProgress(prev => ({
+        ...prev,
+        [assignmentTitle]: { ...prev[assignmentTitle], progress: 0, status: 'failed', error: err.message || 'Delete failed.' }
+      }));
+    }
+  };
+
+  const uploadLecturerCoursework = async ({
+    tempId,
+    formData,
+    type,
+    files,
+    subjectName,
+    classId,
+    initialData,
+    onComplete
+  }: any) => {
+    const totalSize = files.reduce((sum: number, f: File) => sum + f.size, 0);
+    const assignmentTitle = formData.title;
+
+    setUploadProgress(prev => ({
+      ...prev,
+      [tempId]: { title: assignmentTitle, progress: 0, status: 'uploading', type }
+    }));
+
+    try {
+      const links: string[] = [];
+      let capturedFolderId = initialData?.folder_id || null;
+
+      if (files.length > 0) {
+        // 1. Fetch OAuth2 access token and root folder ID
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        const headers: HeadersInit = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const tokenRes = await fetch('/api/drive/token', { headers });
+        const tokenData = await tokenRes.json();
+        if (!tokenRes.ok || tokenData.error) {
+          throw new Error(tokenData.error || 'Failed to retrieve Google Drive upload session.');
+        }
+        const { accessToken, parentFolderId } = tokenData;
+
+        // Query the lecturer's own drive folder ID if defined
+        let targetParentId = parentFolderId;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('drive_folder_id')
+            .eq('id', user.id)
+            .single();
+          if (prof?.drive_folder_id) {
+            targetParentId = prof.drive_folder_id;
+          }
+        }
+
+        // A. Search/Create the Subject/Class Folder inside targetParentId dynamically
+        let subjectFolderId = null;
+
+        const trySearchAndCreate = async (parentId: string) => {
+          // Try searching first
+          const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${subjectName?.replace(/'/g, "\\'")}' and '${parentId}' in parents and trashed = false`;
+          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+          
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            if (searchData.files && searchData.files.length > 0) {
+              return searchData.files[0].id;
+            }
+          } else {
+            const errData = await searchRes.json().catch(() => ({}));
+            if (searchRes.status === 404 || searchRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
+              throw new Error('access_denied');
+            }
+          }
+
+          // Create it if not found
+          const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: subjectName?.trim(),
+              mimeType: 'application/vnd.google-apps.folder',
+              parents: [parentId]
+            })
+          });
+
+          if (createSubRes.ok) {
+            const subFolderData = await createSubRes.json();
+            const subId = subFolderData.id;
+
+            // Grant anyone reader permission
+            await fetch(`https://www.googleapis.com/drive/v3/files/${subId}/permissions`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                role: 'reader',
+                type: 'anyone'
+              })
+            });
+            return subId;
+          } else {
+            const errData = await createSubRes.json().catch(() => ({}));
+            if (createSubRes.status === 404 || createSubRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
+              throw new Error('access_denied');
+            }
+            const errText = JSON.stringify(errData);
+            throw new Error(`Failed to create subject folder: ${errText}`);
+          }
+        };
+
+        try {
+          subjectFolderId = await trySearchAndCreate(targetParentId);
+        } catch (e: any) {
+          if (e.message === 'access_denied' && targetParentId !== parentFolderId) {
+            console.warn(`Lecturer folder ${targetParentId} is inaccessible. Attempting synchronous repair...`);
+            let repairedId = null;
+            
+            if (user) {
+              try {
+                const { data: p } = await supabase.from('profiles').select('full_name, email').eq('id', user.id).single();
+                if (p && p.email) {
+                  const autoRes = await fetch('/api/drive/setup-lecturer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lecturerName: p.full_name, lecturerEmail: p.email })
+                  });
+                  const autoData = await autoRes.json();
+                  if (autoRes.ok && autoData.folderId) {
+                    await supabase
+                      .from('profiles')
+                      .update({ drive_folder_id: autoData.folderId })
+                      .eq('id', user.id);
+                    repairedId = autoData.folderId;
+                    console.log(`Successfully repaired inaccessible drive folder ID for lecturer ${p.full_name}. New folder: ${repairedId}`);
+                  }
+                }
+              } catch (repairErr) {
+                console.error("Failed to synchronously repair lecturer drive:", repairErr);
+              }
+            }
+
+            if (repairedId) {
+              targetParentId = repairedId;
+            } else {
+              targetParentId = parentFolderId;
+            }
+
+            subjectFolderId = await trySearchAndCreate(targetParentId);
+          } else {
+            throw e;
+          }
+        }
+
+        if (subjectFolderId) {
+          targetParentId = subjectFolderId;
+        }
+
+        // 2. Create coursework folder if it doesn't exist yet
+        if (!capturedFolderId) {
+          const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: `${type}: ${formData.title.trim()}`,
+              mimeType: 'application/vnd.google-apps.folder',
+              parents: [targetParentId]
+            })
+          });
+
+          if (!folderRes.ok) {
+            const errText = await folderRes.text();
+            throw new Error(`Failed to create coursework folder in Google Drive: ${errText}`);
+          }
+
+          const folderData = await folderRes.json();
+          capturedFolderId = folderData.id;
+        }
+
+        // 3. Upload attached files with progress tracking!
+        let totalUploaded = 0;
+
+        for (const f of files) {
+          const metadata = {
+            name: f.name,
+            parents: [capturedFolderId]
+          };
+
+          const formDataPayload = new FormData();
+          formDataPayload.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          formDataPayload.append('file', f);
+
+          const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+            xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
+            
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const fileUploaded = e.loaded;
+                const currentTotal = totalUploaded + fileUploaded;
+                const pct = Math.min(Math.round((currentTotal / totalSize) * 98), 98);
+                setUploadProgress(prev => ({
+                  ...prev,
+                  [tempId]: { ...prev[tempId], progress: pct }
+                }));
+              }
+            };
+
+            xhr.onload = () => {
+              resolve({
+                status: xhr.status,
+                ok: xhr.status >= 200 && xhr.status < 300,
+                responseText: xhr.responseText
+              });
+            };
+
+            xhr.onerror = () => {
+              reject(new Error(`Network upload failed for "${f.name}".`));
+            };
+
+            xhr.send(formDataPayload);
+          });
+
+          if (!uploadResult.ok) {
+            throw new Error(`File upload failed for "${f.name}" (Status ${uploadResult.status}): ${uploadResult.responseText}`);
+          }
+
+          const uploadData = JSON.parse(uploadResult.responseText);
+          const fileId = uploadData.id;
+
+          // Set anyone reader permission
+          await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              role: 'reader',
+              type: 'anyone'
+            })
+          });
+
+          // Fetch webViewLink
+          const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          });
+
+          if (!metaRes.ok) {
+            throw new Error("Failed to retrieve file web link from Google Drive.");
+          }
+
+          const metaData = await metaRes.json();
+          links.push(metaData.webViewLink);
+
+          totalUploaded += f.size;
+          const pct = Math.round((totalUploaded / totalSize) * 98);
+          setUploadProgress(prev => ({
+            ...prev,
+            [tempId]: { ...prev[tempId], progress: pct }
+          }));
+        }
+      }
+
+      // Save to database
+      const tableName = type === 'assignment' ? 'assignments' : 'materials';
+      let dbError;
+      let insertedId = "";
+
+      if (initialData) {
+        // Update existing item
+        const updatePayload: any = {
+          title: formData.title,
+          description: formData.description || null,
+        };
+        if (links.length > 0) {
+          updatePayload.file_url = initialData.file_url
+            ? `${initialData.file_url}, ${links.join(', ')}`
+            : links.join(', ');
+        }
+        if (type === 'assignment') {
+          updatePayload.deadline = formData.deadline ? new Date(formData.deadline).toISOString() : null;
+          updatePayload.allow_late = formData.allowLate;
+        }
+
+        const { error } = await supabase
+          .from(tableName)
+          .update(updatePayload)
+          .eq('id', initialData.id);
+        dbError = error;
+        insertedId = initialData.id;
+      } else {
+        // Insert new item
+        const payload: any = {
+          class_id: classId,
+          title: formData.title,
+          description: formData.description || null,
+          file_url: links.join(', '),
+          folder_id: capturedFolderId,
+          created_at: new Date().toISOString()
+        };
+
+        if (type === 'assignment') {
+          payload.deadline = formData.deadline ? new Date(formData.deadline).toISOString() : null;
+          payload.allow_late = formData.allowLate;
+        }
+
+        const { data: insertedData, error } = await supabase
+          .from(tableName)
+          .insert([payload])
+          .select()
+          .single();
+        
+        dbError = error;
+        if (insertedData) {
+          insertedId = insertedData.id;
+        }
+      }
+
+      if (dbError) throw dbError;
+
+      // Notify all students in this class if it's a new coursework item (not editing)
+      if (!initialData) {
+        try {
+          const { data: mappings } = await supabase
+            .from('student_classes')
+            .select('student_id')
+            .eq('subject_id', classId);
+
+          if (mappings && mappings.length > 0) {
+            const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            
+            // Resolve Lecturer Name
+            let lecturerName = "Lecturer";
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: prof } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', user.id)
+                .single();
+              if (prof?.full_name) {
+                lecturerName = prof.full_name;
+              }
+            }
+
+            const formattedDeadline = type === 'assignment' && formData.deadline
+              ? new Date(formData.deadline).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+              : '';
+
+            const message = type === 'assignment'
+              ? `${lecturerName} added a new assignment: "${formData.title}" in ${subjectName || 'Classroom'} at ${currentTime}. Due: ${formattedDeadline}.`
+              : `${lecturerName} added a new material: "${formData.title}" in ${subjectName || 'Classroom'} at ${currentTime}.`;
+
+            const linkPath = `/dashboard/student/class/${classId}?select=${insertedId}`;
+
+            const notificationsToInsert = mappings.map(m => ({
+              user_id: m.student_id,
+              title: type === 'assignment' ? "New Assignment Added" : "New Material Added",
+              message: message,
+              type: type,
+              link: linkPath
+            }));
+
+            await supabase.from('notifications').insert(notificationsToInsert);
+          }
+        } catch (err) {
+          console.error("Error creating coursework notifications:", err);
+        }
+      }
+
+      // Complete successfully
+      setUploadProgress(prev => ({
+        ...prev,
+        [tempId]: { ...prev[tempId], progress: 100, status: 'success' }
+      }));
+
+      if (onComplete) onComplete();
+
+      // Clear successfully completed item after 5 seconds
+      setTimeout(() => {
+        setUploadProgress(prev => {
+          const copy = { ...prev };
+          delete copy[tempId];
+          return copy;
+        });
+      }, 5000);
+
+    } catch (err: any) {
+      console.error("Global lecturer upload failed:", err);
+      setUploadProgress(prev => ({
+        ...prev,
+        [tempId]: { ...prev[tempId], progress: 0, status: 'failed', error: err.message || 'Unknown network error.' }
+      }));
+    }
+  };
+
+  return (
+    <UploadContext.Provider value={{
+      uploadProgress,
+      setUploadProgress,
+      dismissProgress,
+      uploadStudentSubmission,
+      deleteStudentFile,
+      uploadLecturerCoursework
+    }}>
+      {children}
+    </UploadContext.Provider>
+  );
+}
+
+export function useUpload() {
+  const context = useContext(UploadContext);
+  if (context === undefined) {
+    throw new Error('useUpload must be used within an UploadProvider');
+  }
+  return context;
+}

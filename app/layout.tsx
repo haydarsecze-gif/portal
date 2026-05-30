@@ -4,6 +4,7 @@ import "./globals.css";
 import PWAClient from "./components/PWAClient";
 import InstallApp from "./components/InstallApp";
 import GlobalErrorReporter from "./components/GlobalErrorReporter";
+import { UploadProvider } from "./components/UploadContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,7 +65,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-bg-portal text-text-title transition-colors duration-300">
         <GlobalErrorReporter />
         <PWAClient />
-        {children}
+        <UploadProvider>
+          {children}
+        </UploadProvider>
         <InstallApp />
       </body>
     </html>

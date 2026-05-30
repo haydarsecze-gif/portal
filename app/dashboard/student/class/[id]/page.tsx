@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cl
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
+import { useUpload } from '@/app/components/UploadContext'
 
 const STATUS_LABELS: Record<string, string> = {
   'P': 'Present', 'L': 'Late', 'X': 'Absent', 'M': 'Medical (MC)', 'V': 'Valid Reason', 'H': 'Holiday / Break', 'N': 'Not Applicable', '--': 'Unmarked'
@@ -58,7 +59,7 @@ export default function StudentClassroom() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isResubmitting, setIsResubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ [itemId: string]: { progress: number; status: 'uploading' | 'success' | 'failed'; error?: string } }>({});
+  const { uploadProgress, setUploadProgress, uploadStudentSubmission, deleteStudentFile } = useUpload();
   const [profile, setProfile] = useState<any>(null);
   const [roomName, setRoomName] = useState<string>('');
   const [subjectTrueUUID, setSubjectTrueUUID] = useState<string>('');
@@ -389,215 +390,31 @@ export default function StudentClassroom() {
     setSelectedItem(null);
     setShowSuccess(false);
 
-    // Initialize progress tracking state
-    setUploadProgress(prev => ({
-      ...prev,
-      [assignmentTitle]: { progress: 0, status: 'uploading' }
-    }));
+    // Call global context uploader that runs at layout scope!
+    const studentName = profile?.full_name || "Student";
+    const existingSubmission = getSub(assignmentTitle);
 
-    // Start background execution
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const studentName = profile?.full_name || "Student";
-        const uploadedLinks = [];
-        const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
-        
-        const totalSize = filesToUpload.reduce((sum, f) => sum + f.size, 0);
-        let totalUploadedBytes = 0;
+    try {
+      const res = await fetch('/api/drive/token');
+      const tokenData = await res.json();
+      const accessToken = tokenData.accessToken;
 
-        for (const file of filesToUpload) {
-          // 1. Prepare Google Drive folder and get resumable session URL via server (100-byte body)
-          const res = await fetch('/api/drive/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              studentName,
-              targetFolderId: itemToUpload.folder_id,
-              fileName: file.name,
-              fileType: file.type || 'application/octet-stream',
-              fileSize: file.size
-            })
-          });
-          const responseText = await res.text();
-          let initData;
-          try {
-            initData = JSON.parse(responseText);
-          } catch (jsonErr) {
-            throw new Error(`Google Drive resumable upload initialization failed (Status ${res.status}): ${responseText.substring(0, 150)}`);
-          }
-          if (initData.error) throw new Error(initData.error);
-
-          const { uploadUrl, studentFolderId, accessToken } = initData;
-
-          // 2. Upload file in chunks (BYPASSES ALL PAYLOAD AND MEMORY LIMITS!)
-          let uploadedBytes = 0;
-          const totalBytes = file.size;
-
-          while (uploadedBytes < totalBytes) {
-            const chunkEnd = Math.min(uploadedBytes + CHUNK_SIZE, totalBytes);
-            const chunkBlob = file.slice(uploadedBytes, chunkEnd);
-            const chunkSize = chunkBlob.size;
-
-            const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
-              const xhr = new XMLHttpRequest();
-              xhr.open('PUT', uploadUrl);
-              xhr.setRequestHeader('Content-Length', String(chunkSize));
-              xhr.setRequestHeader('Content-Range', `bytes ${uploadedBytes}-${chunkEnd - 1}/${totalBytes}`);
-              
-              xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable) {
-                  const chunkUploaded = e.loaded;
-                  const currentTotal = totalUploadedBytes + chunkUploaded;
-                  const pct = Math.min(Math.round((currentTotal / totalSize) * 98), 98);
-                  setUploadProgress(prev => ({
-                    ...prev,
-                    [assignmentTitle]: { progress: pct, status: 'uploading' }
-                  }));
-                }
-              };
-
-              xhr.onload = () => {
-                resolve({
-                  status: xhr.status,
-                  ok: xhr.status >= 200 && xhr.status < 300,
-                  responseText: xhr.responseText
-                });
-              };
-
-              xhr.onerror = () => {
-                reject(new Error('Network upload failed.'));
-              };
-
-              xhr.send(chunkBlob);
-            });
-
-            if (uploadResult.status === 308) {
-              // Intermediate chunk uploaded successfully!
-              totalUploadedBytes += chunkSize;
-              const pct = Math.round((totalUploadedBytes / totalSize) * 98);
-              setUploadProgress(prev => ({
-                ...prev,
-                [assignmentTitle]: { progress: pct, status: 'uploading' }
-              }));
-              uploadedBytes = chunkEnd;
-            } else if (uploadResult.ok) {
-              // Final chunk uploaded successfully!
-              totalUploadedBytes += chunkSize;
-              const pct = Math.round((totalUploadedBytes / totalSize) * 98);
-              setUploadProgress(prev => ({
-                ...prev,
-                [assignmentTitle]: { progress: pct, status: 'uploading' }
-              }));
-              const uploadData = JSON.parse(uploadResult.responseText);
-              const fileId = uploadData.id;
-
-              // Set permission to anyone reader
-              const permRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  role: 'reader',
-                  type: 'anyone'
-                })
-              });
-
-              if (!permRes.ok) {
-                console.error("Direct permission set failed for file", fileId);
-              }
-
-              // Fetch file webViewLink
-              const metaRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webViewLink,name`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`
-                }
-              });
-
-              if (!metaRes.ok) {
-                throw new Error("Failed to retrieve uploaded file web link from Google Drive.");
-              }
-
-              const fileMeta = await metaRes.json();
-              uploadedLinks.push(`${fileMeta.name}:::${fileMeta.webViewLink}`);
-              uploadedBytes = totalBytes; // Complete
-            } else {
-              const errText = uploadResult.responseText;
-              throw new Error(`Chunk upload failed at byte ${uploadedBytes} (Status ${uploadResult.status}): ${errText}`);
-            }
-          }
+      uploadStudentSubmission({
+        assignmentTitle,
+        filesToUpload,
+        itemToUpload,
+        subjectTrueUUID,
+        studentName,
+        profile,
+        accessToken,
+        existingSubmission,
+        onComplete: () => {
+          fetchClassData();
         }
-
-        // 3. Save to database
-        const existingSubmission = getSub(assignmentTitle);
-        let finalLinks = uploadedLinks;
-        if (existingSubmission && existingSubmission.file_urls) {
-          finalLinks = [...existingSubmission.file_urls, ...uploadedLinks];
-        }
-
-        const { error: submitErr } = await supabase.from('submissions').upsert({
-          id: existingSubmission?.id,
-          class_id: subjectTrueUUID,
-          student_id: user?.id,
-          assignment_name: assignmentTitle,
-          file_urls: finalLinks,
-          submitted_at: new Date().toISOString(),
-        });
-
-        if (submitErr) throw submitErr;
-
-        // Notify lecturers about the new assignment submission
-        try {
-          const { data: lecturers } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'teacher')
-            .eq('is_approved', true)
-            .in('full_name', subject?.lecturer_names || [])
-
-          if (lecturers && lecturers.length > 0) {
-            const notificationsToInsert = lecturers.map(lec => ({
-              user_id: lec.id,
-              title: "New Assignment Submission",
-              message: `${studentName} submitted the assignment "${assignmentTitle}" in ${subject?.name || "Classroom"}.`,
-              type: "submission"
-            }))
-
-            await supabase.from('notifications').insert(notificationsToInsert)
-          }
-        } catch (err) {
-          console.error("Error creating submission notifications:", err)
-        }
-
-        // Success state
-        setUploadProgress(prev => ({
-          ...prev,
-          [assignmentTitle]: { progress: 100, status: 'success' }
-        }));
-        
-        // Refresh page data so they see the green Done status
-        fetchClassData();
-
-        // Automatically hide success bar after 6 seconds
-        setTimeout(() => {
-          setUploadProgress(prev => {
-            const copy = { ...prev };
-            delete copy[assignmentTitle];
-            return copy;
-          });
-        }, 6000);
-
-      } catch (err: any) {
-        console.error("Background upload failed:", err);
-        setUploadProgress(prev => ({
-          ...prev,
-          [assignmentTitle]: { progress: 0, status: 'failed', error: err.message || 'Unknown network error.' }
-        }));
-      }
-    })();
+      });
+    } catch (err: any) {
+      console.error("Token query failed:", err);
+    }
   };
 
   const handleRemoveExistingFile = (fileStringToRemove: string) => {
@@ -608,18 +425,17 @@ export default function StudentClassroom() {
       type: 'warning',
       isConfirm: true,
       onConfirm: async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        const activeSub = getSub(selectedItem.title);
-        if (!activeSub) return;
-
-        const updatedUrls = activeSub.file_urls.filter((url: string) => url !== fileStringToRemove);
-
-        if (updatedUrls.length === 0) {
-          await supabase.from('submissions').delete().eq('id', activeSub.id); // Fix: Delete precisely by primary key ID
-        } else {
-          await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', activeSub.id); // Fix: Update precisely by primary key ID
-        }
-        fetchClassData();
+        const assignmentTitle = selectedItem.title;
+        const existingSubmission = getSub(assignmentTitle);
+        deleteStudentFile({
+          fileStringToRemove,
+          assignmentTitle,
+          existingSubmission,
+          subjectTrueUUID,
+          onComplete: () => {
+            fetchClassData();
+          }
+        });
       }
     });
   };
