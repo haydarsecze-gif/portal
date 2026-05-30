@@ -55,13 +55,13 @@ export default function LecturerDashboard() {
     if (driveConnected === 'true') {
       setSettingsMessage('✅ Google Drive connected successfully! Your coursework files are now hosted on your own personal Drive.')
       setShowSettingsModal(true)
-      window.history.replaceState({}, document.title, window.location.pathname)
+      router.replace('/dashboard/lecturer')
     } else if (driveConnected === 'false') {
       setSettingsMessage(`❌ Drive connection failed: ${driveError || 'Unknown error'}`)
       setShowSettingsModal(true)
-      window.history.replaceState({}, document.title, window.location.pathname)
+      router.replace('/dashboard/lecturer')
     }
-  }, [])
+  }, [router])
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [settingsName, setSettingsName] = useState('')
