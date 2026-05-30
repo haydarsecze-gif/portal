@@ -48,6 +48,16 @@ export async function POST(req: Request) {
 
     console.log(`Admin User ID ${user.id} requested deletion of user ID ${userId}`);
 
+    // Nullify teacher_id in classes table to satisfy foreign key constraints before deletion
+    try {
+      await serviceClient
+        .from('classes')
+        .update({ teacher_id: null })
+        .eq('teacher_id', userId);
+    } catch (dbErr) {
+      console.warn('Non-fatal error nullifying teacher_id in classes:', dbErr);
+    }
+
     // Call serviceClient auth admin to delete the user completely
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(userId);
 
