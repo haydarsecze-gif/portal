@@ -145,72 +145,87 @@ export default function ContentModal({
         let subjectFolderId = null
         let fallbackUsed = false
 
-        const trySearchAndCreate = async (parentId: string) => {
-          const parentToSearch = parentId || 'root'
-          // Try searching first
-          const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${finalSubjectName.replace(/'/g, "\\'")}' and '${parentToSearch}' in parents and trashed = false`
-          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          })
+        const getOrCreateSubjectFolder = async (subjId: string, parentId: string, finalSubjName: string, accToken: string) => {
+          const globalCache = (typeof window !== 'undefined' ? ((window as any).__subjectFolderCache = (window as any).__subjectFolderCache || {}) : {}) as Record<string, Promise<string> | undefined>
           
-          if (searchRes.ok) {
-            const searchData = await searchRes.json()
-            if (searchData.files && searchData.files.length > 0) {
-              return searchData.files[0].id
-            }
-          } else {
-            const errData = await searchRes.json().catch(() => ({}))
-            if (searchRes.status === 404 || searchRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
-              throw new Error('access_denied')
-            }
+          if (globalCache[subjId]) {
+            return globalCache[subjId]
           }
 
-          // Create it if not found
-          const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              name: finalSubjectName,
-              mimeType: 'application/vnd.google-apps.folder',
-              parents: [parentToSearch]
+          const promise = (async () => {
+            const parentToSearch = parentId || 'root'
+            const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${finalSubjName.replace(/'/g, "\\'")}' and '${parentToSearch}' in parents and trashed = false`
+            const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accToken}`
+              }
             })
-          })
+            
+            if (searchRes.ok) {
+              const searchData = await searchRes.json()
+              if (searchData.files && searchData.files.length > 0) {
+                return searchData.files[0].id
+              }
+            } else {
+              const errData = await searchRes.json().catch(() => ({}))
+              if (searchRes.status === 404 || searchRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
+                throw new Error('access_denied')
+              }
+            }
 
-          if (createSubRes.ok) {
-            const subFolderData = await createSubRes.json()
-            const subId = subFolderData.id
-
-            // Grant anyone reader permission
-            await fetch(`https://www.googleapis.com/drive/v3/files/${subId}/permissions`, {
+            // Create it if not found
+            const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${accessToken}`,
+                'Authorization': `Bearer ${accToken}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
-                role: 'reader',
-                type: 'anyone'
+                name: finalSubjName,
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [parentToSearch]
               })
             })
-            return subId
-          } else {
-            const errData = await createSubRes.json().catch(() => ({}))
-            if (createSubRes.status === 404 || createSubRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
-              throw new Error('access_denied')
+
+            if (createSubRes.ok) {
+              const subFolderData = await createSubRes.json()
+              const subId = subFolderData.id
+
+              // Grant anyone reader permission
+              await fetch(`https://www.googleapis.com/drive/v3/files/${subId}/permissions`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  role: 'reader',
+                  type: 'anyone'
+                })
+              })
+              return subId
+            } else {
+              const errData = await createSubRes.json().catch(() => ({}))
+              if (createSubRes.status === 404 || createSubRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
+                throw new Error('access_denied')
+              }
+              const errText = JSON.stringify(errData)
+              throw new Error(`Failed to create subject folder: ${errText}`)
             }
-            const errText = JSON.stringify(errData)
-            throw new Error(`Failed to create subject folder: ${errText}`)
-          }
+          })()
+
+          globalCache[subjId] = promise
+          
+          promise.catch(() => {
+            delete globalCache[subjId]
+          })
+
+          return promise
         }
 
         try {
-          subjectFolderId = await trySearchAndCreate(targetParentId)
+          subjectFolderId = await getOrCreateSubjectFolder(classId, targetParentId, finalSubjectName, accessToken)
         } catch (e: any) {
           if (e.message === 'access_denied' && targetParentId !== parentFolderId) {
             console.warn(`Lecturer folder ${targetParentId} is inaccessible. Attempting synchronous repair...`)
@@ -246,7 +261,7 @@ export default function ContentModal({
               targetParentId = parentFolderId
             }
 
-            subjectFolderId = await trySearchAndCreate(targetParentId)
+            subjectFolderId = await getOrCreateSubjectFolder(classId, targetParentId, finalSubjectName, accessToken)
           } else {
             throw e
           }
