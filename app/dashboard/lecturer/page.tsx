@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare } from 'lucide-react'
+import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -48,6 +48,7 @@ export default function LecturerDashboard() {
   const [settingsName, setSettingsName] = useState('')
   const [settingsEmail, setSettingsEmail] = useState('')
   const [settingsDrive, setSettingsDrive] = useState('')
+  const [settingsPassword, setSettingsPassword] = useState('')
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState('')
 
@@ -106,13 +107,23 @@ export default function LecturerDashboard() {
       if (!user) throw new Error('No session active.')
 
       // 1. Update Auth Email if changed
+      let emailChanged = false
       if (settingsEmail.toLowerCase().trim() !== user.email?.toLowerCase().trim()) {
         const { error: emailErr } = await supabase.auth.updateUser({ email: settingsEmail.trim() })
         if (emailErr) throw emailErr
-        setSettingsMessage('ℹ️ Verification sent! Please check both email inboxes.')
+        emailChanged = true
       }
 
-      // 2. Update Profiles Table
+      // 2. Update Auth Password if typed
+      if (settingsPassword.trim()) {
+        if (settingsPassword.trim().length < 6) {
+          throw new Error('Password must be at least 6 characters long.')
+        }
+        const { error: passErr } = await supabase.auth.updateUser({ password: settingsPassword.trim() })
+        if (passErr) throw passErr
+      }
+
+      // 3. Update Profiles Table
       const { error: profErr } = await supabase
         .from('profiles')
         .update({
@@ -124,12 +135,13 @@ export default function LecturerDashboard() {
 
       if (profErr) throw profErr
 
-      setSettingsMessage('✅ Profile updated successfully!')
+      setSettingsMessage(emailChanged ? '✅ Profile updated! Verification email sent to both inboxes.' : '✅ Profile updated successfully!')
       fetchData(false)
       setTimeout(() => {
         setShowSettingsModal(false)
+        setSettingsPassword('')
         setSettingsMessage('')
-      }, 2000)
+      }, emailChanged ? 4000 : 2000)
     } catch (e: any) {
       setSettingsMessage('❌ ' + (e.message || 'Update failed.'))
     } finally {
@@ -449,6 +461,20 @@ export default function LecturerDashboard() {
                   onChange={e => setSettingsDrive(e.target.value.trim())}
                   className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
                   placeholder="Google Drive Folder ID"
+                />
+              </div>
+
+              {/* New Password field (Optional) */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock size={14} className="text-indigo-500" /> New Password (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={settingsPassword}
+                  onChange={e => setSettingsPassword(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  placeholder="•••••••• (Leave blank to keep current)"
                 />
               </div>
             </div>

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw } from 'lucide-react'
+import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw, Settings, Mail, Lock, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
@@ -13,6 +13,13 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const router = useRouter()
+
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [settingsName, setSettingsName] = useState('')
+  const [settingsEmail, setSettingsEmail] = useState('')
+  const [settingsPassword, setSettingsPassword] = useState('')
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsMessage, setSettingsMessage] = useState('')
 
   const loadDashboard = useCallback(async (showFullLoader = false) => {
     if (showFullLoader) setLoading(true)
@@ -28,6 +35,11 @@ export default function StudentDashboard() {
         .eq('id', user.id)
         .single()
       setProfile(prof)
+
+      if (prof) {
+        setSettingsName(prof.full_name || '')
+        setSettingsEmail(user.email || '')
+      }
 
       if (prof && prof.role === 'student') {
         const { data: existingStudent } = await supabase
@@ -79,6 +91,69 @@ export default function StudentDashboard() {
     loadDashboard(true)
   }, [loadDashboard])
 
+  const handleSaveProfileSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!settingsName.trim() || !settingsEmail.trim()) {
+      setSettingsMessage('❌ All fields are required.')
+      return
+    }
+    setSettingsLoading(true)
+    setSettingsMessage('')
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No session active.')
+
+      // 1. Update Auth Email if changed
+      let emailChanged = false
+      if (settingsEmail.toLowerCase().trim() !== user.email?.toLowerCase().trim()) {
+        const { error: emailErr } = await supabase.auth.updateUser({ email: settingsEmail.trim() })
+        if (emailErr) throw emailErr
+        emailChanged = true
+      }
+
+      // 2. Update Auth Password if typed
+      if (settingsPassword.trim()) {
+        if (settingsPassword.trim().length < 6) {
+          throw new Error('Password must be at least 6 characters long.')
+        }
+        const { error: passErr } = await supabase.auth.updateUser({ password: settingsPassword.trim() })
+        if (passErr) throw passErr
+      }
+
+      // 3. Update Profiles Table
+      const { error: profErr } = await supabase
+        .from('profiles')
+        .update({
+          full_name: settingsName.trim(),
+          email: settingsEmail.toLowerCase().trim()
+        })
+        .eq('id', user.id)
+      if (profErr) throw profErr
+
+      // 4. Update Students Table
+      const { error: studentErr } = await supabase
+        .from('students')
+        .update({
+          name: settingsName.trim(),
+          email: settingsEmail.toLowerCase().trim()
+        })
+        .eq('id', user.id)
+      if (studentErr) throw studentErr
+
+      setSettingsMessage(emailChanged ? '✅ Profile updated! Verification email sent to both inboxes.' : '✅ Profile updated successfully!')
+      loadDashboard(false)
+      setTimeout(() => {
+        setShowSettingsModal(false)
+        setSettingsPassword('')
+        setSettingsMessage('')
+      }, emailChanged ? 4000 : 2000)
+    } catch (e: any) {
+      setSettingsMessage('❌ ' + (e.message || 'Update failed.'))
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/auth/login')
@@ -92,7 +167,7 @@ export default function StudentDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none animate-in fade-in duration-300">
+    <div className="min-h-screen bg-bg-portal flex flex-col font-sans select-none animate-in fade-in duration-300 text-text-title">
       {/* Sticky top header bar */}
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-4 flex items-center justify-between">
@@ -105,6 +180,13 @@ export default function StudentDashboard() {
             <AccountSwitcher />
             <NotificationBell />
             <ThemeToggle />
+            <button 
+              onClick={() => setShowSettingsModal(true)} 
+              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              title="Profile Settings"
+            >
+              <Settings size={20} />
+            </button>
             <button 
               onClick={() => loadDashboard(false)} 
               disabled={isSyncing}
@@ -161,7 +243,7 @@ export default function StudentDashboard() {
               <div 
                 key={cls.id} 
                 onClick={() => router.push(`/dashboard/student/class/${cls.id}`)} 
-                className="group bg-white p-8 rounded-[2rem] border border-slate-100/80 shadow-sm hover:shadow-xl hover:shadow-indigo-950/5 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[220px]"
+                className="group bg-bg-card p-8 rounded-[2rem] border border-border-card shadow-sm hover:shadow-xl hover:shadow-indigo-950/5 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[220px]"
               >
                 <div>
                   <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
@@ -195,6 +277,100 @@ export default function StudentDashboard() {
           )}
         </div>
       </div>
+
+      {/* Profile Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[999] p-4">
+          <form 
+            onSubmit={handleSaveProfileSettings}
+            className="bg-bg-card border border-border-card rounded-[2.5rem] p-8 md:p-10 w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Profile Settings</h2>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Update your student credentials</p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => { setShowSettingsModal(false); setSettingsMessage(''); }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors font-black text-[10px] uppercase tracking-widest cursor-pointer bg-slate-100 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800/50"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {/* Full Name field */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <User size={14} className="text-indigo-500" /> Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={settingsName}
+                  onChange={e => setSettingsName(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  placeholder="Student Full Name"
+                />
+              </div>
+
+              {/* Email field */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Mail size={14} className="text-indigo-500" /> Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={settingsEmail}
+                  onChange={e => setSettingsEmail(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  placeholder="student@limkokwing.edu"
+                />
+              </div>
+
+              {/* New Password field (Optional) */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock size={14} className="text-indigo-500" /> New Password (Optional)
+                </label>
+                <input
+                  type="password"
+                  value={settingsPassword}
+                  onChange={e => setSettingsPassword(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-805/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
+                  placeholder="•••••••• (Leave blank to keep current)"
+                />
+              </div>
+            </div>
+
+            {settingsMessage && (
+              <p className={`mt-6 text-center text-xs font-black py-3 px-4 rounded-xl leading-tight uppercase tracking-wide border ${
+                settingsMessage.includes('✅') 
+                  ? 'text-emerald-550 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/60' 
+                  : 'text-red-550 dark:text-red-450 bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/60'
+              }`}>
+                {settingsMessage}
+              </p>
+            )}
+
+            <div className="pt-6 border-t border-slate-100 dark:border-slate-900 mt-6 flex justify-end">
+              <button
+                type="submit"
+                disabled={settingsLoading}
+                className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white disabled:bg-slate-100 dark:disabled:bg-slate-900 disabled:text-slate-400 px-6 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-md shadow-indigo-500/10 cursor-pointer"
+              >
+                {settingsLoading ? (
+                  <><Loader2 className="animate-spin" size={14} /> Saving...</>
+                ) : (
+                  'Save Settings'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }
