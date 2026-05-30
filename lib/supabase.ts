@@ -23,6 +23,14 @@ const client = createClient(
       storageKey: `sb-${projectRef}-auth-token`,
       autoRefreshToken: true,
       detectSessionInUrl: true
+    },
+    global: {
+      fetch: (url, options) => {
+        return fetch(url, {
+          ...options,
+          credentials: 'omit'
+        })
+      }
     }
   }
 )
