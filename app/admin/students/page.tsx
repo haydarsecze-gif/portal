@@ -131,11 +131,31 @@ export default function StudentDirectory() {
   const deleteStudent = async (id: string) => {
     if(!confirm("Are you sure? This will delete the student's profile permanently.")) return
     
-    const { error } = await supabase.from('profiles').delete().eq('id', id)
-    if (error) {
-      alert("Delete failed: " + error.message)
-    } else {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert("Unauthorized: No active session.")
+        return
+      }
+
+      const res = await fetch('/api/auth/delete-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ userId: id })
+      })
+
+      const resData = await res.json()
+      if (!res.ok) {
+        alert("Error: " + (resData.error || "Failed to delete student account."))
+        return
+      }
+
       fetchData()
+    } catch (err: any) {
+      alert("Error: " + err.message)
     }
   }
 

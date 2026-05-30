@@ -151,23 +151,26 @@ export default function LecturerManagement() {
     const lecturerName = targetLecturer?.full_name || "Lecturer"
 
     if (confirm(`Delete lecturer account "${lecturerName}"?`)) {
-      const { error } = await supabase.from('profiles').delete().eq('id', id)
-      if (!error) {
-        try {
-          // Get the authenticated session token from Supabase Client to authorize deletion
-          const { data: { session } } = await supabase.auth.getSession()
-          if (session) {
-            await fetch('/api/auth/delete-user', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`
-              },
-              body: JSON.stringify({ userId: id })
-            })
-          }
-        } catch (authDeleteErr) {
-          console.error("Error deleting auth record from Supabase:", authDeleteErr)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          alert("Unauthorized: No active session.")
+          return
+        }
+
+        const res = await fetch('/api/auth/delete-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ userId: id })
+        })
+
+        const resData = await res.json()
+        if (!res.ok) {
+          alert("Error: " + (resData.error || "Failed to delete lecturer account."))
+          return
         }
 
         try {
@@ -203,6 +206,9 @@ export default function LecturerManagement() {
         } catch (err) {
           console.error("Error creating deletion notification:", err)
         }
+      } catch (authDeleteErr: any) {
+        console.error("Error deleting auth record from Supabase:", authDeleteErr)
+        alert("Error: " + authDeleteErr.message)
       }
       fetchTeachers()
     }

@@ -48,7 +48,32 @@ export async function POST(req: Request) {
 
     console.log(`Admin User ID ${user.id} requested deletion of user ID ${userId}`);
 
-    // Nullify teacher_id in classes table to satisfy foreign key constraints before deletion
+    // 1. Clean up student-related records
+    try {
+      await serviceClient.from('submissions').delete().eq('student_id', userId);
+    } catch (dbErr) {
+      console.warn('Non-fatal error cleaning up submissions:', dbErr);
+    }
+
+    try {
+      await serviceClient.from('attendance').delete().eq('student_id', userId);
+    } catch (dbErr) {
+      console.warn('Non-fatal error cleaning up attendance:', dbErr);
+    }
+
+    try {
+      await serviceClient.from('student_classes').delete().eq('student_id', userId);
+    } catch (dbErr) {
+      console.warn('Non-fatal error cleaning up student_classes:', dbErr);
+    }
+
+    try {
+      await serviceClient.from('students').delete().eq('id', userId);
+    } catch (dbErr) {
+      console.warn('Non-fatal error cleaning up students table:', dbErr);
+    }
+
+    // 2. Clean up lecturer-related records (classes)
     try {
       await serviceClient
         .from('classes')
@@ -58,12 +83,29 @@ export async function POST(req: Request) {
       console.warn('Non-fatal error nullifying teacher_id in classes:', dbErr);
     }
 
-    // Call serviceClient auth admin to delete the user completely
+    // 3. Clean up the public.profiles record using serviceClient to bypass RLS completely
+    const { error: profileDeleteErr } = await serviceClient
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (profileDeleteErr) {
+      console.error('Supabase Profiles row delete error:', profileDeleteErr);
+      return NextResponse.json({ error: 'Failed to delete user profile from database: ' + profileDeleteErr.message }, { status: 500 });
+    }
+
+    // 4. Call serviceClient auth admin to delete the user completely from auth.users
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(userId);
 
     if (deleteErr) {
-      console.error('Supabase Auth user delete error:', deleteErr);
-      return NextResponse.json({ error: 'Failed to delete user from Supabase Auth: ' + deleteErr.message }, { status: 500 });
+      // Check if user is already deleted/not found in auth.users
+      const errMsg = deleteErr.message?.toLowerCase() || '';
+      if (errMsg.includes('user not found') || errMsg.includes('not found') || deleteErr.status === 404) {
+        console.warn(`User ID ${userId} was already deleted or not found in auth.users. Proceeding peacefully.`);
+      } else {
+        console.error('Supabase Auth user delete error:', deleteErr);
+        return NextResponse.json({ error: 'Failed to delete user from Supabase Auth: ' + deleteErr.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });
