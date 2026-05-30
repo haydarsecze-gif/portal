@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { FileText, BookOpen, Trash2, ChevronDown, ChevronUp, Eye, HardDrive, Database, AlertCircle } from 'lucide-react'
+import { FileText, BookOpen, Trash2, ChevronDown, ChevronUp, Eye, HardDrive, Database, AlertCircle, Paperclip } from 'lucide-react'
 
 export default function ContentCard({ item, isAssignment, onRefresh, studentCount, autoExpanded }: any) {
   const [expanded, setExpanded] = useState(autoExpanded || false)
@@ -14,6 +14,7 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
+  const [attachmentsExpanded, setAttachmentsExpanded] = useState(false)
 
   const links: string[] = item?.file_url 
     ? item.file_url.split(',').map((u: string) => u.trim()).filter(Boolean) 
@@ -191,12 +192,40 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
             <p className="text-gray-600 text-sm mb-5 whitespace-pre-wrap leading-relaxed">{item.description || "No description."}</p>
             
             {links.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {links.map((url: string, i: number) => (
-                  <a key={url + i} href={url} target="_blank" rel="noreferrer" className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition shadow-sm">
-                    <Eye size={14} className="text-blue-500" /> View Attachment {i + 1}
+              <div className="relative inline-block text-left">
+                {links.length === 1 ? (
+                  <a href={links[0]} target="_blank" rel="noreferrer" className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition shadow-sm w-fit">
+                    <Eye size={14} className="text-blue-500" /> View Attachment
                   </a>
-                ))}
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setAttachmentsExpanded(!attachmentsExpanded)}
+                      className="bg-white border border-gray-200 px-4 py-2 rounded-xl text-xs font-bold text-gray-700 flex items-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition shadow-sm w-fit flex"
+                    >
+                      <Paperclip size={14} className="text-blue-500" />
+                      <span>Attachments ({links.length})</span>
+                      {attachmentsExpanded ? <ChevronUp size={14} className="ml-1 text-gray-400" /> : <ChevronDown size={14} className="ml-1 text-gray-400" />}
+                    </button>
+                    {attachmentsExpanded && (
+                      <div className="absolute left-0 mt-2 w-60 rounded-2xl bg-white border border-gray-200 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                        {links.map((url: string, i: number) => (
+                          <a
+                            key={url + i}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={() => setAttachmentsExpanded(false)}
+                            className="flex items-center gap-2.5 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-gray-100 last:border-0 text-left"
+                          >
+                            <Eye size={14} className="text-blue-500 shrink-0" />
+                            <span className="text-xs font-semibold text-gray-700 truncate">Attachment {i + 1}</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

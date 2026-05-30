@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle } from 'lucide-react'
+import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -59,7 +59,12 @@ export default function StudentClassroom() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isResubmitting, setIsResubmitting] = useState(false);
+  const [attachmentsExpanded, setAttachmentsExpanded] = useState(false);
   const { uploadProgress, setUploadProgress, uploadStudentSubmission, deleteStudentFile, triggerHardReload, isReloading } = useUpload();
+
+  useEffect(() => {
+    setAttachmentsExpanded(false);
+  }, [selectedItem]);
   const [profile, setProfile] = useState<any>(null);
   const [roomName, setRoomName] = useState<string>('');
   const [subjectTrueUUID, setSubjectTrueUUID] = useState<string>('');
@@ -920,12 +925,50 @@ export default function StudentClassroom() {
 
                   <div className="bg-slate-50 rounded-3xl p-6 mb-6 border border-slate-100/80">
                     <p className="text-slate-600 text-sm leading-relaxed mb-4">{selectedItem.description || "No specific instructions provided."}</p>
-                    {selectedItem.file_url && (
-                      <a href={selectedItem.file_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white w-fit px-4 py-2.5 rounded-xl border border-slate-200/80 shadow-xs hover:border-indigo-400 transition-colors">
-                        <Paperclip size={13} className="text-indigo-500" />
-                        <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Lecturer File Attachment</span>
-                      </a>
-                    )}
+                    {(() => {
+                      const studentLinks = selectedItem.file_url
+                        ? selectedItem.file_url.split(',').map((u: string) => u.trim()).filter(Boolean)
+                        : [];
+                      if (studentLinks.length === 0) return null;
+                      if (studentLinks.length === 1) {
+                        return (
+                          <a href={studentLinks[0]} target="_blank" rel="noreferrer" className="flex items-center gap-2 bg-white w-fit px-4 py-2.5 rounded-xl border border-slate-200/80 shadow-xs hover:border-indigo-400 transition-colors">
+                            <Paperclip size={13} className="text-indigo-500" />
+                            <span className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Lecturer File Attachment</span>
+                          </a>
+                        );
+                      }
+                      return (
+                        <div className="relative inline-block text-left">
+                          <button
+                            onClick={() => setAttachmentsExpanded(!attachmentsExpanded)}
+                            className="flex items-center gap-2 bg-white px-4 py-2.5 rounded-xl border border-slate-200/80 shadow-xs hover:border-indigo-400 transition-colors text-[9px] font-black text-slate-700 uppercase tracking-widest flex"
+                          >
+                            <Paperclip size={13} className="text-indigo-500" />
+                            <span>Attachments ({studentLinks.length})</span>
+                            {attachmentsExpanded ? <ChevronUp size={14} className="ml-1 text-slate-400" /> : <ChevronDown size={14} className="ml-1 text-slate-400" />}
+                          </button>
+                          
+                          {attachmentsExpanded && (
+                            <div className="absolute left-0 mt-2 w-60 rounded-2xl bg-white border border-slate-100 shadow-xl py-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+                              {studentLinks.map((url: string, index: number) => (
+                                <a
+                                  key={url + index}
+                                  href={url}
+                                  target="_blank"
+                                  rel="noreferrer; noopener"
+                                  onClick={() => setAttachmentsExpanded(false)}
+                                  className="flex items-center gap-2.5 px-4 py-3 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 text-left"
+                                >
+                                  <Eye size={14} className="text-indigo-500 shrink-0" />
+                                  <span className="text-xs font-semibold text-slate-700 truncate">Attachment {index + 1}</span>
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   
                   {selectedItem.type === 'assignment' && (
