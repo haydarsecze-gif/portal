@@ -119,8 +119,8 @@ export default function Login() {
         }
       }
 
-      // 2. Fallback to setSession if not logged in yet (supports old token-only cache)
-      if (!loggedIn && acc.access_token) {
+      // 2. Fallback to setSession ONLY if no password exists in saved credentials (supports old token-only cache)
+      if (!loggedIn && !acc.password && acc.access_token) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: acc.access_token,

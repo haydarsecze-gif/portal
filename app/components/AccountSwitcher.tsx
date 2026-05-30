@@ -104,8 +104,8 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         }
       }
 
-      // 2. Fallback to setSession if not logged in yet (supports old token-only cache)
-      if (!loggedIn && targetAccount.access_token) {
+      // 2. Fallback to setSession ONLY if no password exists in saved credentials (supports old token-only cache)
+      if (!loggedIn && !targetAccount.password && targetAccount.access_token) {
         try {
           const { data, error } = await supabase.auth.setSession({
             access_token: targetAccount.access_token,
