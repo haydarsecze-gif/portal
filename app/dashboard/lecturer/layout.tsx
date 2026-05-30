@@ -196,61 +196,8 @@ export default function LecturerDashboardLayout({
       }
     })
 
-    // Fallback 1: periodic verification every 10 seconds to ensure absolute robustness
-    const interval = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, role, is_approved')
-          .eq('id', session.user.id)
-          .single()
-        if (!profile) {
-          verifiedUserIdRef.current = null
-          await supabase.auth.signOut()
-          router.push('/auth/login?reason=deleted')
-        } else if (profile.role === 'admin') {
-          verifiedUserIdRef.current = session.user.id
-          router.push('/admin/students')
-        } else if (profile.role === 'student') {
-          verifiedUserIdRef.current = session.user.id
-          router.push('/dashboard/student')
-        } else if (active) {
-          setIsApproved(!!profile.is_approved)
-        }
-      }
-    }, 10000)
-
-    // Fallback 2: check on window focus
-    const handleFocus = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id, role, is_approved')
-          .eq('id', session.user.id)
-          .single()
-        if (!profile) {
-          verifiedUserIdRef.current = null
-          await supabase.auth.signOut()
-          router.push('/auth/login?reason=deleted')
-        } else if (profile.role === 'admin') {
-          verifiedUserIdRef.current = session.user.id
-          router.push('/admin/students')
-        } else if (profile.role === 'student') {
-          verifiedUserIdRef.current = session.user.id
-          router.push('/dashboard/student')
-        } else if (active) {
-          setIsApproved(!!profile.is_approved)
-        }
-      }
-    }
-    window.addEventListener('focus', handleFocus)
-
     return () => {
       active = false
-      clearInterval(interval)
-      window.removeEventListener('focus', handleFocus)
       subscription.unsubscribe()
       if (channel) {
         supabase.removeChannel(channel)

@@ -103,11 +103,10 @@ export default function LecturerDashboard() {
         setSettingsDrive(p.drive_folder_id || '')
       }
 
-      // Querying the single source of truth: 'subjects' table
       const { data: s } = await supabase
         .from('subjects')
         .select('*')
-        .contains('lecturer_names', [p.full_name])
+        .contains('lecturer_names', [p.full_name?.trim()])
       
       setSubjects(s || [])
     } catch (err) {
