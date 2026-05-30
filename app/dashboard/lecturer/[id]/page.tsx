@@ -173,12 +173,11 @@ export default function SubjectDetail() {
             <NotificationBell />
             <ThemeToggle />
             <button 
-              onClick={fetchSubjectData} 
-              disabled={loading}
+              onClick={() => window.location.reload()} 
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
-              title="Refresh Data"
+              title="Hard Reload Page"
             >
-              <RefreshCw size={20} className={loading ? "animate-spin text-indigo-600" : ""} />
+              <RefreshCw size={20} />
             </button>
           </div>
         </div>
