@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Loader2, ShieldAlert, LogOut } from 'lucide-react'
@@ -14,10 +14,12 @@ export default function LecturerDashboardLayout({
   const [loading, setLoading] = useState(true)
   const [isApproved, setIsApproved] = useState<boolean | null>(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const verifiedUserIdRef = useRef<string | null>(null)
 
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true)
+      verifiedUserIdRef.current = null
       await supabase.auth.signOut()
       router.push('/auth/login')
     } catch (e) {
@@ -26,95 +28,173 @@ export default function LecturerDashboardLayout({
     }
   }
 
+  const verifyLecturerSession = async (active = true) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.user) {
+        verifiedUserIdRef.current = null
+        if (active) {
+          setIsApproved(null)
+          setLoading(false)
+          router.push('/auth/login')
+        }
+        return null
+      }
+
+      const currentUserId = session.user.id
+
+      // If we already verified this user, skip database fetch to prevent loop
+      if (verifiedUserIdRef.current === currentUserId && isApproved !== null) {
+        if (active) {
+          setLoading(false)
+        }
+        return currentUserId
+      }
+
+      // Verify profile exists and check role & approval status
+      const { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, role, is_approved')
+        .eq('id', currentUserId)
+        .single()
+
+      if (profErr || !profile) {
+        console.warn('Access Denied or Profile Missing for Lecturer dashboard verification.', profErr)
+        verifiedUserIdRef.current = null
+        await supabase.auth.signOut()
+        if (active) {
+          setIsApproved(null)
+          setLoading(false)
+          router.push('/auth/login?reason=deleted')
+        }
+        return null
+      }
+
+      // Redirect non-teacher roles to their correct panels immediately
+      if (profile.role === 'admin') {
+        verifiedUserIdRef.current = currentUserId
+        if (active) {
+          setIsApproved(null)
+          setLoading(false)
+          router.push('/admin/students')
+        }
+        return currentUserId
+      }
+      if (profile.role === 'student') {
+        verifiedUserIdRef.current = currentUserId
+        if (active) {
+          setIsApproved(null)
+          setLoading(false)
+          router.push('/dashboard/student')
+        }
+        return currentUserId
+      }
+
+      if (active) {
+        verifiedUserIdRef.current = currentUserId
+        setIsApproved(!!profile.is_approved)
+        setLoading(false)
+      }
+      return currentUserId
+    } catch (err) {
+      console.error('Lecturer layout auth check error:', err)
+      if (active) {
+        setLoading(false)
+      }
+      return null
+    }
+  }
+
   useEffect(() => {
     let active = true
     let channel: any = null
 
-    const checkAuthAndSubscribe = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.user) {
-          if (active) {
-            router.push('/auth/login')
-          }
-          return
-        }
+    const initAuth = async () => {
+      const userId = await verifyLecturerSession(active)
+      if (!userId || !active) return
 
-        const currentUserId = session.user.id
-
-        // Verify profile exists and check role & approval status
-        const { data: profile, error: profErr } = await supabase
-          .from('profiles')
-          .select('id, role, is_approved')
-          .eq('id', currentUserId)
-          .single()
-
-        if (profErr || !profile) {
-          await supabase.auth.signOut()
-          if (active) {
+      // Subscribe to real-time updates and deletions of this lecturer's profile
+      channel = supabase
+        .channel(`lecturer_profile_${userId}`)
+        .on('postgres_changes', {
+          event: '*', // Listen to INSERT, UPDATE, and DELETE
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`
+        }, async (payload) => {
+          if (payload.eventType === 'DELETE') {
+            console.log('Lecturer profile deleted in real-time!', payload)
+            verifiedUserIdRef.current = null
+            await supabase.auth.signOut()
             router.push('/auth/login?reason=deleted')
-          }
-          return
-        }
-
-        // Redirect non-teacher roles to their correct panels immediately
-        if (profile.role === 'admin') {
-          router.push('/admin/students')
-          return
-        }
-        if (profile.role === 'student') {
-          router.push('/dashboard/student')
-          return
-        }
-
-        if (active) {
-          setIsApproved(!!profile.is_approved)
-          setLoading(false)
-        }
-
-        // Subscribe to real-time updates and deletions of this lecturer's profile
-        channel = supabase
-          .channel(`lecturer_profile_${currentUserId}`)
-          .on('postgres_changes', {
-            event: '*', // Listen to INSERT, UPDATE, and DELETE
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${currentUserId}`
-          }, async (payload) => {
-            if (payload.eventType === 'DELETE') {
-              console.log('Lecturer profile deleted in real-time!', payload)
-              await supabase.auth.signOut()
-              router.push('/auth/login?reason=deleted')
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedProfile = payload.new
-              console.log('Lecturer profile updated in real-time!', updatedProfile)
-              if (updatedProfile && active) {
-                // If role changed or no longer a teacher, redirect them out
-                if (updatedProfile.role !== 'teacher') {
-                  if (updatedProfile.role === 'admin') router.push('/admin/students')
-                  else if (updatedProfile.role === 'student') router.push('/dashboard/student')
-                  else router.push('/auth/login')
-                  return
-                }
-                setIsApproved(!!updatedProfile.is_approved)
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedProfile = payload.new
+            console.log('Lecturer profile updated in real-time!', updatedProfile)
+            if (updatedProfile && active) {
+              // If role changed or no longer a teacher, redirect them out
+              if (updatedProfile.role !== 'teacher') {
+                verifiedUserIdRef.current = null
+                if (updatedProfile.role === 'admin') router.push('/admin/students')
+                else if (updatedProfile.role === 'student') router.push('/dashboard/student')
+                else router.push('/auth/login')
+                return
               }
+              setIsApproved(!!updatedProfile.is_approved)
             }
-          })
-          .subscribe((status: string, err: any) => {
-            if (status === 'CHANNEL_ERROR' || err) {
-              console.warn('Real-time Channel Status:', status, err)
-            }
-          })
-
-      } catch (err) {
-        console.error('Lecturer layout auth check error:', err)
-        if (active) {
-          setLoading(false)
-        }
-      }
+          }
+        })
+        .subscribe((status: string, err: any) => {
+          if (status === 'CHANNEL_ERROR' || err) {
+            console.warn('Real-time Channel Status:', status, err)
+          }
+        })
     }
 
-    checkAuthAndSubscribe()
+    initAuth()
+
+    // Listen for auth state changes to dynamically catch switcher updates
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        const sessionUserId = session?.user?.id || null
+        if (sessionUserId !== verifiedUserIdRef.current) {
+          if (channel) {
+            supabase.removeChannel(channel)
+            channel = null
+          }
+          setLoading(true)
+          const userId = await verifyLecturerSession(active)
+          if (userId && active) {
+            channel = supabase
+              .channel(`lecturer_profile_${userId}`)
+              .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'profiles',
+                filter: `id=eq.${userId}`
+              }, async (payload) => {
+                if (payload.eventType === 'DELETE') {
+                  verifiedUserIdRef.current = null
+                  await supabase.auth.signOut()
+                  router.push('/auth/login?reason=deleted')
+                } else if (payload.eventType === 'UPDATE') {
+                  const updatedProfile = payload.new
+                  if (updatedProfile && active) {
+                    if (updatedProfile.role !== 'teacher') {
+                      verifiedUserIdRef.current = null
+                      if (updatedProfile.role === 'admin') router.push('/admin/students')
+                      else if (updatedProfile.role === 'student') router.push('/dashboard/student')
+                      else router.push('/auth/login')
+                      return
+                    }
+                    setIsApproved(!!updatedProfile.is_approved)
+                  }
+                }
+              })
+              .subscribe()
+          }
+        }
+      }
+    })
 
     // Fallback 1: periodic verification every 10 seconds to ensure absolute robustness
     const interval = setInterval(async () => {
@@ -126,11 +206,14 @@ export default function LecturerDashboardLayout({
           .eq('id', session.user.id)
           .single()
         if (!profile) {
+          verifiedUserIdRef.current = null
           await supabase.auth.signOut()
           router.push('/auth/login?reason=deleted')
         } else if (profile.role === 'admin') {
+          verifiedUserIdRef.current = session.user.id
           router.push('/admin/students')
         } else if (profile.role === 'student') {
+          verifiedUserIdRef.current = session.user.id
           router.push('/dashboard/student')
         } else if (active) {
           setIsApproved(!!profile.is_approved)
@@ -148,11 +231,14 @@ export default function LecturerDashboardLayout({
           .eq('id', session.user.id)
           .single()
         if (!profile) {
+          verifiedUserIdRef.current = null
           await supabase.auth.signOut()
           router.push('/auth/login?reason=deleted')
         } else if (profile.role === 'admin') {
+          verifiedUserIdRef.current = session.user.id
           router.push('/admin/students')
         } else if (profile.role === 'student') {
+          verifiedUserIdRef.current = session.user.id
           router.push('/dashboard/student')
         } else if (active) {
           setIsApproved(!!profile.is_approved)
@@ -165,6 +251,7 @@ export default function LecturerDashboardLayout({
       active = false
       clearInterval(interval)
       window.removeEventListener('focus', handleFocus)
+      subscription.unsubscribe()
       if (channel) {
         supabase.removeChannel(channel)
       }
