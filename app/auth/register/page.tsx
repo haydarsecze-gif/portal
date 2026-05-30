@@ -7,21 +7,22 @@ import ThemeToggle from '@/app/components/ThemeToggle'
 
 const extractFolderId = (input: string) => {
   if (!input) return '';
-  const trimmed = input.trim();
+  let trimmed = input.trim();
   
   // Match typical google drive folder urls
   const foldersMatch = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
   if (foldersMatch && foldersMatch[1]) {
-    return foldersMatch[1];
+    trimmed = foldersMatch[1];
+  } else {
+    // Match open id urls
+    const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (idMatch && idMatch[1]) {
+      trimmed = idMatch[1];
+    }
   }
   
-  // Match open id urls
-  const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-  if (idMatch && idMatch[1]) {
-    return idMatch[1];
-  }
-  
-  return trimmed;
+  // Sanitize to only keep valid Google Drive ID characters (alphanumeric, hyphens, underscores)
+  return trimmed.replace(/[^a-zA-Z0-9-_]/g, '');
 }
 
 export default function Register() {
@@ -34,6 +35,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [showDriveInstructions, setShowDriveInstructions] = useState(false)
+  const [connectedDriveEmail, setConnectedDriveEmail] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -44,6 +46,19 @@ export default function Register() {
         setInviteCode(code.toUpperCase())
       }
     }
+    
+    async function fetchDriveEmail() {
+      try {
+        const res = await fetch('/api/drive/token')
+        const data = await res.json()
+        if (data.driveEmail) {
+          setConnectedDriveEmail(data.driveEmail)
+        }
+      } catch (err) {
+        console.error("Failed to fetch connected drive email:", err)
+      }
+    }
+    fetchDriveEmail()
   }, [])
 
   const handleRegister = async () => {
@@ -386,11 +401,11 @@ export default function Register() {
                 </div>
                 <div className="w-full min-w-0">
                   <p className="text-[10px] font-black text-slate-200 uppercase tracking-wide">Share as Editor</p>
-                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
+                  <p className="text-[9px] text-slate-455 dark:text-slate-500 font-bold uppercase tracking-wider mt-0.5 leading-normal mb-1.5">
                     Share this folder with Editor access to our secure service email:
                   </p>
                   <span className="block font-black select-all bg-indigo-950 p-2 rounded-lg border border-indigo-900/60 break-all text-indigo-300 text-[8.5px] leading-tight font-mono">
-                    student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com
+                    {connectedDriveEmail || 'student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com'}
                   </span>
                 </div>
               </div>

@@ -1,6 +1,8 @@
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 
+let cachedEmail: string | null = null;
+
 export async function GET() {
   try {
     let clientId = process.env.GOOGLE_CLIENT_ID || '';
@@ -29,8 +31,25 @@ export async function GET() {
       throw new Error('Failed to retrieve access token from Google.');
     }
 
-    return NextResponse.json({ accessToken: token, parentFolderId });
+    if (!cachedEmail) {
+      try {
+        const drive = google.drive({ version: 'v3', auth: oauth2Client });
+        const aboutRes = await drive.about.get({
+          fields: 'user(emailAddress)'
+        });
+        cachedEmail = aboutRes.data.user?.emailAddress || null;
+      } catch (err: any) {
+        console.warn('Failed to retrieve authenticated user email from Google:', err.message || err);
+      }
+    }
+
+    return NextResponse.json({ 
+      accessToken: token, 
+      parentFolderId,
+      driveEmail: cachedEmail || 'student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com'
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+

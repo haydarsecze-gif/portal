@@ -1,30 +1,37 @@
-const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+const path = require('path');
 
-const envPath = './.env.local';
-const envContent = fs.readFileSync(envPath, 'utf8');
+// Read .env.local file
+const envFile = fs.readFileSync(path.join(__dirname, '../.env.local'), 'utf8');
 const env = {};
-envContent.split('\n').forEach(line => {
-  const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+envFile.split('\n').forEach(line => {
+  const match = line.match(/^([^=]+)=(.*)$/);
   if (match) {
-    let value = match[2] || '';
-    if (value.startsWith('"') && value.endsWith('"')) {
-      value = value.substring(1, value.length - 1);
-    } else if (value.startsWith("'") && value.endsWith("'")) {
-      value = value.substring(1, value.length - 1);
-    }
-    env[match[1]] = value;
+    env[match[1].trim()] = match[2].trim().replace(/^['"]|['"]$/g, '');
   }
 });
 
-const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false }
-});
+const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 async function run() {
-  const { data: profiles, error } = await supabase.from('profiles').select('id, full_name, role, drive_folder_id').eq('role', 'teacher');
-  if (error) console.error(error);
-  else console.log(profiles);
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, role, drive_folder_id');
+
+  if (error) {
+    console.error("Error fetching profiles:", error);
+    return;
+  }
+
+  console.log("=== LECTURER PROFILES IN DB ===");
+  profiles.filter(p => p.role === 'teacher').forEach(p => {
+    console.log(`ID: ${p.id}`);
+    console.log(`Name: ${p.full_name}`);
+    console.log(`Email: ${p.email}`);
+    console.log(`Drive Folder ID: "${p.drive_folder_id}"`);
+    console.log("------------------------");
+  });
 }
 
 run();

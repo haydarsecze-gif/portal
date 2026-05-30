@@ -23,21 +23,21 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 
 const extractFolderId = (input) => {
   if (!input) return '';
-  const trimmed = input.trim();
+  let trimmed = input.trim();
   
   // Match typical google drive folder urls
   const foldersMatch = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
   if (foldersMatch && foldersMatch[1]) {
-    return foldersMatch[1];
+    trimmed = foldersMatch[1];
+  } else {
+    // Match open id urls
+    const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (idMatch && idMatch[1]) {
+      trimmed = idMatch[1];
+    }
   }
   
-  // Match open id urls
-  const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-  if (idMatch && idMatch[1]) {
-    return idMatch[1];
-  }
-  
-  return trimmed;
+  return trimmed.replace(/[^a-zA-Z0-9-_]/g, '');
 }
 
 async function run() {

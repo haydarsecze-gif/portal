@@ -19,21 +19,22 @@ const formatTime = (time: string) => {
 
 const extractFolderId = (input: string) => {
   if (!input) return '';
-  const trimmed = input.trim();
+  let trimmed = input.trim();
   
   // Match typical google drive folder urls
   const foldersMatch = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
   if (foldersMatch && foldersMatch[1]) {
-    return foldersMatch[1];
+    trimmed = foldersMatch[1];
+  } else {
+    // Match open id urls
+    const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (idMatch && idMatch[1]) {
+      trimmed = idMatch[1];
+    }
   }
   
-  // Match open id urls
-  const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
-  if (idMatch && idMatch[1]) {
-    return idMatch[1];
-  }
-  
-  return trimmed;
+  // Sanitize to only keep valid Google Drive ID characters (alphanumeric, hyphens, underscores)
+  return trimmed.replace(/[^a-zA-Z0-9-_]/g, '');
 }
 
 export default function LecturerDashboard() {
@@ -42,7 +43,23 @@ export default function LecturerDashboard() {
   const [loading, setLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const [showDriveInstructions, setShowDriveInstructions] = useState(false)
+  const [connectedDriveEmail, setConnectedDriveEmail] = useState('')
   const router = useRouter()
+
+  useEffect(() => {
+    async function fetchDriveEmail() {
+      try {
+        const res = await fetch('/api/drive/token')
+        const data = await res.json()
+        if (data.driveEmail) {
+          setConnectedDriveEmail(data.driveEmail)
+        }
+      } catch (err) {
+        console.error("Failed to fetch connected drive email:", err)
+      }
+    }
+    fetchDriveEmail()
+  }, [])
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [settingsName, setSettingsName] = useState('')
@@ -722,7 +739,7 @@ export default function LecturerDashboard() {
                     Share this folder with Editor access to our secure service email:
                   </p>
                   <span className="block font-black select-all bg-indigo-50 dark:bg-indigo-950 p-2 rounded-lg border border-indigo-100 dark:border-indigo-900/60 break-all text-indigo-600 dark:text-indigo-300 text-[8.5px] leading-tight font-mono">
-                    student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com
+                    {connectedDriveEmail || 'student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com'}
                   </span>
                 </div>
               </div>
