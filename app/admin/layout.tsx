@@ -1,9 +1,9 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw } from 'lucide-react'
+import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw, Loader2 } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -11,6 +11,59 @@ import AccountSwitcher from '@/app/components/AccountSwitcher'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  
+  const [isAdminChecking, setIsAdminChecking] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+
+  const verifyAdminSession = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/auth/login')
+        return
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (error || !profile || profile.role !== 'admin') {
+        console.warn("Access Denied: User role is not admin.", profile?.role)
+        if (profile?.role === 'teacher') {
+          router.push('/dashboard/lecturer')
+        } else if (profile?.role === 'student') {
+          router.push('/dashboard/student')
+        } else {
+          router.push('/auth/login')
+        }
+        return
+      }
+
+      setIsAuthorized(true)
+    } catch (err) {
+      console.error("Verification failed:", err)
+      router.push('/auth/login')
+    } finally {
+      setIsAdminChecking(false)
+    }
+  }
+
+  useEffect(() => {
+    verifyAdminSession()
+
+    // Listen for auth state changes to dynamically catch switcher updates
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+        verifyAdminSession()
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router])
 
   const handleAdminLogout = async () => {
     if (confirm("Are you sure you want to log out from the Admin Panel?")) {
@@ -23,6 +76,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         alert("Logout failed: " + err.message)
       }
     }
+  }
+
+  if (isAdminChecking) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+        <Loader2 className="animate-spin text-indigo-500 mb-4" size={48} />
+        <h2 className="text-xs font-black text-slate-200 uppercase tracking-widest leading-none">Verifying Admin Credentials...</h2>
+        <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-2">Checking academic console authorizations</p>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return null // prevent flash of unauthorized admin content
   }
 
   return (
