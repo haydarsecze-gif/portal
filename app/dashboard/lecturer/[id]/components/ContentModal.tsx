@@ -100,7 +100,7 @@ export default function ContentModal({
         // If targetParentId is still falsy, dynamically search or create "Limkokwing Coursework" folder in the root
         if (!targetParentId) {
           try {
-            const listRootRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent("name = 'Limkokwing Coursework' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false")}&fields=files(id)`, {
+            const listRootRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent("name = 'Limkokwing Coursework' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false")}&fields=files(id)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
               method: 'GET',
               headers: { 'Authorization': `Bearer ${accessToken}` }
             })
@@ -149,7 +149,7 @@ export default function ContentModal({
           const parentToSearch = parentId || 'root'
           // Try searching first
           const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${finalSubjectName.replace(/'/g, "\\'")}' and '${parentToSearch}' in parents and trashed = false`
-          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
+          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -169,7 +169,7 @@ export default function ContentModal({
           }
 
           // Create it if not found
-          const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+          const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -259,7 +259,7 @@ export default function ContentModal({
 
         // 2. Create coursework folder if it doesn't exist yet
         if (!capturedFolderId) {
-          const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+          const folderRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -292,7 +292,7 @@ export default function ContentModal({
           formDataPayload.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
           formDataPayload.append('file', f)
 
-          const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`

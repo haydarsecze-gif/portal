@@ -359,7 +359,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         // If targetParentId is still falsy, dynamically search or create "Limkokwing Coursework" folder in the root
         if (!targetParentId) {
           try {
-            const listRootRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent("name = 'Limkokwing Coursework' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false")}&fields=files(id)`, {
+            const listRootRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent("name = 'Limkokwing Coursework' and mimeType = 'application/vnd.google-apps.folder' and 'root' in parents and trashed = false")}&fields=files(id)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
               method: 'GET',
               headers: { 'Authorization': `Bearer ${accessToken}` }
             });
@@ -407,7 +407,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           const parentToSearch = parentId || 'root';
           // Try searching first
           const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${finalSubjectName.replace(/'/g, "\\'")}' and '${parentToSearch}' in parents and trashed = false`;
-          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
+          const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)&supportsAllDrives=true&includeItemsFromAllDrives=true`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${accessToken}`
@@ -427,7 +427,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
           }
 
           // Create it if not found
-          const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+          const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -516,7 +516,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
         // 2. Create coursework folder if it doesn't exist yet
         if (!capturedFolderId) {
-          const folderRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+          const folderRes = await fetch('https://www.googleapis.com/drive/v3/files?supportsAllDrives=true', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${accessToken}`,
@@ -553,7 +553,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
           const uploadResult = await new Promise<{ status: number; ok: boolean; responseText: string }>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+            xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true');
             xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`);
             
             xhr.upload.onprogress = (e) => {
