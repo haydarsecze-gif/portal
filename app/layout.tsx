@@ -52,11 +52,39 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
+              // 1. Theme handler
               const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
               if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
               } else {
                 document.documentElement.classList.remove('dark');
+              }
+
+              // 2. One-Time Cache and Cookie Buster
+              const cacheBusterKey = 'portal_cache_buster_v2';
+              if (!localStorage.getItem(cacheBusterKey)) {
+                // Clear all localStorage keys except the theme
+                const preservedTheme = localStorage.getItem('theme');
+                localStorage.clear();
+                if (preservedTheme) {
+                  localStorage.setItem('theme', preservedTheme);
+                }
+
+                // Clear all sessionStorage
+                sessionStorage.clear();
+
+                // Clear all browser cookies starting with 'sb-' or containing 'supabase'
+                document.cookie.split(";").forEach((c) => {
+                  const name = c.trim().split("=")[0];
+                  if (name.startsWith("sb-") || name.toLowerCase().includes("supabase")) {
+                    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname + ";";
+                    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname + ";";
+                  }
+                });
+
+                // Set cache buster flag so this runs only once!
+                localStorage.setItem(cacheBusterKey, 'true');
               }
             } catch (e) {}
           })();
