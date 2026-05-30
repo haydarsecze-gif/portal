@@ -240,6 +240,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       }));
 
       if (onComplete) onComplete();
+
+      // Clear successfully completed item after 3.5 seconds
+      setTimeout(() => {
+        dismissProgress(assignmentTitle);
+      }, 3500);
     } catch (err: any) {
       console.error("Global upload failed:", err);
       setUploadProgress(prev => ({
@@ -296,6 +301,11 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       }));
 
       if (onComplete) onComplete();
+
+      // Clear successfully completed item after 3.5 seconds
+      setTimeout(() => {
+        dismissProgress(assignmentTitle);
+      }, 3500);
     } catch (err: any) {
       console.error("Global delete failed:", err);
       setUploadProgress(prev => ({
@@ -798,14 +808,10 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
       if (onComplete) onComplete();
 
-      // Clear successfully completed item after 5 seconds
+      // Clear successfully completed item after 3.5 seconds
       setTimeout(() => {
-        setUploadProgress(prev => {
-          const copy = { ...prev };
-          delete copy[tempId];
-          return copy;
-        });
-      }, 5000);
+        dismissProgress(tempId);
+      }, 3500);
 
     } catch (err: any) {
       console.error("Global lecturer upload failed:", err);
