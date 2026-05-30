@@ -3,6 +3,49 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, Loader2, UserMinus, GraduationCap, AlertTriangle, RefreshCcw, Pencil, X, Save } from 'lucide-react'
 
+// Relative time formatter: e.g. "1 day ago", "2 months ago", "1 year 2 months ago"
+export function formatRelativeTime(dateStr?: string) {
+  if (!dateStr) return 'N/A';
+  try {
+    const cleanStr = dateStr.replace(' ', 'T');
+    const past = new Date(cleanStr);
+    if (isNaN(past.getTime())) return 'N/A';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - past.getTime();
+    if (diffMs < 0) return 'Just now';
+
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+
+    const diffMonths = Math.floor(diffDays / 30.44); // average month length
+    if (diffMonths < 12) {
+      return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+    }
+
+    const diffYears = Math.floor(diffMonths / 12);
+    const remainingMonths = diffMonths % 12;
+
+    if (remainingMonths === 0) {
+      return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+    }
+
+    const yearStr = diffYears === 1 ? '1 year' : `${diffYears} years`;
+    const monthStr = remainingMonths === 1 ? '1 month' : `${remainingMonths} months`;
+    return `${yearStr} ${monthStr} ago`;
+  } catch (e) {
+    console.error('Error formatting relative time:', e);
+    return 'N/A';
+  }
+}
+
 export default function StudentDirectory() {
   const [students, setStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -285,9 +328,14 @@ export default function StudentDirectory() {
                       </div>
                     </td>
                     <td className="p-6">
-                      <span className="text-xs text-slate-500 font-bold leading-none">
+                      <div className="text-xs text-slate-800 dark:text-slate-200 font-black leading-none">
                         {formatDate(s.created_at)}
-                      </span>
+                      </div>
+                      {s.created_at && (
+                        <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1.5 leading-none">
+                          Registered: {formatRelativeTime(s.created_at)}
+                        </div>
+                      )}
                     </td>
                     <td className="p-6">
                       <span className={`inline-block px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest leading-none ${

@@ -1,11 +1,62 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Check, X, Trash2, Mail, Clock, ShieldAlert, Loader2, Sparkles, UserCheck } from 'lucide-react'
+import { Check, X, Trash2, Mail, Clock, ShieldAlert, Loader2, Sparkles, UserCheck, Pencil, Save } from 'lucide-react'
+
+// Relative time formatter: e.g. "1 day ago", "2 months ago", "1 year 2 months ago"
+export function formatRelativeTime(dateStr?: string) {
+  if (!dateStr) return 'N/A';
+  try {
+    const cleanStr = dateStr.replace(' ', 'T');
+    const past = new Date(cleanStr);
+    if (isNaN(past.getTime())) return 'N/A';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - past.getTime();
+    if (diffMs < 0) return 'Just now';
+
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+
+    const diffMonths = Math.floor(diffDays / 30.44); // average month length
+    if (diffMonths < 12) {
+      return diffMonths === 1 ? '1 month ago' : `${diffMonths} months ago`;
+    }
+
+    const diffYears = Math.floor(diffMonths / 12);
+    const remainingMonths = diffMonths % 12;
+
+    if (remainingMonths === 0) {
+      return diffYears === 1 ? '1 year ago' : `${diffYears} years ago`;
+    }
+
+    const yearStr = diffYears === 1 ? '1 year' : `${diffYears} years`;
+    const monthStr = remainingMonths === 1 ? '1 month' : `${remainingMonths} months`;
+    return `${yearStr} ${monthStr} ago`;
+  } catch (e) {
+    console.error('Error formatting relative time:', e);
+    return 'N/A';
+  }
+}
 
 export default function LecturerManagement() {
   const [teachers, setTeachers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Edit states for Admin editing lecturer
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingLecturer, setEditingLecturer] = useState<any>(null)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editDriveId, setEditDriveId] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => { fetchTeachers() }, [])
 
@@ -157,6 +208,49 @@ export default function LecturerManagement() {
     }
   }
 
+  const handleSaveLecturer = async () => {
+    if (!editingLecturer || !editName.trim() || !editEmail.trim()) {
+      alert("Please fill in the Name and Email fields.")
+      return
+    }
+    
+    setIsSaving(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert("Unauthorized: No active session.")
+        setIsSaving(false)
+        return
+      }
+
+      const res = await fetch('/api/admin/update-lecturer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          userId: editingLecturer.id,
+          fullName: editName.trim(),
+          email: editEmail.trim(),
+          driveFolderId: editDriveId.trim()
+        })
+      })
+
+      const resData = await res.json()
+      if (!res.ok) {
+        alert("Error: " + (resData.error || "Failed to update lecturer details."))
+      } else {
+        setIsEditModalOpen(false)
+        fetchTeachers()
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20 text-slate-300">
       <Loader2 className="animate-spin mb-2" />
@@ -188,7 +282,15 @@ export default function LecturerManagement() {
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-black text-slate-850 uppercase tracking-tight truncate">{t.full_name}</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 truncate">{t.email || 'No email provided'}</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-0.5 text-[9.5px]">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider truncate">{t.email || 'No email provided'}</span>
+                      {t.created_at && (
+                        <>
+                          <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+                          <span className="text-amber-500 dark:text-amber-400 font-black uppercase tracking-wider">Registered: {formatRelativeTime(t.created_at)}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-2 justify-end sm:justify-start shrink-0">
@@ -241,15 +343,45 @@ export default function LecturerManagement() {
                     <tr key={t.id} className="group hover:bg-slate-50/20 transition-colors">
                       <td className="p-6">
                         <div className="font-bold text-sm text-slate-800 uppercase tracking-tight">{t.full_name}</div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{t.email || 'No email provided'}</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-0.5 text-[9.5px]">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider truncate">{t.email || 'No email provided'}</span>
+                          {t.created_at && (
+                            <>
+                              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+                              <span className="text-indigo-500 dark:text-indigo-400 font-black uppercase tracking-wider">Created: {formatRelativeTime(t.created_at)}</span>
+                            </>
+                          )}
+                          {t.drive_folder_id && (
+                            <>
+                              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+                              <span className="text-emerald-500 dark:text-emerald-400 font-black uppercase tracking-wider truncate max-w-[150px]" title={t.drive_folder_id}>Drive ID: {t.drive_folder_id}</span>
+                            </>
+                          )}
+                        </div>
                       </td>
                       <td className="p-6 text-right">
-                        <button 
-                          onClick={() => deleteTeacher(t.id)} 
-                          className="text-slate-300 hover:text-red-500 p-2.5 hover:bg-red-50 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => {
+                              setEditingLecturer(t)
+                              setEditName(t.full_name || '')
+                              setEditEmail(t.email || '')
+                              setEditDriveId(t.drive_folder_id || '')
+                              setIsEditModalOpen(true)
+                            }}
+                            className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all cursor-pointer active:scale-95"
+                            title="Edit Lecturer Details"
+                          >
+                            <Pencil size={16} />
+                          </button>
+                          <button 
+                            onClick={() => deleteTeacher(t.id)} 
+                            className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 hover:bg-red-50 border border-slate-100 hover:border-red-100 text-slate-350 hover:text-red-500 rounded-xl transition-all cursor-pointer active:scale-95"
+                            title="Delete Lecturer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -265,6 +397,96 @@ export default function LecturerManagement() {
           </div>
         </div>
       </section>
+
+      {/* Edit Lecturer Modal */}
+      {isEditModalOpen && editingLecturer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-6 right-6 p-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-350 hover:text-slate-600 dark:hover:text-slate-100 rounded-xl transition-all cursor-pointer"
+            >
+              <X size={16} />
+            </button>
+
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+                Account Administration
+              </span>
+              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight mt-2 leading-none">
+                Edit Lecturer Profile
+              </h3>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
+                Override active lecturing faculty settings
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5 text-left">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none block">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all"
+                  placeholder="e.g. Dr. John Doe"
+                />
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none block">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all"
+                  placeholder="e.g. lecturer@domain.com"
+                />
+              </div>
+
+              <div className="space-y-1.5 text-left">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none block">
+                  Google Drive Folder ID
+                </label>
+                <input
+                  type="text"
+                  value={editDriveId}
+                  onChange={e => setEditDriveId(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-900 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all"
+                  placeholder="e.g. 1PAX7i6xTj_-SucRyBp..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="flex-1 py-4 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveLecturer}
+                disabled={isSaving}
+                className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-950/10 active:scale-95 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSaving ? (
+                  <Loader2 className="animate-spin text-white" size={12} />
+                ) : (
+                  <>
+                    <Save size={12} />
+                    <span>Save Changes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
