@@ -90,3 +90,23 @@ NOTIFY pgrst, 'reload schema';
 -- 7. Add google_refresh_token column to profiles table
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS google_refresh_token TEXT;
 NOTIFY pgrst, 'reload schema';
+
+-- 8. Register profiles table in the supabase_realtime publication for real-time deletes
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime'
+    ) THEN
+        -- Check if the table is not already in the publication before adding it
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_publication_tables 
+            WHERE pubname = 'supabase_realtime' 
+              AND schemaname = 'public' 
+              AND tablename = 'profiles'
+        ) THEN
+            ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+        END IF;
+    END IF;
+END $$;
+NOTIFY pgrst, 'reload schema';
+

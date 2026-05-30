@@ -88,7 +88,12 @@ export default function LecturerDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/auth/login')
 
-      const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const { data: p, error: pErr } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (pErr || !p) {
+        await supabase.auth.signOut()
+        router.push('/auth/login')
+        return
+      }
       setProfile(p)
       if (p) {
         setSettingsName(p.full_name || '')

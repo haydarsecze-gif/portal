@@ -26,6 +26,18 @@ export default function Login() {
     } catch (e) {
       console.error(e)
     }
+
+    // Check URL parameters for account deletion warning safely on client
+    try {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('reason') === 'deleted') {
+        setMessage('⚠️ Your lecturer account has been deleted by an administrator.')
+        // Clean URL to prevent warning persisting on manual refresh
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    } catch (err) {
+      console.error('Error reading URL parameters:', err)
+    }
   }, [])
 
   const handleLogin = async () => {

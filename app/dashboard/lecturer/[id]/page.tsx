@@ -436,6 +436,20 @@ export default function SubjectDetail() {
     setLoading(true)
     
     try {
+      // Verify lecturer profile still exists (Kick-out if deleted)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: prof, error: profErr } = await supabase.from('profiles').select('id').eq('id', user.id).single()
+        if (profErr || !prof) {
+          await supabase.auth.signOut()
+          router.push('/auth/login')
+          return
+        }
+      } else {
+        router.push('/auth/login')
+        return
+      }
+
       // 1. Fetch Subject, Assignments, Materials, AND Submissions
       const [subRes, assignmentsRes, materialsRes, submissionsRes] = await Promise.all([
         supabase.from('subjects').select('*').eq('id', subjectId).single(),
