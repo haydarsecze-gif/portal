@@ -61,7 +61,7 @@ export default function RootLayout({
               }
 
               // 2. One-Time Cache and Cookie Buster
-              const cacheBusterKey = 'portal_cache_buster_v2';
+              const cacheBusterKey = 'portal_cache_buster_v3';
               if (!localStorage.getItem(cacheBusterKey)) {
                 // Clear all localStorage keys except the theme
                 const preservedTheme = localStorage.getItem('theme');

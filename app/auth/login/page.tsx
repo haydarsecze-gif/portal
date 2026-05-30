@@ -106,8 +106,10 @@ export default function Login() {
           ? '/dashboard/lecturer'
           : '/dashboard/student'
       
+      setEmail('')
+      setPassword('')
       setTimeout(() => {
-        window.location.href = targetUrl
+        window.location.replace(targetUrl)
       }, 500)
     }
   }
@@ -170,8 +172,10 @@ export default function Login() {
             ? '/dashboard/lecturer'
             : '/dashboard/student'
         
+        setEmail('')
+        setPassword('')
         setTimeout(() => {
-          window.location.href = targetUrl
+          window.location.replace(targetUrl)
         }, 500)
       }
     } catch (err: any) {

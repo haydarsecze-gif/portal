@@ -19,15 +19,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const verifiedUserIdRef = React.useRef<string | null>(null)
   const isCheckingRef = React.useRef(false)
 
-  const verifyAdminSession = async () => {
+  const verifyAdminSession = async (passedUser?: any) => {
     if (isCheckingRef.current) return verifiedUserIdRef.current
     isCheckingRef.current = true
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = passedUser || (await supabase.auth.getUser()).data.user
       if (!user) {
         verifiedUserIdRef.current = null
         setIsAuthorized(false)
-        window.location.href = '/auth/login'
+        window.location.replace('/auth/login')
         return null
       }
 
@@ -48,11 +48,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         verifiedUserIdRef.current = null
         setIsAuthorized(false)
         if (profile?.role === 'teacher') {
-          window.location.href = '/dashboard/lecturer'
+          window.location.replace('/dashboard/lecturer')
         } else if (profile?.role === 'student') {
-          window.location.href = '/dashboard/student'
+          window.location.replace('/dashboard/student')
         } else {
-          window.location.href = '/auth/login'
+          window.location.replace('/auth/login')
         }
         return null
       }
@@ -64,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       console.error("Verification failed:", err)
       verifiedUserIdRef.current = null
       setIsAuthorized(false)
-      window.location.href = '/auth/login'
+      window.location.replace('/auth/login')
       return null
     } finally {
       isCheckingRef.current = false
@@ -80,8 +80,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (event === 'SIGNED_IN' && session?.user) {
         const sessionUserId = session.user.id
         if (sessionUserId !== verifiedUserIdRef.current && !isCheckingRef.current) {
-          setIsAdminChecking(true)
-          verifyAdminSession()
+          // Do not call setIsAdminChecking(true) here to prevent component unmounting
+          verifyAdminSession(session.user)
         }
       }
     })

@@ -154,7 +154,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
             : '/dashboard/student'
         
         setTimeout(() => {
-          window.location.href = targetUrl
+          window.location.replace(targetUrl)
         }, 500)
       }
     } catch (err: any) {
@@ -164,7 +164,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         message: 'Session expired. Please log in manually to re-establish this account.',
         type: 'error',
         onConfirm: () => {
-          window.location.href = '/auth/login'
+          window.location.replace('/auth/login')
         }
       })
     } finally {
@@ -182,13 +182,13 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
   const handleAddNewAccount = async () => {
     await supabase.auth.signOut()
     nukeSession() // Completely nuke leftover cookies/tokens
-    window.location.href = '/auth/login'
+    window.location.replace('/auth/login')
   }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     nukeSession() // Completely nuke leftover cookies/tokens
-    window.location.href = '/auth/login'
+    window.location.replace('/auth/login')
   }
 
   // Get Initials for Avatar

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'student-portal-v2';
+const CACHE_NAME = 'student-portal-v3';
 const STATIC_ASSETS = [
   '/icon.svg',
   '/manifest.json'
@@ -39,6 +39,7 @@ self.addEventListener('fetch', (e) => {
   // 2. Bypass cache entirely for Supabase endpoints, NextJS hot-reload, and API routes
   if (
     url.origin.includes('supabase.co') || 
+    url.pathname.startsWith('/_supabase') || 
     url.pathname.startsWith('/api/') || 
     url.pathname.includes('_next/webpack-hmr')
   ) {

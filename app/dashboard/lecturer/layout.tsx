@@ -22,24 +22,24 @@ export default function LecturerDashboardLayout({
       setIsSigningOut(true)
       verifiedUserIdRef.current = null
       await supabase.auth.signOut()
-      window.location.href = '/auth/login'
+      window.location.replace('/auth/login')
     } catch (e) {
       console.error('Error signing out:', e)
       setIsSigningOut(false)
     }
   }
 
-  const verifyLecturerSession = async (active = true) => {
+  const verifyLecturerSession = async (active = true, passedUser?: any) => {
     if (isCheckingRef.current) return verifiedUserIdRef.current
     isCheckingRef.current = true
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = passedUser || (await supabase.auth.getUser()).data.user
       if (!user) {
         verifiedUserIdRef.current = null
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          window.location.href = '/auth/login'
+          window.location.replace('/auth/login')
         }
         return null
       }
@@ -68,7 +68,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          window.location.href = '/auth/login?reason=deleted'
+          window.location.replace('/auth/login?reason=deleted')
         }
         return null
       }
@@ -79,7 +79,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          window.location.href = '/admin/students'
+          window.location.replace('/admin/students')
         }
         return currentUserId
       }
@@ -88,7 +88,7 @@ export default function LecturerDashboardLayout({
         if (active) {
           setIsApproved(null)
           setLoading(false)
-          window.location.href = '/dashboard/student'
+          window.location.replace('/dashboard/student')
         }
         return currentUserId
       }
@@ -131,7 +131,7 @@ export default function LecturerDashboardLayout({
             console.log('Lecturer profile deleted in real-time!', payload)
             verifiedUserIdRef.current = null
             await supabase.auth.signOut()
-            window.location.href = '/auth/login?reason=deleted'
+            window.location.replace('/auth/login?reason=deleted')
           } else if (payload.eventType === 'UPDATE') {
             const updatedProfile = payload.new
             console.log('Lecturer profile updated in real-time!', updatedProfile)
@@ -139,9 +139,9 @@ export default function LecturerDashboardLayout({
               // If role changed or no longer a teacher, redirect them out
               if (updatedProfile.role !== 'teacher') {
                 verifiedUserIdRef.current = null
-                if (updatedProfile.role === 'admin') window.location.href = '/admin/students'
-                else if (updatedProfile.role === 'student') window.location.href = '/dashboard/student'
-                else window.location.href = '/auth/login'
+                if (updatedProfile.role === 'admin') window.location.replace('/admin/students')
+                else if (updatedProfile.role === 'student') window.location.replace('/dashboard/student')
+                else window.location.replace('/auth/login')
                 return
               }
               setIsApproved(!!updatedProfile.is_approved)
@@ -166,8 +166,8 @@ export default function LecturerDashboardLayout({
             supabase.removeChannel(channel)
             channel = null
           }
-          setLoading(true)
-          const userId = await verifyLecturerSession(active)
+          // Do not call setLoading(true) here to prevent component unmounting
+          const userId = await verifyLecturerSession(active, session.user)
           if (userId && active) {
             channel = supabase
               .channel(`lecturer_profile_${userId}`)
@@ -180,15 +180,15 @@ export default function LecturerDashboardLayout({
                 if (payload.eventType === 'DELETE') {
                   verifiedUserIdRef.current = null
                   await supabase.auth.signOut()
-                  window.location.href = '/auth/login?reason=deleted'
+                  window.location.replace('/auth/login?reason=deleted')
                 } else if (payload.eventType === 'UPDATE') {
                   const updatedProfile = payload.new
                   if (updatedProfile && active) {
                     if (updatedProfile.role !== 'teacher') {
                       verifiedUserIdRef.current = null
-                      if (updatedProfile.role === 'admin') window.location.href = '/admin/students'
-                      else if (updatedProfile.role === 'student') window.location.href = '/dashboard/student'
-                      else window.location.href = '/auth/login'
+                      if (updatedProfile.role === 'admin') window.location.replace('/admin/students')
+                      else if (updatedProfile.role === 'student') window.location.replace('/dashboard/student')
+                      else window.location.replace('/auth/login')
                       return
                     }
                     setIsApproved(!!updatedProfile.is_approved)
