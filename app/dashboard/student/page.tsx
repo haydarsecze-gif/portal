@@ -121,6 +121,7 @@ export default function StudentDashboard() {
       }
 
       // 3. Update Profiles Table
+      let isMissingEmailCol = false
       const { error: profErr } = await supabase
         .from('profiles')
         .update({
@@ -128,7 +129,24 @@ export default function StudentDashboard() {
           email: settingsEmail.toLowerCase().trim()
         })
         .eq('id', user.id)
-      if (profErr) throw profErr
+
+      if (profErr) {
+        const isEmailErr = profErr.code === '42703' || 
+                           profErr.message?.toLowerCase().includes("email") ||
+                           profErr.message?.toLowerCase().includes("schema cache")
+        if (isEmailErr) {
+          isMissingEmailCol = true
+          const { error: retryErr } = await supabase
+            .from('profiles')
+            .update({
+              full_name: settingsName.trim()
+            })
+            .eq('id', user.id)
+          if (retryErr) throw retryErr
+        } else {
+          throw profErr
+        }
+      }
 
       // 4. Update Students Table
       const { error: studentErr } = await supabase
@@ -138,15 +156,36 @@ export default function StudentDashboard() {
           email: settingsEmail.toLowerCase().trim()
         })
         .eq('id', user.id)
-      if (studentErr) throw studentErr
 
-      setSettingsMessage(emailChanged ? '✅ Profile updated! Verification email sent to both inboxes.' : '✅ Profile updated successfully!')
+      if (studentErr) {
+        const isEmailErr = studentErr.code === '42703' || 
+                           studentErr.message?.toLowerCase().includes("email")
+        if (isEmailErr) {
+          isMissingEmailCol = true
+          const { error: retryErr } = await supabase
+            .from('students')
+            .update({
+              name: settingsName.trim()
+            })
+            .eq('id', user.id)
+          if (retryErr) throw retryErr
+        } else {
+          throw studentErr
+        }
+      }
+
+      if (isMissingEmailCol) {
+        setSettingsMessage('⚠️ Saved! Please run the Supabase migration in database.sql to add the missing "email" column.')
+      } else {
+        setSettingsMessage(emailChanged ? '✅ Profile updated! Verification email sent to both inboxes.' : '✅ Profile updated successfully!')
+      }
+
       loadDashboard(false)
       setTimeout(() => {
         setShowSettingsModal(false)
         setSettingsPassword('')
         setSettingsMessage('')
-      }, emailChanged ? 4000 : 2000)
+      }, emailChanged || isMissingEmailCol ? 4000 : 2000)
     } catch (e: any) {
       setSettingsMessage('❌ ' + (e.message || 'Update failed.'))
     } finally {
