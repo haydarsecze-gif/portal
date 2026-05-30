@@ -111,15 +111,58 @@ export default function LecturerDashboard() {
     }
   }, [router])
 
+  const handleAutoCreateDriveFolder = async () => {
+    if (!settingsName.trim() || !settingsEmail.trim()) {
+      setSettingsMessage('❌ Name and Email are required to auto-create folder.')
+      return
+    }
+    setSettingsLoading(true)
+    setSettingsMessage('⚡ Creating & sharing Google Drive folder...')
+    try {
+      const res = await fetch('/api/drive/setup-lecturer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lecturerName: settingsName, lecturerEmail: settingsEmail })
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to auto-create folder')
+      }
+      setSettingsDrive(data.folderId)
+      setSettingsMessage('✅ Folder created and shared successfully! Save Settings to apply.')
+    } catch (err: any) {
+      setSettingsMessage('❌ ' + (err.message || 'Folder setup failed.'))
+    } finally {
+      setSettingsLoading(false)
+    }
+  }
+
   const handleSaveProfileSettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!settingsName.trim() || !settingsEmail.trim() || !settingsDrive.trim()) {
-      setSettingsMessage('❌ All fields are required.')
+    if (!settingsName.trim() || !settingsEmail.trim()) {
+      setSettingsMessage('❌ Name and Email are required.')
       return
     }
     setSettingsLoading(true)
     setSettingsMessage('')
     try {
+      // If drive folder is empty, auto-create it now
+      let finalDriveId = settingsDrive.trim();
+      if (!finalDriveId) {
+        setSettingsMessage('⚡ Auto-creating Google Drive folder...');
+        const autoRes = await fetch('/api/drive/setup-lecturer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lecturerName: settingsName, lecturerEmail: settingsEmail })
+        });
+        const autoData = await autoRes.json();
+        if (!autoRes.ok || autoData.error) {
+          throw new Error(autoData.error || 'Failed to auto-create folder');
+        }
+        finalDriveId = autoData.folderId;
+        setSettingsDrive(finalDriveId);
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No session active.')
 
@@ -129,6 +172,19 @@ export default function LecturerDashboard() {
         const { error: emailErr } = await supabase.auth.updateUser({ email: settingsEmail.trim() })
         if (emailErr) throw emailErr
         emailChanged = true
+      }
+
+      // If email changed and folder exists, share it with the new email
+      if (emailChanged && finalDriveId) {
+        try {
+          await fetch('/api/drive/setup-lecturer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lecturerName: settingsName, lecturerEmail: settingsEmail, folderId: finalDriveId })
+          });
+        } catch (e) {
+          console.warn("Failed to share folder with new email:", e);
+        }
       }
 
       // 2. Update Auth Password if typed
@@ -147,7 +203,7 @@ export default function LecturerDashboard() {
         .update({
           full_name: settingsName.trim(),
           email: settingsEmail.toLowerCase().trim(),
-          drive_folder_id: extractFolderId(settingsDrive)
+          drive_folder_id: finalDriveId
         })
         .eq('id', user.id)
 
@@ -486,21 +542,29 @@ export default function LecturerDashboard() {
                   <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <KeyRound size={14} className="text-indigo-500" /> Google Drive Folder ID
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowDriveInstructions(true)}
-                    className="text-[9px] font-black text-indigo-400 hover:text-indigo-350 uppercase tracking-widest flex items-center gap-1 cursor-pointer bg-indigo-950/40 border border-indigo-900/40 px-2.5 py-1 rounded-lg transition"
-                  >
-                    <HelpCircle size={10} /> Setup Guide
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAutoCreateDriveFolder}
+                      className="text-[9px] font-black text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-350 uppercase tracking-widest flex items-center gap-1 cursor-pointer bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 px-2.5 py-1 rounded-lg transition"
+                    >
+                      Auto-Create Folder
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDriveInstructions(true)}
+                      className="text-[9px] font-black text-indigo-400 hover:text-indigo-350 uppercase tracking-widest flex items-center gap-1 cursor-pointer bg-indigo-950/40 border border-indigo-900/40 px-2.5 py-1 rounded-lg transition"
+                    >
+                      <HelpCircle size={10} /> Setup Guide
+                    </button>
+                  </div>
                 </div>
                 <input
                   type="text"
-                  required
                   value={settingsDrive}
                   onChange={e => setSettingsDrive(e.target.value.trim())}
                   className="w-full p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100/50 dark:border-slate-905/30 rounded-2xl text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-slate-200"
-                  placeholder="Google Drive Folder ID"
+                  placeholder="Google Drive Folder ID (Optional)"
                 />
               </div>
 

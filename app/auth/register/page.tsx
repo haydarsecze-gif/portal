@@ -72,11 +72,6 @@ export default function Register() {
       return
     }
 
-    if (role === 'teacher' && !driveFolderId.trim()) {
-      setMessage("❌ Lecturer must enter Google Drive Folder ID")
-      return
-    }
-
     setLoading(true)
     setMessage('')
 
@@ -107,6 +102,28 @@ export default function Register() {
         const userRole = role === 'student' ? 'student' : 'teacher'
         const status = role === 'student' ? 'active' : 'pending'
 
+        let driveIdToSave = null
+        if (role === 'teacher') {
+          if (driveFolderId.trim()) {
+            driveIdToSave = extractFolderId(driveFolderId)
+          } else {
+            try {
+              const setupRes = await fetch('/api/drive/setup-lecturer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lecturerName: fullName, lecturerEmail: email })
+              })
+              const setupData = await setupRes.json()
+              if (!setupRes.ok || setupData.error) {
+                throw new Error(setupData.error || 'Failed to auto-create folder')
+              }
+              driveIdToSave = setupData.folderId
+            } catch (err: any) {
+              console.error("Auto Drive Setup Error:", err)
+            }
+          }
+        }
+
         const { error: profileError } = await supabase.from('profiles').insert({
           id: authData.user.id,
           full_name: fullName,
@@ -114,7 +131,7 @@ export default function Register() {
           status: status,
           class_id: classId,
           email: email.toLowerCase().trim(),
-          drive_folder_id: role === 'teacher' ? extractFolderId(driveFolderId) : null
+          drive_folder_id: driveIdToSave
         })
 
         if (profileError) throw profileError
@@ -290,17 +307,20 @@ export default function Register() {
                 </button>
               </div>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-500 dark:text-indigo-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-350 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-500 dark:text-indigo-400 group-focus-within:text-indigo-600 dark:group-focus-within:text-indigo-355 transition-colors">
                   <KeyRound size={16} />
                 </div>
                 <input
                   type="text"
-                  placeholder="Google Drive Folder ID"
+                  placeholder="Google Drive Folder ID (Optional)"
                   value={driveFolderId}
                   onChange={(e) => setDriveFolderId(e.target.value.trim())}
                   className="w-full pl-12 pr-6 py-4.5 bg-slate-100/50 dark:bg-indigo-950/20 border border-slate-200/60 dark:border-indigo-900/60 focus:border-indigo-500 rounded-2xl text-slate-800 dark:text-indigo-305 text-sm font-black placeholder:text-slate-450 dark:placeholder:text-indigo-500/60 outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/10 transition-all duration-300"
                 />
               </div>
+              <p className="text-[8.5px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wide leading-normal px-1">
+                💡 Leave blank to automatically create & share a secure folder on our Drive for you.
+              </p>
             </div>
           )}
 
