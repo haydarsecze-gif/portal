@@ -16,6 +16,7 @@ interface UploadContextType {
   setUploadProgress: React.Dispatch<React.SetStateAction<{ [key: string]: UploadProgressItem }>>;
   dismissProgress: (key: string) => void;
   triggerHardReload: () => void;
+  isReloading: boolean;
   uploadStudentSubmission: (params: {
     assignmentTitle: string;
     filesToUpload: File[];
@@ -723,7 +724,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
       uploadStudentSubmission,
       deleteStudentFile,
       uploadLecturerCoursework,
-      triggerHardReload
+      triggerHardReload,
+      isReloading
     }}>
       {children}
       {isReloading && (

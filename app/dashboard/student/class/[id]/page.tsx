@@ -59,7 +59,7 @@ export default function StudentClassroom() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isResubmitting, setIsResubmitting] = useState(false);
-  const { uploadProgress, setUploadProgress, uploadStudentSubmission, deleteStudentFile, triggerHardReload } = useUpload();
+  const { uploadProgress, setUploadProgress, uploadStudentSubmission, deleteStudentFile, triggerHardReload, isReloading } = useUpload();
   const [profile, setProfile] = useState<any>(null);
   const [roomName, setRoomName] = useState<string>('');
   const [subjectTrueUUID, setSubjectTrueUUID] = useState<string>('');
@@ -483,7 +483,7 @@ export default function StudentClassroom() {
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >
-              <RefreshCw size={20} />
+              <RefreshCw size={20} className={isReloading ? "animate-spin text-indigo-500" : ""} />
             </button>
           </div>
         </div>
@@ -581,7 +581,7 @@ export default function StudentClassroom() {
                       </div>
                     </div>
                     {hasSub && (
-                      <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-emerald-100 shrink-0">
+                      <div className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 border border-emerald-100 shrink-0 animate-in fade-in zoom-in duration-500">
                         <Check size={11} strokeWidth={4}/> Done
                       </div>
                     )}

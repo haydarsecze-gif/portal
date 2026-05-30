@@ -7,10 +7,12 @@ import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw, Loader2 } f
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
+import { useUpload } from '@/app/components/UploadContext'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
+  const { triggerHardReload, isReloading } = useUpload()
   
   const [isAdminChecking, setIsAdminChecking] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
@@ -75,8 +77,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     // Listen for auth state changes to dynamically catch switcher updates
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        const sessionUserId = session?.user?.id || null
+      if (event === 'SIGNED_IN' && session?.user) {
+        const sessionUserId = session.user.id
         if (sessionUserId !== verifiedUserIdRef.current) {
           setIsAdminChecking(true)
           verifyAdminSession()
@@ -161,11 +163,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <NotificationBell />
           <ThemeToggle />
           <button 
-            onClick={() => window.location.reload()}
+            onClick={triggerHardReload} 
             className="p-3 bg-white/85 dark:bg-slate-900/85 border border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
             title="Refresh Page"
           >
-            <RefreshCw size={20} />
+            <RefreshCw size={20} className={isReloading ? "animate-spin text-indigo-500" : ""} />
           </button>
           <button 
             onClick={handleAdminLogout}
@@ -294,11 +296,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <NotificationBell />
             <ThemeToggle />
             <button 
-              onClick={() => window.location.reload()}
+              onClick={triggerHardReload} 
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md"
               title="Refresh Page"
             >
-              <RefreshCw size={20} />
+              <RefreshCw size={20} className={isReloading ? "animate-spin text-indigo-500" : ""} />
             </button>
             <button 
               onClick={handleAdminLogout}

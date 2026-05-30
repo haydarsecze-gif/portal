@@ -159,8 +159,8 @@ export default function LecturerDashboardLayout({
 
     // Listen for auth state changes to dynamically catch switcher updates
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        const sessionUserId = session?.user?.id || null
+      if (event === 'SIGNED_IN' && session?.user) {
+        const sessionUserId = session.user.id
         if (sessionUserId !== verifiedUserIdRef.current) {
           if (channel) {
             supabase.removeChannel(channel)

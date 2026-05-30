@@ -14,7 +14,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const router = useRouter()
-  const { triggerHardReload } = useUpload()
+  const { triggerHardReload, isReloading } = useUpload()
 
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [settingsName, setSettingsName] = useState('')
@@ -233,7 +233,7 @@ export default function StudentDashboard() {
               className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >
-              <RefreshCw size={20} />
+              <RefreshCw size={20} className={isReloading ? "animate-spin text-indigo-500" : ""} />
             </button>
             <button 
               onClick={handleLogout} 
