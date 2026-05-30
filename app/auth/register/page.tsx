@@ -5,6 +5,25 @@ import { useRouter } from 'next/navigation'
 import { Loader2, Mail, Lock, User, KeyRound, ArrowLeft, UserCheck, RefreshCw, HelpCircle, X, Smartphone, Share, PlusSquare } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
+const extractFolderId = (input: string) => {
+  if (!input) return '';
+  const trimmed = input.trim();
+  
+  // Match typical google drive folder urls
+  const foldersMatch = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+  if (foldersMatch && foldersMatch[1]) {
+    return foldersMatch[1];
+  }
+  
+  // Match open id urls
+  const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+  if (idMatch && idMatch[1]) {
+    return idMatch[1];
+  }
+  
+  return trimmed;
+}
+
 export default function Register() {
   const [role, setRole] = useState<'student' | 'teacher'>('student')
   const [fullName, setFullName] = useState('')
@@ -80,7 +99,7 @@ export default function Register() {
           status: status,
           class_id: classId,
           email: email.toLowerCase().trim(),
-          drive_folder_id: role === 'teacher' ? driveFolderId.trim() : null
+          drive_folder_id: role === 'teacher' ? extractFolderId(driveFolderId) : null
         })
 
         if (profileError) throw profileError

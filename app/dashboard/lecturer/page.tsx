@@ -17,6 +17,25 @@ const formatTime = (time: string) => {
   return `${formattedH}:${minutes} ${ampm}`;
 };
 
+const extractFolderId = (input: string) => {
+  if (!input) return '';
+  const trimmed = input.trim();
+  
+  // Match typical google drive folder urls
+  const foldersMatch = trimmed.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+  if (foldersMatch && foldersMatch[1]) {
+    return foldersMatch[1];
+  }
+  
+  // Match open id urls
+  const idMatch = trimmed.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+  if (idMatch && idMatch[1]) {
+    return idMatch[1];
+  }
+  
+  return trimmed;
+}
+
 export default function LecturerDashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [subjects, setSubjects] = useState<any[]>([])
@@ -99,7 +118,7 @@ export default function LecturerDashboard() {
         .update({
           full_name: settingsName.trim(),
           email: settingsEmail.toLowerCase().trim(),
-          drive_folder_id: settingsDrive.trim()
+          drive_folder_id: extractFolderId(settingsDrive)
         })
         .eq('id', user.id)
 
