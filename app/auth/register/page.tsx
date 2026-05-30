@@ -93,7 +93,8 @@ export default function Register() {
           status: status,
           class_id: classId,
           email: email.toLowerCase().trim(),
-          drive_folder_id: null
+          drive_folder_id: null,
+          is_approved: role === 'student'
         })
 
         if (profileError) throw profileError
