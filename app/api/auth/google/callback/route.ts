@@ -80,6 +80,22 @@ export async function GET(request: NextRequest) {
       throw new Error('Failed to create personal coursework root folder on your Google Drive.');
     }
 
+    // Share the folder with the service account so the student portal backend has full access to it
+    const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 'student-portal-uploader@primal-duality-496907-a8.iam.gserviceaccount.com';
+    try {
+      await drive.permissions.create({
+        fileId: personalFolderId,
+        requestBody: {
+          role: 'writer',
+          type: 'user',
+          emailAddress: serviceAccountEmail.trim().toLowerCase()
+        },
+        sendNotificationEmail: false
+      });
+    } catch (shareErr) {
+      console.warn(`Could not share personal folder ${personalFolderId} with service account ${serviceAccountEmail}:`, shareErr);
+    }
+
     // Initialize Supabase admin client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
