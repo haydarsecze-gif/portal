@@ -92,59 +92,108 @@ export default function SubjectDetail() {
 
           // A. Search/Create the Subject/Class Folder inside targetParentId dynamically
           let subjectFolderId = null
-          try {
-            const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${subject?.name?.replace(/'/g, "\\'")}' and '${targetParentId}' in parents and trashed = false`
+          let fallbackUsed = false
+
+          const trySearchAndCreate = async (parentId: string) => {
+            // Try searching first
+            const searchQ = `mimeType = 'application/vnd.google-apps.folder' and name = '${subject?.name?.replace(/'/g, "\\'")}' and '${parentId}' in parents and trashed = false`
             const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQ)}&fields=files(id,name)`, {
               method: 'GET',
               headers: {
                 'Authorization': `Bearer ${accessToken}`
               }
             })
+            
             if (searchRes.ok) {
               const searchData = await searchRes.json()
               if (searchData.files && searchData.files.length > 0) {
-                subjectFolderId = searchData.files[0].id
+                return searchData.files[0].id
+              }
+            } else {
+              const errData = await searchRes.json().catch(() => ({}))
+              if (searchRes.status === 404 || searchRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
+                throw new Error('access_denied')
               }
             }
-          } catch (e) {
-            console.warn("Failed to search for subject folder, will attempt to create:", e)
-          }
 
-          if (!subjectFolderId) {
-            try {
-              // Create the Subject/Class Folder
-              const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+            // Create it if not found
+            const createSubRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: subject?.name?.trim(),
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [parentId]
+              })
+            })
+
+            if (createSubRes.ok) {
+              const subFolderData = await createSubRes.json()
+              const subId = subFolderData.id
+
+              // Grant anyone reader permission
+              await fetch(`https://www.googleapis.com/drive/v3/files/${subId}/permissions`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${accessToken}`,
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  name: subject?.name?.trim(),
-                  mimeType: 'application/vnd.google-apps.folder',
-                  parents: [targetParentId]
+                  role: 'reader',
+                  type: 'anyone'
                 })
               })
-              if (createSubRes.ok) {
-                const subFolderData = await createSubRes.json()
-                subjectFolderId = subFolderData.id
-
-                // Grant anyone reader permission to the subject folder so students can access assignments/materials inside
-                await fetch(`https://www.googleapis.com/drive/v3/files/${subjectFolderId}/permissions`, {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    role: 'reader',
-                    type: 'anyone'
-                  })
-                })
+              return subId
+            } else {
+              const errData = await createSubRes.json().catch(() => ({}))
+              if (createSubRes.status === 404 || createSubRes.status === 403 || errData.error?.message?.toLowerCase().includes('not found') || errData.error?.message?.toLowerCase().includes('permission')) {
+                throw new Error('access_denied')
               }
-            } catch (e) {
-              console.error("Error creating subject folder:", e)
+              const errText = JSON.stringify(errData)
+              throw new Error(`Failed to create subject folder: ${errText}`)
             }
+          }
+
+          try {
+            subjectFolderId = await trySearchAndCreate(targetParentId)
+          } catch (e: any) {
+            if (e.message === 'access_denied' && targetParentId !== parentFolderId) {
+              console.warn(`Lecturer folder ${targetParentId} is inaccessible. Falling back to default app folder.`)
+              fallbackUsed = true
+              targetParentId = parentFolderId
+              subjectFolderId = await trySearchAndCreate(parentFolderId)
+            } else {
+              throw e
+            }
+          }
+
+          if (fallbackUsed && user) {
+            // Trigger background auto-setup to repair their drive_folder_id for future uploads!
+            (async () => {
+              try {
+                const { data: p } = await supabase.from('profiles').select('full_name, email').eq('id', user.id).single()
+                if (p && p.email) {
+                  const autoRes = await fetch('/api/drive/setup-lecturer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lecturerName: p.full_name, lecturerEmail: p.email })
+                  })
+                  const autoData = await autoRes.json()
+                  if (autoRes.ok && autoData.folderId) {
+                    await supabase
+                      .from('profiles')
+                      .update({ drive_folder_id: autoData.folderId })
+                      .eq('id', user.id)
+                    console.log(`Successfully repaired inaccessible drive folder ID for lecturer ${p.full_name}. New folder: ${autoData.folderId}`)
+                  }
+                }
+              } catch (repairErr) {
+                console.error("Failed to automatically repair lecturer drive:", repairErr)
+              }
+            })()
           }
 
           if (subjectFolderId) {
