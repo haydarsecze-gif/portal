@@ -22,8 +22,28 @@ export default function LecturerManagement() {
     const targetLecturer = teachers.find(t => t.id === id)
     const lecturerName = targetLecturer?.full_name || "Lecturer"
 
-    const { error } = await supabase.from('profiles').update({ is_approved: approved }).eq('id', id)
-    if (!error) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        alert("Unauthorized: No active session.")
+        return
+      }
+
+      const res = await fetch('/api/admin/approve-lecturer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ userId: id, approved })
+      })
+
+      const resData = await res.json()
+      if (!res.ok) {
+        alert("Error: " + (resData.error || "Failed to update lecturer approval status."))
+        return
+      }
+
       try {
         let adminName = "Administrator"
         const { data: { user: adminUser } } = await supabase.auth.getUser()
@@ -68,7 +88,10 @@ export default function LecturerManagement() {
       } catch (err) {
         console.error("Error creating approval notification:", err)
       }
+    } catch (err: any) {
+      alert("Error: " + err.message)
     }
+
     fetchTeachers()
   }
 
@@ -145,39 +168,41 @@ export default function LecturerManagement() {
   const approved = teachers.filter(t => t.is_approved)
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-300 font-sans select-none">
+    <div className="space-y-12 animate-in fade-in duration-300 font-sans select-text">
       
       {/* Pending Approvals Section */}
       <section>
         <div className="flex items-center gap-3 mb-6">
-          <Clock className="text-amber-500" size={18} />
+          <Clock className="text-amber-500 shrink-0" size={18} />
           <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Pending Lecturer Approvals</h2>
-          <span className="bg-amber-50 border border-amber-100 text-amber-600 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">{pending.length}</span>
+          <span className="bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">{pending.length}</span>
         </div>
         
         <div className="grid gap-4">
           {pending.length > 0 ? (
             pending.map(t => (
-              <div key={t.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-sm uppercase">
+              <div key={t.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4 text-left min-w-0">
+                  <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-sm uppercase shrink-0">
                     {t.full_name?.[0] || 'T'}
                   </div>
-                  <div>
-                    <h3 className="font-black text-slate-850 uppercase tracking-tight">{t.full_name}</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{t.email || 'No email provided'}</p>
+                  <div className="min-w-0">
+                    <h3 className="font-black text-slate-850 uppercase tracking-tight truncate">{t.full_name}</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5 truncate">{t.email || 'No email provided'}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-end sm:justify-start shrink-0">
                   <button 
                     onClick={() => updateStatus(t.id, true)} 
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-2xl shadow-lg shadow-emerald-500/10 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Approve Lecturer"
                   >
                     <Check size={16} strokeWidth={3} />
                   </button>
                   <button 
                     onClick={() => deleteTeacher(t.id)} 
-                    className="bg-slate-50 border border-slate-150 hover:bg-red-50 text-slate-400 hover:text-red-500 hover:border-red-100 p-3 rounded-2xl active:scale-95 transition-all cursor-pointer"
+                    className="bg-slate-50 border border-slate-150 hover:bg-red-50 text-slate-400 hover:text-red-500 hover:border-red-100 p-3 rounded-2xl active:scale-95 transition-all cursor-pointer flex items-center justify-center"
+                    title="Reject/Delete Lecturer"
                   >
                     <X size={16} strokeWidth={3} />
                   </button>
@@ -196,9 +221,9 @@ export default function LecturerManagement() {
       {/* Verified Faculty Section */}
       <section>
         <div className="flex items-center gap-3 mb-6">
-          <UserCheck className="text-indigo-600" size={18} />
+          <UserCheck className="text-indigo-600 shrink-0" size={18} />
           <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Verified Faculty Directory</h2>
-          <span className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">{approved.length}</span>
+          <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">{approved.length}</span>
         </div>
         
         <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">

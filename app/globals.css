@@ -204,8 +204,7 @@ body {
 
 /* 5. Keep strong white headers and critical content bright white */
 .dark .text-white, 
-.dark .text-slate-100,
-.dark .font-black {
+.dark .text-slate-100 {
   color: #FFFFFF !important;
 }
 
