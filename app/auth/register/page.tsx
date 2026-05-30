@@ -133,11 +133,36 @@ export default function Register() {
 
 
 
-        setMessage(role === 'teacher' 
-          ? "✅ Request sent! Wait for admin approval." 
-          : "✅ Registration successful!")
-        
-        setTimeout(() => router.push('/auth/login'), 2000)
+        if (userRole === 'teacher') {
+          try {
+            // Save lecturer credentials securely to Multi-Account Switcher for 1-click test switching
+            const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+            const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
+            const newAcc = {
+              email: email.toLowerCase(),
+              password: btoa(password),
+              role: 'teacher',
+              name: fullName
+            }
+            if (index > -1) {
+              saved[index] = newAcc
+            } else {
+              saved.push(newAcc)
+            }
+            localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+          } catch (e) {
+            console.error("Error caching registered lecturer credentials:", e)
+          }
+
+          const registeredUserId = authData.user.id
+          setMessage("✅ Registration successful! Redirecting to Google Drive connection...")
+          setTimeout(() => {
+            window.location.href = `/api/auth/google?userId=${registeredUserId}`
+          }, 1500)
+        } else {
+          setMessage("✅ Registration successful!")
+          setTimeout(() => router.push('/auth/login'), 2000)
+        }
       }
     } catch (err: any) {
       setMessage("❌ " + err.message)
@@ -263,7 +288,7 @@ export default function Register() {
                 🔌 1-Click Google Drive Connection
               </p>
               <p className="text-[9.5px] font-medium text-slate-550 dark:text-slate-400/90 leading-relaxed">
-                As a lecturer, you don't need to manually create or share folders! Once registered and approved by the admin, you can link your personal or work Google Drive with a single click inside your dashboard settings.
+                As a lecturer, you don't need to manually create or share folders! Once you click "Complete Register", the portal will immediately direct you to link your personal or work Google Drive with a single click.
               </p>
             </div>
           )}
