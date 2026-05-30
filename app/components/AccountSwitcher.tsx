@@ -128,6 +128,13 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
       // Successful login
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // Assert email match to prevent hijacked / legacy token mismatch login
+        if (user.email && targetAccount.email && user.email.toLowerCase() !== targetAccount.email.toLowerCase()) {
+          console.error("Mismatch during switch login:", user.email, targetAccount.email)
+          await supabase.auth.signOut()
+          throw new Error("Mismatched session tokens. Please log in manually.")
+        }
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, full_name')

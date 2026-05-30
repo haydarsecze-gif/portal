@@ -143,6 +143,13 @@ export default function Login() {
       // Successful login
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // Assert email match to prevent hijacked / legacy token mismatch login
+        if (user.email && acc.email && user.email.toLowerCase() !== acc.email.toLowerCase()) {
+          console.error("Mismatch during quick login:", user.email, acc.email)
+          await supabase.auth.signOut()
+          throw new Error("Mismatched session tokens. Please log in manually.")
+        }
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('role, full_name')
