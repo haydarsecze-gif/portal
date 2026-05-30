@@ -48,6 +48,17 @@ const UploadContext = createContext<UploadContextType | undefined>(undefined);
 
 export function UploadProvider({ children }: { children: React.ReactNode }) {
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: UploadProgressItem }>({});
+  const submissionQueues = React.useRef<{ [key: string]: Promise<any> }>({});
+
+  const enqueueSubmissionAction = (assignmentTitle: string, action: () => Promise<any>) => {
+    const currentQueue = submissionQueues.current[assignmentTitle] || Promise.resolve();
+    const nextQueue = currentQueue.then(action).catch((err) => {
+      console.error("Queue execution error for " + assignmentTitle + ":", err);
+      throw err;
+    });
+    submissionQueues.current[assignmentTitle] = nextQueue;
+    return nextQueue;
+  };
 
   const dismissProgress = (key: string) => {
     setUploadProgress(prev => {
@@ -157,42 +168,57 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 3. Save to database
-      let finalLinks = uploadedLinks;
-      if (existingSubmission && existingSubmission.file_urls) {
-        finalLinks = [...existingSubmission.file_urls, ...uploadedLinks];
-      }
+      // 3. Save to database in a sequential transaction queue to avoid deadlock/concurrency overrides!
+      await enqueueSubmissionAction(assignmentTitle, async () => {
+        // Query the absolute latest submission from the database first
+        const { data: latestSub, error: fetchErr } = await supabase
+          .from('submissions')
+          .select('*')
+          .eq('class_id', subjectTrueUUID)
+          .eq('student_id', user?.id)
+          .eq('assignment_name', assignmentTitle)
+          .maybeSingle();
 
-      const { error: submitErr } = await supabase.from('submissions').upsert({
-        id: existingSubmission?.id,
-        class_id: subjectTrueUUID,
-        student_id: user?.id,
-        assignment_name: assignmentTitle,
-        file_urls: finalLinks,
-        submitted_at: new Date().toISOString()
-      });
-      if (submitErr) throw submitErr;
+        if (fetchErr) throw fetchErr;
 
-      // 4. Notify lecturers
-      try {
-        const { data: lecturers } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('role', 'teacher')
-          .eq('is_approved', true);
-        
-        if (lecturers && lecturers.length > 0) {
-          const notificationsToInsert = lecturers.map(lec => ({
-            user_id: lec.id,
-            title: "New Assignment Submission",
-            message: `${studentName} submitted the assignment "${assignmentTitle}".`,
-            type: "submission"
-          }));
-          await supabase.from('notifications').insert(notificationsToInsert);
+        let finalLinks = uploadedLinks;
+        if (latestSub && latestSub.file_urls) {
+          const existingLinksSet = new Set(latestSub.file_urls);
+          const uniqueNewLinks = uploadedLinks.filter(link => !existingLinksSet.has(link));
+          finalLinks = [...latestSub.file_urls, ...uniqueNewLinks];
         }
-      } catch (err) {
-        console.error("Error creating notifications:", err);
-      }
+
+        const { error: submitErr } = await supabase.from('submissions').upsert({
+          id: latestSub?.id,
+          class_id: subjectTrueUUID,
+          student_id: user?.id,
+          assignment_name: assignmentTitle,
+          file_urls: finalLinks,
+          submitted_at: new Date().toISOString()
+        });
+        if (submitErr) throw submitErr;
+
+        // 4. Notify lecturers
+        try {
+          const { data: lecturers } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'teacher')
+            .eq('is_approved', true);
+          
+          if (lecturers && lecturers.length > 0) {
+            const notificationsToInsert = lecturers.map(lec => ({
+              user_id: lec.id,
+              title: "New Assignment Submission",
+              message: `${studentName} submitted the assignment "${assignmentTitle}".`,
+              type: "submission"
+            }));
+            await supabase.from('notifications').insert(notificationsToInsert);
+          }
+        } catch (err) {
+          console.error("Error creating notifications:", err);
+        }
+      });
 
       setUploadProgress(prev => ({
         ...prev,
@@ -222,15 +248,33 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     }));
 
     try {
-      if (!existingSubmission) return;
+      const { data: { user } } = await supabase.auth.getUser();
 
-      const updatedUrls = existingSubmission.file_urls.filter((url: string) => url !== fileStringToRemove);
+      await enqueueSubmissionAction(assignmentTitle, async () => {
+        // Query the absolute latest submission from the database first
+        const { data: latestSub, error: fetchErr } = await supabase
+          .from('submissions')
+          .select('*')
+          .eq('class_id', subjectTrueUUID)
+          .eq('student_id', user?.id)
+          .eq('assignment_name', assignmentTitle)
+          .maybeSingle();
 
-      if (updatedUrls.length === 0) {
-        await supabase.from('submissions').delete().eq('id', existingSubmission.id);
-      } else {
-        await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', existingSubmission.id);
-      }
+        if (fetchErr) throw fetchErr;
+        if (!latestSub) {
+          throw new Error("No active submission record found to delete files from.");
+        }
+
+        const updatedUrls = latestSub.file_urls.filter((url: string) => url !== fileStringToRemove);
+
+        if (updatedUrls.length === 0) {
+          const { error: delErr } = await supabase.from('submissions').delete().eq('id', latestSub.id);
+          if (delErr) throw delErr;
+        } else {
+          const { error: updErr } = await supabase.from('submissions').update({ file_urls: updatedUrls }).eq('id', latestSub.id);
+          if (updErr) throw updErr;
+        }
+      });
 
       setUploadProgress(prev => ({
         ...prev,
@@ -239,6 +283,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
       if (onComplete) onComplete();
     } catch (err: any) {
+      console.error("Global delete failed:", err);
       setUploadProgress(prev => ({
         ...prev,
         [assignmentTitle]: { ...prev[assignmentTitle], progress: 0, status: 'failed', error: err.message || 'Delete failed.' }
