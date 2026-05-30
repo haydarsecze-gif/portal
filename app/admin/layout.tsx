@@ -15,21 +15,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isAdminChecking, setIsAdminChecking] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
   const verifiedUserIdRef = React.useRef<string | null>(null)
+  const isCheckingRef = React.useRef(false)
 
   const verifyAdminSession = async () => {
+    if (isCheckingRef.current) return verifiedUserIdRef.current
+    isCheckingRef.current = true
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         verifiedUserIdRef.current = null
         setIsAuthorized(false)
         router.push('/auth/login')
-        return
+        return null
       }
 
       // If we already verified this user, skip database fetch to prevent loop
       if (verifiedUserIdRef.current === user.id && isAuthorized) {
         setIsAdminChecking(false)
-        return
+        return user.id
       }
 
       const { data: profile, error } = await supabase
@@ -49,17 +52,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         } else {
           router.push('/auth/login')
         }
-        return
+        return null
       }
 
       verifiedUserIdRef.current = user.id
       setIsAuthorized(true)
+      return user.id
     } catch (err) {
       console.error("Verification failed:", err)
       verifiedUserIdRef.current = null
       setIsAuthorized(false)
       router.push('/auth/login')
+      return null
     } finally {
+      isCheckingRef.current = false
       setIsAdminChecking(false)
     }
   }
@@ -72,6 +78,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         const sessionUserId = session?.user?.id || null
         if (sessionUserId !== verifiedUserIdRef.current) {
+          setIsAdminChecking(true)
           verifyAdminSession()
         }
       }
@@ -80,7 +87,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return () => {
       subscription.unsubscribe()
     }
-  }, [router, isAuthorized])
+  }, [router])
 
   const [alertConfig, setAlertConfig] = useState<{
     isOpen: boolean;
