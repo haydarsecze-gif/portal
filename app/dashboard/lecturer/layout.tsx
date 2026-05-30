@@ -33,8 +33,8 @@ export default function LecturerDashboardLayout({
     if (isCheckingRef.current) return verifiedUserIdRef.current
     isCheckingRef.current = true
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.user) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
         verifiedUserIdRef.current = null
         if (active) {
           setIsApproved(null)
@@ -44,7 +44,7 @@ export default function LecturerDashboardLayout({
         return null
       }
 
-      const currentUserId = session.user.id
+      const currentUserId = user.id
 
       // If we already verified this user, skip database fetch to prevent loop
       if (verifiedUserIdRef.current === currentUserId && isApproved !== null) {
@@ -161,7 +161,7 @@ export default function LecturerDashboardLayout({
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const sessionUserId = session.user.id
-        if (sessionUserId !== verifiedUserIdRef.current) {
+        if (sessionUserId !== verifiedUserIdRef.current && !isCheckingRef.current) {
           if (channel) {
             supabase.removeChannel(channel)
             channel = null

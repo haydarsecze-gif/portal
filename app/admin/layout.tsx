@@ -79,7 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         const sessionUserId = session.user.id
-        if (sessionUserId !== verifiedUserIdRef.current) {
+        if (sessionUserId !== verifiedUserIdRef.current && !isCheckingRef.current) {
           setIsAdminChecking(true)
           verifyAdminSession()
         }

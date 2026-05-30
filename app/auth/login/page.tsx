@@ -85,7 +85,9 @@ export default function Login() {
           ? '/dashboard/lecturer'
           : '/dashboard/student'
       
-      window.location.href = targetUrl
+      setTimeout(() => {
+        window.location.href = targetUrl
+      }, 150)
     }
   }
 
@@ -171,7 +173,9 @@ export default function Login() {
             ? '/dashboard/lecturer'
             : '/dashboard/student'
         
-        window.location.href = targetUrl
+        setTimeout(() => {
+          window.location.href = targetUrl
+        }, 150)
       }
     } catch (err: any) {
       setMessage('❌ Quick login failed: ' + (err.message || 'Please log in manually.'))

@@ -158,7 +158,9 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
             ? '/dashboard/lecturer'
             : '/dashboard/student'
         
-        window.location.href = targetUrl
+        setTimeout(() => {
+          window.location.href = targetUrl
+        }, 150)
       }
     } catch (err: any) {
       setAlertConfig({
