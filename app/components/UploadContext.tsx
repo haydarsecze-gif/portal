@@ -221,11 +221,25 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             .eq('is_approved', true);
           
           if (lecturers && lecturers.length > 0) {
+            let submissionStatusText = "on time";
+            if (itemToUpload?.deadline) {
+              const deadlineDate = new Date(itemToUpload.deadline);
+              const submissionDate = new Date();
+              if (submissionDate > deadlineDate) {
+                submissionStatusText = "late";
+              }
+            }
+
+            const actionVerb = latestSub ? "resubmitted" : "submitted";
+            const notifTitle = latestSub ? "Assignment Resubmission" : "New Assignment Submission";
+            const message = `${studentName} ${actionVerb} the assignment "${assignmentTitle}" (${submissionStatusText}).`;
+
             const notificationsToInsert = lecturers.map(lec => ({
               user_id: lec.id,
-              title: "New Assignment Submission",
-              message: `${studentName} submitted the assignment "${assignmentTitle}".`,
-              type: "submission"
+              title: notifTitle,
+              message: message,
+              type: "submission",
+              link: `/dashboard/lecturer/${subjectTrueUUID}?select=${assignmentTitle}`
             }));
             await supabase.from('notifications').insert(notificationsToInsert);
           }

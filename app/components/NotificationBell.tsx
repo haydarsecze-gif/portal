@@ -36,6 +36,15 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
       if (session?.user) {
         setUserId(session.user.id)
         fetchNotifications(session.user.id)
+
+        // Request browser permission for system notifications (PWA / Android / Phone app shortcut)
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+          if (Notification.permission === 'default') {
+            Notification.requestPermission().catch((err) => {
+              console.warn('Notification permission request rejected/failed:', err)
+            })
+          }
+        }
       }
     }
     getSession()
@@ -68,6 +77,15 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
             if (newNotif && (newNotif.user_id === userId || !newNotif.user_id)) {
               setNotifications(prev => [newNotif, ...prev])
               setUnreadCount(c => c + 1)
+
+              // Show native system popup/banner notification like an app
+              if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                new Notification(newNotif.title || 'Student Portal Alert', {
+                  body: newNotif.message || '',
+                  icon: '/icon.svg',
+                  badge: '/icon.svg'
+                })
+              }
             }
           } catch (e) {
             console.error('Error handling realtime notification insert:', e)
