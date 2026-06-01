@@ -233,11 +233,32 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
         // 4. Notify lecturers
         try {
-          const { data: lecturers } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'teacher')
-            .eq('is_approved', true);
+          // Resolve lecturer names associated with this subject first
+          const { data: subjectDetails } = await supabase
+            .from('subjects')
+            .select('lecturer_names')
+            .eq('id', subjectTrueUUID)
+            .maybeSingle();
+
+          let lecturers: any[] = [];
+          if (subjectDetails?.lecturer_names && subjectDetails.lecturer_names.length > 0) {
+            const { data: matchedLecs } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('role', 'teacher')
+              .in('full_name', subjectDetails.lecturer_names);
+            lecturers = matchedLecs || [];
+          }
+
+          // Fallback to all approved teachers if no specific lecturers are found
+          if (lecturers.length === 0) {
+            const { data: allTeachers } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('role', 'teacher')
+              .eq('is_approved', true);
+            lecturers = allTeachers || [];
+          }
           
           if (lecturers && lecturers.length > 0) {
             let submissionStatusText = "on time";

@@ -121,3 +121,11 @@ ALTER TABLE public.students ADD COLUMN IF NOT EXISTS semester INTEGER;
 
 NOTIFY pgrst, 'reload schema';
 
+-- 10. Grant public schema privileges to standard Supabase roles to prevent "permission denied" errors
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, service_role, authenticated, anon;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, service_role, authenticated, anon;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO postgres, service_role, authenticated, anon;
+
+NOTIFY pgrst, 'reload schema';
+
+

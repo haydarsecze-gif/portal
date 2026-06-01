@@ -356,6 +356,31 @@ export default function StudentClassroom() {
           } else {
             setCheckInMessage(checkInMsg);
             setGeoSuccess(true);
+
+            // Send notification to lecturers of this subject
+            try {
+              if (subject?.lecturer_names && subject.lecturer_names.length > 0) {
+                const { data: matchedLecturers } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('role', 'teacher')
+                  .in('full_name', subject.lecturer_names);
+
+                if (matchedLecturers && matchedLecturers.length > 0) {
+                  const checkInMsgForLec = `${profile?.full_name || 'A student'} checked in for Week ${targetWeek} (Status: ${checkInStatus}) in "${subject.name}".`;
+                  const notifInserts = matchedLecturers.map(lec => ({
+                    user_id: lec.id,
+                    title: "Student Check-In",
+                    message: checkInMsgForLec,
+                    type: "system",
+                    link: `/dashboard/lecturer/${subjectTrueUUID}`
+                  }));
+                  await supabase.from('notifications').insert(notifInserts);
+                }
+              }
+            } catch (notifErr) {
+              console.error("Error creating attendance check-in notification:", notifErr);
+            }
           }
 
           fetchClassData(); 
