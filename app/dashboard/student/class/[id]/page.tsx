@@ -285,6 +285,12 @@ export default function StudentClassroom() {
       return;
     }
 
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      setGeoError("Insecure Connection (HTTP): Your browser blocks location access over insecure HTTP connections on mobile. Please use an HTTPS connection (e.g. Firebase, Vercel, or Ngrok) to test on your phone.");
+      setIsCheckingGeo(false);
+      return;
+    }
+
     if (!navigator.geolocation) {
       setGeoError("Geolocation tracking services are unsupported by this browser.");
       setIsCheckingGeo(false);
