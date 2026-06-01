@@ -273,15 +273,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        {/* LOGOUT BUTTON */}
-        <div className="mt-auto p-8 border-t border-slate-800">
-          <button 
-            onClick={handleAdminLogout}
-            className="flex items-center gap-3 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-red-400 transition-colors w-full text-left outline-none cursor-pointer"
-          >
-            <LogOut size={18} /> Exit Admin
-          </button>
-        </div>
+
       </aside>
 
       {/* CORE FRAME LAYOUT children */}
