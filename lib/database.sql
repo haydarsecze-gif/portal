@@ -110,3 +110,14 @@ BEGIN
 END $$;
 NOTIFY pgrst, 'reload schema';
 
+-- 9. Add student profile details (birthday, more_detail, semester) to profiles and students tables
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS more_detail TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS semester INTEGER;
+
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS more_detail TEXT;
+ALTER TABLE public.students ADD COLUMN IF NOT EXISTS semester INTEGER;
+
+NOTIFY pgrst, 'reload schema';
+

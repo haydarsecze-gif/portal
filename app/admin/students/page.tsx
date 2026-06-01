@@ -57,6 +57,10 @@ export default function StudentDirectory() {
   const [editingStudent, setEditingStudent] = useState<any>(null)
   const [selectedClassId, setSelectedClassId] = useState<string>('')
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editEmail, setEditEmail] = useState('')
+  const [editBirthday, setEditBirthday] = useState('')
+  const [editMoreDetail, setEditMoreDetail] = useState('')
+  const [editSemester, setEditSemester] = useState<string>('')
 
   // Premium Alert/Confirm Dialog Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -74,16 +78,37 @@ export default function StudentDirectory() {
     setDebugInfo(null)
     
     try {
-      const [overviewRes, profilesRes, classesRes] = await Promise.all([
+      let profiles: any[] = []
+      const { data: profs, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, class_id, created_at, birthday, more_detail, semester, email')
+        .eq('role', 'student')
+
+      if (profErr) {
+        // Fallback to select without the new columns if they don't exist yet
+        const { data: fallbackProfs, error: fallbackErr } = await supabase
+          .from('profiles')
+          .select('id, class_id, created_at, email')
+          .eq('role', 'student')
+        if (fallbackErr) throw fallbackErr
+        profiles = (fallbackProfs || []).map(p => ({
+          ...p,
+          birthday: null,
+          more_detail: '',
+          semester: null
+        }))
+      } else {
+        profiles = profs || []
+      }
+
+      const [overviewRes, classesRes] = await Promise.all([
         supabase.from('admin_student_overview').select('*'),
-        supabase.from('profiles').select('id, class_id, created_at').eq('role', 'student'),
         supabase.from('classes').select('id, name, semester')
       ])
 
       if (overviewRes.error) throw overviewRes.error
 
       const overview = overviewRes.data || []
-      const profiles = profilesRes.data || []
       const classes = classesRes.data || []
 
       const combined = overview.map(o => {
@@ -91,9 +116,12 @@ export default function StudentDirectory() {
         const cls = classes.find(c => c.id === prof?.class_id)
         return {
           ...o,
-          created_at: prof?.created_at || o.created_at,
-          semester: cls ? cls.semester : 'N/A',
-          class_name: cls ? cls.name : (o.subject_name || 'Unassigned')
+          email: prof?.email || o.email || 'No email provided',
+          birthday: prof?.birthday || null,
+          more_detail: prof?.more_detail || '',
+          semester: prof?.semester !== undefined && prof?.semester !== null ? prof.semester : (cls ? cls.semester : 'N/A'),
+          class_name: cls ? cls.name : (o.subject_name || 'Unassigned'),
+          created_at: prof?.created_at || o.created_at
         }
       })
 
@@ -122,10 +150,12 @@ export default function StudentDirectory() {
             id: p.id,
             student_id: p.id,
             full_name: p.full_name,
-            email: 'No Email',
+            email: p.email || 'No Email',
             created_at: p.created_at,
-            semester: cls ? cls.semester : 'N/A',
+            semester: p.semester !== undefined && p.semester !== null ? p.semester : (cls ? cls.semester : 'N/A'),
             class_name: cls ? cls.name : 'Unassigned',
+            birthday: p.birthday || null,
+            more_detail: p.more_detail || '',
             days_present: 0
           }
         })
@@ -203,38 +233,59 @@ export default function StudentDirectory() {
     if (!editingStudent) return
     const studentId = editingStudent.student_id || editingStudent.id
     try {
-      // 1. Update profiles table
+      const updatePayload: any = {
+        email: editEmail.trim() || null,
+        birthday: editBirthday || null,
+        more_detail: editMoreDetail.trim() || null,
+        semester: editSemester ? parseInt(editSemester) : null
+      }
+
+      // Update profiles table
       const { error: profileErr } = await supabase
         .from('profiles')
-        .update({ class_id: selectedClassId || null })
+        .update(updatePayload)
         .eq('id', studentId)
-      if (profileErr) throw profileErr
 
-      // 2. Update students table
-      const { error: studentErr } = await supabase
-        .from('students')
-        .update({ class_id: selectedClassId || null })
-        .eq('id', studentId)
-      if (studentErr) throw studentErr
+      if (profileErr) {
+        // Fallback in case columns birthday/more_detail/semester don't exist yet in the database
+        const isColumnErr = profileErr.code === '42703' || profileErr.message?.toLowerCase().includes("column")
+        if (isColumnErr) {
+          // Attempt update with email only
+          const { error: retryErr } = await supabase
+            .from('profiles')
+            .update({ email: editEmail.trim() || null })
+            .eq('id', studentId)
+          if (retryErr) throw retryErr
 
-      // 3. Resolve metadata and dispatch notifications
-      try {
-        let className = "Unassigned"
-        let semester = 1
-        if (selectedClassId) {
-          const { data: classData } = await supabase
-            .from('subjects')
-            .select('name, semester')
-            .eq('id', selectedClassId)
-            .maybeSingle()
-          if (classData) {
-            className = classData.name
-            semester = classData.semester
-          }
+          setAlertConfig({
+            isOpen: true,
+            title: "Partial Save Success",
+            message: "Student email was successfully updated! However, birthday, semester, and details were not saved because the columns do not exist in your database yet. Please run the migration script in database.sql to add them.",
+            type: "warning"
+          })
+        } else {
+          throw profileErr
         }
+      } else {
+        // Update students table as well
+        const studentPayload: any = {
+          email: editEmail.trim() || null,
+          birthday: editBirthday || null,
+          more_detail: editMoreDetail.trim() || null,
+          semester: editSemester ? parseInt(editSemester) : null
+        }
+        
+        await supabase
+          .from('students')
+          .update(studentPayload)
+          .eq('id', studentId)
+      }
 
+      // Resolve metadata and dispatch notifications
+      try {
         let adminName = "Administrator"
-        const { data: { user: adminUser } } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
+        const adminUser = session?.user
         if (adminUser) {
           const { data: prof } = await supabase
             .from('profiles')
@@ -249,8 +300,8 @@ export default function StudentDirectory() {
         // Notify the target student
         await supabase.from('notifications').insert({
           user_id: studentId,
-          title: "Class Track & Semester Updated",
-          message: `Your class track was updated to ${className} (Semester ${semester}) by ${adminName} at ${currentTime}.`,
+          title: "Profile Information Updated",
+          message: `Your profile details were updated by admin ${adminName} at ${currentTime}.`,
           type: "system",
           link: "/dashboard/student"
         })
@@ -264,15 +315,15 @@ export default function StudentDirectory() {
         if (adminProfiles && adminProfiles.length > 0) {
           const adminNotifs = adminProfiles.map(adm => ({
             user_id: adm.id,
-            title: "Student Class Track Updated",
-            message: `${adminName} updated student ${editingStudent.full_name}'s track to ${className} (Semester ${semester}) at ${currentTime}.`,
+            title: "Student Profile Details Updated",
+            message: `${adminName} updated student ${editingStudent.full_name}'s profile details at ${currentTime}.`,
             type: "approval",
             link: "/admin/students"
           }))
           await supabase.from('notifications').insert(adminNotifs)
         }
       } catch (notifErr) {
-        console.error("Error creating student class change notifications:", notifErr)
+        console.error("Error creating student profile change notifications:", notifErr)
       }
 
       setIsEditModalOpen(false)
@@ -280,8 +331,8 @@ export default function StudentDirectory() {
     } catch (err: any) {
       setAlertConfig({
         isOpen: true,
-        title: "Assignment Failed",
-        message: "Failed to assign student class track: " + err.message,
+        title: "Update Failed",
+        message: "Failed to update student details: " + err.message,
         type: "error"
       })
     }
@@ -372,9 +423,10 @@ export default function StudentDirectory() {
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <th className="p-6">Student Identity</th>
                   <th className="p-6">Date Registered</th>
-                  <th className="p-6">Active Class Track</th>
                   <th className="p-6 text-center">Semester</th>
                   <th className="p-6 text-center">Engagement Log</th>
+                  <th className="p-6">Birthday</th>
+                  <th className="p-6">Details</th>
                   <th className="p-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -388,7 +440,7 @@ export default function StudentDirectory() {
                         </div>
                         <div>
                           <p className="text-base font-black text-slate-800 uppercase tracking-tight group-hover:text-indigo-600 transition-colors duration-300">{s.full_name}</p>
-                          <p className="text-[10px] text-slate-450 font-bold uppercase tracking-wider mt-0.5 leading-none">{s.email || 'No email provided'}</p>
+                          <p className="text-[10px] text-slate-455 font-bold uppercase tracking-wider mt-0.5 leading-none">{s.email || 'No email provided'}</p>
                         </div>
                       </div>
                     </td>
@@ -401,15 +453,6 @@ export default function StudentDirectory() {
                           Registered: {formatRelativeTime(s.created_at)}
                         </div>
                       )}
-                    </td>
-                    <td className="p-6">
-                      <span className={`inline-block px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest leading-none ${
-                        s.class_name && s.class_name !== 'Unassigned' 
-                          ? 'bg-blue-50 border border-blue-100 text-blue-600' 
-                          : 'bg-slate-50 border border-slate-100 text-slate-400'
-                      }`}>
-                        {s.class_name || 'Unassigned'}
-                      </span>
                     </td>
                     <td className="p-6 text-center">
                       <span className={`inline-block px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest leading-none ${
@@ -426,15 +469,28 @@ export default function StudentDirectory() {
                         <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest mt-1">Days Present</span>
                       </div>
                     </td>
+                    <td className="p-6">
+                      <div className="text-xs text-slate-850 dark:text-slate-200 font-black leading-none">
+                        {s.birthday ? formatDate(s.birthday) : 'Not set'}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate font-medium normal-case tracking-normal">
+                        {s.more_detail || 'No details added'}
+                      </p>
+                    </td>
                     <td className="p-6 text-right flex justify-end gap-2">
                       <button 
                         onClick={() => {
                           setEditingStudent(s)
-                          setSelectedClassId(s.class_id || '')
+                          setEditEmail(s.email || '')
+                          setEditBirthday(s.birthday ? s.birthday.substring(0, 10) : '')
+                          setEditMoreDetail(s.more_detail || '')
+                          setEditSemester(s.semester && s.semester !== 'N/A' ? s.semester.toString() : '')
                           setIsEditModalOpen(true)
                         }}
                         className="w-10 h-10 inline-flex items-center justify-center bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 text-slate-400 hover:text-indigo-600 rounded-xl transition-all cursor-pointer active:scale-95"
-                        title="Assign Class & Semester"
+                        title="Edit Student Details"
                       >
                         <Pencil size={16} />
                       </button>
@@ -454,7 +510,7 @@ export default function StudentDirectory() {
         </div>
       )}
 
-      {/* Assign Class & Semester Modal */}
+      {/* Edit Student Details Modal */}
       {isEditModalOpen && editingStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
@@ -467,39 +523,76 @@ export default function StudentDirectory() {
 
             <div>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-widest">
-                Curriculum Assignment
+                Student Profile Configuration
               </span>
               <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tight mt-2 leading-none">
-                Assign Class & Semester
+                Edit Student Details
               </h3>
-              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
-                Configure academic track for student
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest mt-1">
+                Configure academic and personal details for student
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-900/50 p-4 rounded-2xl">
-                <p className="text-[8px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest leading-none mb-2">Student Identity</p>
+                <p className="text-[8px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest leading-none mb-1.5">Student Identity</p>
                 <p className="text-slate-800 dark:text-slate-200 text-sm font-black uppercase tracking-tight">{editingStudent.full_name}</p>
-                <p className="text-[10px] text-slate-450 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5 leading-none">{editingStudent.email || 'No email provided'}</p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none block">
-                  Select Target Classroom Track
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest leading-none block">
+                  Student Email Address
+                </label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  placeholder="e.g. student@domain.com"
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all duration-300"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest leading-none block">
+                  Student Birthday
+                </label>
+                <input
+                  type="date"
+                  value={editBirthday}
+                  onChange={e => setEditBirthday(e.target.value)}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all duration-300"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest leading-none block">
+                  Academic Semester
                 </label>
                 <select
-                  value={selectedClassId}
-                  onChange={e => setSelectedClassId(e.target.value)}
+                  value={editSemester}
+                  onChange={e => setEditSemester(e.target.value)}
                   className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none cursor-pointer focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all duration-300"
                 >
-                  <option value="">Unassigned (No Class / Semester N/A)</option>
-                  {classesList.map(cls => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name} (Semester {cls.semester})
+                  <option value="">Unassigned (N/A)</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                    <option key={sem} value={sem}>
+                      Semester {sem}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[8px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest leading-none block">
+                  More Details
+                </label>
+                <textarea
+                  value={editMoreDetail}
+                  onChange={e => setEditMoreDetail(e.target.value)}
+                  placeholder="Enter any additional student info or special notes..."
+                  rows={3}
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500/50 transition-all duration-300 resize-none"
+                />
               </div>
             </div>
 
@@ -515,7 +608,7 @@ export default function StudentDirectory() {
                 className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-950/10 active:scale-95 transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Save size={12} />
-                <span>Save Track</span>
+                <span>Save Profile</span>
               </button>
             </div>
           </div>
