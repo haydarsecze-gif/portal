@@ -63,7 +63,8 @@ export default function Login() {
     setMessage('')
     
     nukeSession() // Completely nuke leftover cookies/tokens BEFORE signing in as a different user!
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const cleanEmail = email.trim().toLowerCase()
+    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
     
     if (error) {
       setMessage('❌ ' + error.message)
@@ -81,11 +82,11 @@ export default function Login() {
       // Save account details securely for switching (obfuscating password to protect it from plain text display)
       try {
         const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-        const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
+        const index = saved.findIndex((a: any) => a.email.toLowerCase() === cleanEmail.toLowerCase())
         const newAcc: any = {
-          email: email.toLowerCase(),
+          email: cleanEmail,
           role: profile?.role || 'student',
-          name: profile?.full_name || email
+          name: profile?.full_name || cleanEmail
         }
         if (password) {
           newAcc.password = btoa(password)

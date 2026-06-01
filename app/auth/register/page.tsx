@@ -59,6 +59,8 @@ export default function Register() {
     setLoading(true)
     setMessage('')
 
+    const cleanEmail = email.trim().toLowerCase()
+
     try {
       let classId = null
 
@@ -76,7 +78,7 @@ export default function Register() {
       }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: cleanEmail,
         password,
       })
 
@@ -92,7 +94,7 @@ export default function Register() {
           role: userRole,
           status: status,
           class_id: classId,
-          email: email.toLowerCase().trim(),
+          email: cleanEmail,
           drive_folder_id: null,
           is_approved: role === 'student'
         })
@@ -103,7 +105,7 @@ export default function Register() {
           const { error: studentError } = await supabase.from('students').insert({
             id: authData.user.id,
             name: fullName,
-            email: email,
+            email: cleanEmail,
             class_id: classId
           })
           if (studentError) throw studentError
@@ -137,9 +139,9 @@ export default function Register() {
           try {
             // Save lecturer credentials securely to Multi-Account Switcher for 1-click test switching
             const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-            const index = saved.findIndex((a: any) => a.email.toLowerCase() === email.toLowerCase())
+            const index = saved.findIndex((a: any) => a.email.toLowerCase() === cleanEmail)
             const newAcc: any = {
-              email: email.toLowerCase(),
+              email: cleanEmail,
               role: 'teacher',
               name: fullName
             }
