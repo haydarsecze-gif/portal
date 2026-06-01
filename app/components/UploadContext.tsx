@@ -132,7 +132,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             fileType: file.type || 'application/octet-stream',
             fileSize: file.size,
             isResubmission,
-            resubmitFolderName
+            resubmitFolderName,
+            oldFileUrls: existingSubmission?.file_urls || []
           })
         });
 

@@ -61,9 +61,22 @@ async function resolveLecturerCredentials(targetFolderId: string) {
   return null;
 }
 
+function extractFileIdFromUrl(url: string) {
+  try {
+    const actualUrl = url.includes(':::') ? url.split(':::')[1] : url;
+    const dMatch = actualUrl.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+    if (dMatch && dMatch[1]) return dMatch[1];
+    const idMatch = actualUrl.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+    if (idMatch && idMatch[1]) return idMatch[1];
+  } catch (e) {
+    console.error("Error extracting file ID from URL:", url, e);
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
-    const { studentName, targetFolderId, fileName, fileType, fileSize, isResubmission, resubmitFolderName } = await req.json();
+    const { studentName, targetFolderId, fileName, fileType, fileSize, isResubmission, resubmitFolderName, oldFileUrls } = await req.json();
 
     let clientId = process.env.GOOGLE_CLIENT_ID || '';
     if (clientId.startsWith("'") || clientId.startsWith('"')) {
@@ -141,6 +154,28 @@ export async function POST(req: Request) {
             requestBody: { role: 'reader', type: 'anyone' },
             supportsAllDrives: true
           });
+
+          // Copy old files if they exist and are passed
+          if (oldFileUrls && Array.isArray(oldFileUrls) && oldFileUrls.length > 0) {
+            for (const url of oldFileUrls) {
+              const fileId = extractFileIdFromUrl(url);
+              if (fileId) {
+                try {
+                  const originalName = url.includes(':::') ? url.split(':::')[0] : 'File';
+                  await drive.files.copy({
+                    fileId: fileId,
+                    requestBody: {
+                      name: originalName,
+                      parents: [resubmitFolderId]
+                    },
+                    supportsAllDrives: true
+                  });
+                } catch (copyErr) {
+                  console.error(`Failed to copy old file ${fileId} to resubmit folder:`, copyErr);
+                }
+              }
+            }
+          }
         }
         uploadParentFolderId = resubmitFolderId;
       } catch (folderErr) {
