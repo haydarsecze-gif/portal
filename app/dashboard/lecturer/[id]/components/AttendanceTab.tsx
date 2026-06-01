@@ -257,7 +257,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
+      <div className="flex flex-row justify-between items-center gap-4 mb-5 w-full">
         <div>
           <h3 className="text-xl font-black text-slate-900 tracking-tight">Attendance Record</h3>
           <div className="flex items-center gap-2 mt-1">
@@ -268,7 +268,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-3 shrink-0">
           <button onClick={() => setShowHelp(true)} className="p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-slate-400 hover:text-indigo-600 transition-all shadow-sm flex items-center justify-center h-11 w-11 cursor-pointer shrink-0">
             <HelpCircle size={18} />
           </button>
@@ -281,7 +281,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
               <Edit3 size={12} /> Edit Mode
             </button>
           ) : (
-            <div className="flex items-center gap-2 animate-in slide-in-from-right-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2 animate-in slide-in-from-right-4 shrink-0">
               <button 
                 onClick={handleCancel} 
                 disabled={saving}
