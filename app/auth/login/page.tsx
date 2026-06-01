@@ -15,6 +15,13 @@ export default function Login() {
 
   useEffect(() => {
     nukeSession() // Nuke any stale session cookies/tokens immediately upon visiting the login screen!
+    
+    // Force clear any browser autofill after a small delay to keep fields pristine
+    const clearTimer = setTimeout(() => {
+      setEmail('')
+      setPassword('')
+    }, 150)
+
     try {
       let saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
       if (!Array.isArray(saved)) {
@@ -60,6 +67,7 @@ export default function Login() {
     } catch (err) {
       console.error('Error reading URL parameters:', err)
     }
+    return () => clearTimeout(clearTimer)
   }, [])
 
   const handleLogin = async () => {
@@ -237,6 +245,9 @@ export default function Login() {
         onSubmit={(e) => { e.preventDefault(); handleLogin(); }}
         className="bg-bg-card border border-border-card p-10 md:p-12 rounded-[3rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.5)] dark:shadow-indigo-950/10 w-full max-w-md relative z-10 hover:border-slate-350 dark:hover:border-slate-800 transition-all duration-500 animate-in zoom-in-95 duration-300"
       >
+        {/* Dummy hidden inputs to absorb browser autofill and keep visible fields clean */}
+        <input type="text" name="prevent_autofill_username" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+        <input type="password" name="prevent_autofill_password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
         
         <h1 className="text-3xl font-black text-center uppercase tracking-tighter text-slate-800 dark:text-slate-100 mb-1">
           Login
@@ -256,6 +267,7 @@ export default function Login() {
               placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="off"
               className="w-full pl-12 pr-6 py-4.5 bg-slate-100/50 dark:bg-slate-900/30 group-hover:bg-slate-150/50 dark:group-hover:bg-slate-900/50 border border-slate-200/50 dark:border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-800 dark:text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
             />
           </div>
@@ -270,7 +282,8 @@ export default function Login() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-12 pr-6 py-4.5 bg-slate-100/50 dark:bg-slate-900/30 group-hover:bg-slate-150/50 dark:group-hover:bg-slate-900/50 border border-slate-200/50 dark:border-slate-900 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-800 dark:text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
+              autoComplete="new-password"
+              className="w-full pl-12 pr-6 py-4.5 bg-slate-100/50 dark:bg-slate-900/30 group-hover:bg-slate-150/50 dark:group-hover:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800/50 group-focus-within:border-indigo-500/50 rounded-2xl text-slate-800 dark:text-slate-200 text-sm font-bold outline-none shadow-inner focus:ring-4 focus:ring-indigo-500/5 transition-all duration-300"
             />
           </div>
         </div>

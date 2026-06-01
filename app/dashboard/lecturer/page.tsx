@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, nukeSession } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
@@ -390,7 +390,8 @@ export default function LecturerDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    nukeSession()
+    window.location.replace('/auth/login')
   }
 
   if (loading) return (
