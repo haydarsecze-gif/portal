@@ -246,12 +246,12 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      <div className="p-4 sm:p-8 md:p-12 flex-1 w-full max-w-[1600px] mx-auto">
+      <div className="p-4 sm:p-6 md:p-8 flex-1 w-full max-w-[1600px] mx-auto">
         
         {/* Modern radial gradient greeting block */}
-        <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-[2.5rem] p-8 md:p-12 mb-12 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-3xl p-6 md:p-8 mb-6 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           {/* Absolute Background Wrapper to safely clip the glow blobs without clipping dropdowns */}
-          <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden pointer-events-none z-0">
+          <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none z-0">
             <div className="absolute top-[-30%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
             <div className="absolute bottom-[-30%] left-[-10%] w-[250px] h-[250px] bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
           </div>
@@ -270,28 +270,28 @@ export default function StudentDashboard() {
         </div>
 
         {/* Section Title */}
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-5 flex justify-between items-center">
           <div>
             <h2 className="text-lg font-black text-slate-800 uppercase tracking-tight">Enrolled Classrooms</h2>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Explore active curriculum lists</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
           {myClasses.length > 0 ? (
             myClasses.map((cls) => (
               <div 
                 key={cls.id} 
                 onClick={() => router.push(`/dashboard/student/class/${cls.id}`)} 
-                className="group bg-bg-card p-5 sm:p-6 rounded-3xl border border-border-card shadow-sm hover:shadow-xl hover:shadow-indigo-950/5 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[190px]"
+                className="group bg-bg-card p-4 sm:p-5 rounded-2xl border border-border-card shadow-sm hover:shadow-xl hover:shadow-indigo-950/5 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[170px]"
               >
                 <div>
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-indigo-50 text-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
                     <BookOpen size={18} />
                   </div>
-                  <h3 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-tight leading-tight group-hover:text-indigo-600 transition-colors duration-300 mb-2">{cls.name}</h3>
+                  <h3 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-tight leading-tight group-hover:text-indigo-600 transition-colors duration-300 mb-1.5">{cls.name}</h3>
                   
-                  <div className="flex flex-col gap-1.5 mt-3">
+                  <div className="flex flex-col gap-1 mt-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       <Clock size={12} className="text-slate-300" /> Room {cls.room}
                     </div>
@@ -304,7 +304,7 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-5 pt-4 border-t border-slate-50 flex justify-between items-center shrink-0">
+                <div className="mt-4 pt-3 border-t border-slate-50 flex justify-between items-center shrink-0">
                   <span className="text-[9px] text-slate-300 font-mono">TRACK: {cls.id.substring(0, 8).toUpperCase()}</span>
                   <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
                     Enter <ArrowRight size={12} />
@@ -313,7 +313,7 @@ export default function StudentDashboard() {
               </div>
             ))
           ) : (
-            <div className="col-span-full py-24 text-center bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100">
+            <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
               <BookOpen size={48} className="mx-auto text-slate-200 mb-4" />
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No classes assigned yet.</p>
             </div>

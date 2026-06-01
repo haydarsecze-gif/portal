@@ -1,11 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Smartphone, Download, Check, X } from 'lucide-react'
+import { Smartphone, Check, X } from 'lucide-react'
 
 export default function InstallApp() {
   const [installable, setInstallable] = useState(false)
   const [installed, setInstalled] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   useEffect(() => {
     // 1. Check if PWA install prompt is already captured on the window
@@ -33,6 +34,15 @@ export default function InstallApp() {
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
   }, [])
+
+  useEffect(() => {
+    if (installable) {
+      const timer = setTimeout(() => {
+        setIsCollapsed(true)
+      }, 30000) // 30 seconds
+      return () => clearTimeout(timer)
+    }
+  }, [installable])
 
   const handleInstall = async () => {
     const promptEvent = (window as any).deferredPrompt
@@ -66,21 +76,39 @@ export default function InstallApp() {
   if (!installable) return null
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-6 duration-300">
-      <div className="flex items-center bg-slate-950/80 dark:bg-slate-900/90 border border-slate-800/80 dark:border-slate-700/80 backdrop-blur-2xl p-2 rounded-2xl shadow-2xl shadow-indigo-950/20 max-w-[280px]">
+    <div className={`fixed bottom-6 right-6 z-50 transition-all duration-700 ease-in-out ${
+      isCollapsed ? 'max-w-[120px]' : 'max-w-[340px]'
+    }`}>
+      <div className={`flex items-center bg-[#1e2028]/95 dark:bg-[#15171e]/95 border border-[#2d303c]/80 dark:border-slate-800/80 backdrop-blur-2xl shadow-2xl transition-all duration-700 ease-in-out ${
+        isCollapsed ? 'rounded-full p-1.5' : 'rounded-2xl p-2 pr-3.5'
+      }`}>
         <button
           onClick={handleInstall}
-          className="flex-1 flex items-center gap-2.5 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all shadow duration-300 cursor-pointer"
+          className={`flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black active:scale-95 transition-all duration-700 shadow cursor-pointer shrink-0 ${
+            isCollapsed 
+              ? 'w-10 h-10 rounded-full p-0' 
+              : 'flex-1 gap-2.5 px-4 py-2.5 rounded-xl text-[9px] uppercase tracking-widest'
+          }`}
+          title="Install Portal App"
         >
-          <Smartphone size={14} className="animate-bounce" />
-          <span>Install Portal App</span>
+          <Smartphone size={isCollapsed ? 16 : 14} className={isCollapsed ? 'animate-pulse' : 'animate-bounce'} />
+          <span className={`transition-all duration-500 ease-in-out overflow-hidden whitespace-nowrap ${
+            isCollapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-[200px] opacity-100'
+          }`}>
+            Install Portal App
+          </span>
         </button>
+        
         <button
           onClick={() => setDismissed(true)}
-          className="p-2.5 text-slate-400 hover:text-slate-200 transition-colors rounded-xl hover:bg-white/5 active:scale-95 cursor-pointer ml-1"
+          className={`text-slate-400 hover:text-slate-200 transition-colors active:scale-95 cursor-pointer flex items-center justify-center shrink-0 ${
+            isCollapsed 
+              ? 'p-2 rounded-full hover:bg-white/5 ml-0.5' 
+              : 'p-2.5 rounded-xl hover:bg-white/5 ml-1.5'
+          }`}
           title="Dismiss"
         >
-          <X size={14} />
+          <X size={isCollapsed ? 12 : 14} />
         </button>
       </div>
     </div>

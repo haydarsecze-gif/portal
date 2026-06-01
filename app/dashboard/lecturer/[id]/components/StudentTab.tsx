@@ -112,8 +112,8 @@ export default function StudentTab({ students, classId, subjectName, onRefresh }
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8 md:p-10 shadow-sm transition-all duration-300">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-sm transition-all duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight uppercase">Class Roster</h2>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{students?.length || 0} Students Enrolled</p>

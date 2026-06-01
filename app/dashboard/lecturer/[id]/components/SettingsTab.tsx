@@ -249,10 +249,10 @@ export default function SettingsTab({ subject, onRefresh }: any) {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* Invite Code & Share Card */}
-      <div className="bg-slate-900 rounded-[2.5rem] p-8 md:p-10 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 bottom-0 translate-y-10 translate-x-10 opacity-5 pointer-events-none">
           <Link size={300} />
         </div>
@@ -292,7 +292,7 @@ export default function SettingsTab({ subject, onRefresh }: any) {
             ) : (
               <button
                 onClick={handleGenerateInvite}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-950/55"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-blue-955/55"
               >
                 <Link size={14} /> Generate Code
               </button>
@@ -302,7 +302,7 @@ export default function SettingsTab({ subject, onRefresh }: any) {
       </div>
 
       {/* Settings Form */}
-      <form onSubmit={handleSave} className="bg-white rounded-[2.5rem] border border-gray-100 p-8 md:p-10 shadow-sm space-y-8">
+      <form onSubmit={handleSave} className="bg-white rounded-3xl border border-gray-100 p-5 sm:p-6 shadow-sm space-y-6">
         <div>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight">Classroom Settings</h2>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Configure general metadata & schedule</p>
@@ -485,13 +485,13 @@ export default function SettingsTab({ subject, onRefresh }: any) {
       </form>
 
       {/* Danger Zone */}
-      <div className="bg-red-50/50 dark:bg-rose-950/10 border border-red-100 dark:border-rose-900/30 rounded-[2.5rem] p-8 md:p-10 space-y-6">
+      <div className="bg-red-50/50 dark:bg-rose-950/10 border border-red-100 dark:border-rose-900/30 rounded-3xl p-5 sm:p-6 space-y-4">
         <div>
           <h2 className="text-xl font-black text-rose-600 tracking-tight uppercase">Danger Zone</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Critical operations that cannot be undone</p>
         </div>
         
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-red-100/50 dark:border-rose-950/20">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-red-100/50 dark:border-rose-950/20">
           <div className="space-y-1">
             <h4 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Delete Classroom / Subject</h4>
             <p className="text-xs font-bold text-slate-450 dark:text-slate-500 leading-relaxed max-w-md">

@@ -8,7 +8,6 @@ envContent.split('\n').forEach(line => {
   if (match) {
     let value = match[2] || '';
     if (value.startsWith('"') && value.endsWith('"')) value = value.substring(1, value.length - 1);
-    if (value.startsWith("'") && value.endsWith("'")) value = value.substring(1, value.length - 1);
     env[match[1]] = value;
   }
 });
@@ -18,14 +17,15 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 });
 
 async function run() {
-  const tables = ['subjects', 'classes', 'materials', 'assignments', 'student_classes', 'profiles'];
-  for (const t of tables) {
-    const { data, error } = await supabase.from(t).select('*').limit(1);
-    if (error) {
-      console.error(`Error fetching ${t}:`, error.message);
-    } else {
-      console.log(`Table ${t} properties:`, Object.keys(data[0] || {}));
-    }
+  const subjectId = '81c36a3d-b5b8-479d-881e-a4bb53c30ee2';
+  console.log("Attempting to delete subject with ID:", subjectId);
+  const { error } = await supabase.from('subjects').delete().eq('id', subjectId);
+  if (error) {
+    console.error("Postgres Error Code:", error.code);
+    console.error("Postgres Error Message:", error.message);
+    console.error("Postgres Error Detail:", error.details);
+  } else {
+    console.log("Delete succeeded without errors!");
   }
 }
 

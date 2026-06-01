@@ -501,7 +501,7 @@ export default function AdminCurriculum() {
   )
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-350 font-sans select-none">
+    <div className="space-y-4 animate-in fade-in duration-350 font-sans select-none">
       
       {/* Header section */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 lg:gap-6">
@@ -532,7 +532,7 @@ export default function AdminCurriculum() {
         {subjects.filter(s => s.name?.toLowerCase().includes(search.toLowerCase())).map((s) => (
           <div 
             key={s.id} 
-            className="group bg-white p-5 md:p-6 rounded-3xl border border-slate-100 hover:border-indigo-100 shadow-xs hover:shadow-xl hover:shadow-indigo-950/2 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6"
+            className="group bg-white p-4 sm:p-5 rounded-2xl border border-slate-100 hover:border-indigo-100 shadow-xs hover:shadow-xl hover:shadow-indigo-950/2 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6"
           >
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center w-full">
               <div className="bg-slate-900 group-hover:bg-indigo-600 text-white w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[2rem] flex flex-col items-center justify-center font-black transition-colors duration-300 shrink-0 select-none">
@@ -589,10 +589,10 @@ export default function AdminCurriculum() {
       {/* ROSTER SHEET GRID POPUP */}
       {isRosterModalOpen && selectedSubject && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 z-[99] animate-in fade-in duration-200">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-7xl h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-7xl h-[90vh] shadow-2xl flex flex-col overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-200">
             
             {/* Roster Header */}
-            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-[9px] font-black tracking-widest uppercase text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg border border-indigo-100 leading-none">
@@ -606,8 +606,8 @@ export default function AdminCurriculum() {
                     <HelpCircle size={16} />
                   </button>
                 </div>
-                <h2 className="font-black text-2xl text-slate-800 uppercase tracking-tight mt-3 leading-none">{selectedSubject.name} Attendance Matrix</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">
+                <h2 className="font-black text-2xl text-slate-800 uppercase tracking-tight mt-2.5 leading-none">{selectedSubject.name} Attendance Matrix</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                   {isEditable ? "⚠️ EDIT MODE ENABLED: Dropdown matrix cells unlocked for entry overrides." : "🔒 READ ONLY VIEW: Unlock editor below to make cell updates."}
                 </p>
               </div>
@@ -620,14 +620,14 @@ export default function AdminCurriculum() {
             </div>
 
             {/* Roster Workspace grid */}
-            <div className="flex-1 overflow-auto p-8 custom-scrollbar bg-slate-50/30">
+            <div className="flex-1 overflow-auto p-4 sm:p-5 custom-scrollbar bg-slate-50/30">
               {loadingRoster ? (
                 <div className="h-full flex items-center justify-center flex-col gap-2 text-slate-400">
                   <Loader2 className="animate-spin" />
                   <p className="text-[10px] font-black uppercase tracking-widest">Assembling attendance log registry...</p>
                 </div>
               ) : activeRoster.length > 0 ? (
-                <div className="inline-block min-w-full align-middle border border-slate-150 rounded-[2rem] overflow-hidden shadow-sm bg-white">
+                <div className="inline-block min-w-full align-middle border border-slate-150 rounded-2xl overflow-hidden shadow-sm bg-white">
                   <table className="min-w-full border-collapse text-left">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-900 text-[9px] font-black tracking-widest text-white uppercase divide-x divide-slate-800 select-none">
@@ -640,7 +640,7 @@ export default function AdminCurriculum() {
                     <tbody className="text-xs font-bold divide-y divide-slate-100 bg-white">
                       {activeRoster.map((student) => (
                         <tr key={student.id} className="hover:bg-slate-50/40 transition-colors divide-x divide-slate-100 group">
-                          <td className="p-4 font-black text-slate-850 uppercase tracking-tight sticky left-0 bg-white shadow-[3px_0_10px_rgba(0,0,0,0.02)] z-10 w-32 min-w-[120px] sm:min-w-[240px] max-w-[120px] sm:max-w-none">
+                          <td className="p-4 font-black text-slate-855 uppercase tracking-tight sticky left-0 bg-white shadow-[3px_0_10px_rgba(0,0,0,0.02)] z-10 w-32 min-w-[120px] sm:min-w-[240px] max-w-[120px] sm:max-w-none">
                             <div className="group-hover:text-indigo-600 transition-colors truncate">{student.name}</div>
                             <div className="hidden sm:block text-[9px] font-bold text-slate-400 normal-case tracking-normal mt-0.5 leading-none truncate">{student.email}</div>
                           </td>
@@ -675,7 +675,7 @@ export default function AdminCurriculum() {
                   </table>
                 </div>
               ) : (
-                <div className="p-16 text-center border-2 border-dashed border-slate-200 rounded-[2rem] bg-white">
+                <div className="p-16 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
                   <ShieldAlert className="mx-auto text-slate-200 mb-3" />
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No student enrollment logs assigned yet.</p>
                 </div>
@@ -683,11 +683,11 @@ export default function AdminCurriculum() {
             </div>
 
             {/* Roster Footer Options */}
-            <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+            <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
               <div>
                 {!isEditable && (
                   <button 
-                    type="button"
+                    type="button" 
                     onClick={() => setIsEditable(true)}
                     className="flex items-center gap-1.5 bg-slate-900 text-white px-5 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 shadow-sm active:scale-95 transition-all cursor-pointer"
                   >
@@ -723,8 +723,8 @@ export default function AdminCurriculum() {
       {/* SAVE CONFIRM POPUP with visibility toggle */}
       {showSaveConfirm && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-[999] animate-in fade-in duration-150">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-sm shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-150">
-            <div className="p-8">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-150">
+            <div className="p-5">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 shrink-0">
                   <Save size={20} />

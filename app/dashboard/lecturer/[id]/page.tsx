@@ -186,10 +186,10 @@ export default function SubjectDetail() {
         </div>
       </header>
 
-      <div className="p-4 sm:p-8 md:p-12 flex-1 w-full max-w-[1600px] mx-auto">
+      <div className="p-4 sm:p-6 md:p-8 flex-1 w-full max-w-[1600px] mx-auto">
         
         {/* Header Section */}
-        <header className="mb-8 flex flex-col gap-5">
+        <header className="mb-6 flex flex-col gap-5">
           {/* Subject Title and Badges */}
           <div className="flex flex-col gap-3 mt-1">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
@@ -208,7 +208,7 @@ export default function SubjectDetail() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {['curriculum', 'students', 'attendance', 'settings'].map((t) => (
             <button 
               key={t} 
@@ -226,7 +226,7 @@ export default function SubjectDetail() {
 
         {/* Tab Contents */}
         {activeTab === 'curriculum' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
             <button 
               onClick={() => setShowItemModal(true)} 
               className="bg-indigo-600 text-white px-6 py-4 rounded-2xl flex items-center gap-2 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/10 active:scale-95 transition-all duration-300 cursor-pointer"

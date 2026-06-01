@@ -257,7 +257,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
 
   return (
     <div className="animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
         <div>
           <h3 className="text-xl font-black text-slate-900 tracking-tight">Attendance Record</h3>
           <div className="flex items-center gap-2 mt-1">
@@ -285,7 +285,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
               <button 
                 onClick={handleCancel} 
                 disabled={saving}
-                className="px-5 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-850 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all h-11 cursor-pointer"
+                className="px-5 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-855 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all h-11 cursor-pointer"
               >
                 Cancel
               </button>
@@ -307,7 +307,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50">
-                <th className="p-4 sm:p-5 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 sticky left-0 bg-white z-40 w-32 min-w-[130px] sm:w-72 sm:min-w-[280px]">Student List</th>
+                <th className="p-3 sm:p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 sticky left-0 bg-white z-40 w-32 min-w-[130px] sm:w-72 sm:min-w-[280px]">Student List</th>
                 {weeks.map(w => (
                   <th key={w} className="p-4 text-[10px] font-black text-slate-400 uppercase border-b border-slate-100 text-center min-w-[64px]">W{w}</th>
                 ))}
@@ -317,7 +317,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
               {students.length > 0 ? (
                 students.map((student) => (
                   <tr key={student.id} className="group">
-                    <td className="p-4 sm:p-5 border-b border-slate-50 sticky left-0 bg-white group-hover:bg-slate-50/50 z-30 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)] w-32 min-w-[130px] sm:w-72 sm:min-w-[280px] max-w-[130px] sm:max-w-none">
+                    <td className="p-3 sm:p-4 border-b border-slate-50 sticky left-0 bg-white group-hover:bg-slate-50/50 z-30 shadow-[5px_0_10px_-5px_rgba(0,0,0,0.05)] w-32 min-w-[130px] sm:w-72 sm:min-w-[280px] max-w-[130px] sm:max-w-none">
                       <div className="font-bold text-slate-700 text-sm truncate">{student.name}</div>
                       <div className="hidden sm:block text-[10px] text-slate-400 font-medium normal-case tracking-normal mt-0.5 truncate">{student.email || 'No Email'}</div>
                     </td>

@@ -541,10 +541,10 @@ export default function StudentClassroom() {
         </div>
       </header>
 
-      <div className="p-4 sm:p-8 md:p-10 flex-1 w-full max-w-[1600px] mx-auto">
+      <div className="p-4 sm:p-6 md:p-8 flex-1 w-full max-w-[1600px] mx-auto">
         
         {/* Header Section */}
-        <header className="mb-8 flex flex-col gap-5">
+        <header className="mb-6 flex flex-col gap-3">
           {/* Subject Title and Badges */}
           <div className="flex flex-col gap-3 mt-1">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
@@ -563,7 +563,7 @@ export default function StudentClassroom() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {[
             { id: 'content', label: 'Coursework' },
             { id: 'attendance', label: 'My Attendance' },
@@ -695,10 +695,10 @@ export default function StudentClassroom() {
 
         {/* Tab 2: Attendance */}
         {activeTab === 'attendance' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
             
             {/* Campus check-in component */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100/80 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100/80 shadow-sm flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
               <div className="space-y-1 flex-1">
                 <h4 className="font-black text-slate-800 uppercase tracking-tight flex items-center gap-2 text-base">
                   <MapPin size={18} className="text-indigo-600 animate-pulse" /> Campus Geolocation Check-In
@@ -706,7 +706,7 @@ export default function StudentClassroom() {
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   Assigned Target: <span className="text-indigo-600">Room {roomName}</span>
                 </p>
-                <div className="bg-amber-500/5 border border-amber-500/10 p-3.5 rounded-xl max-w-xl mt-3 flex items-start gap-2.5">
+                <div className="bg-amber-500/5 border border-amber-500/10 p-3.5 rounded-xl max-w-xl mt-2.5 flex items-start gap-2.5">
                   <div className="bg-amber-500/10 p-1.5 rounded-lg text-amber-600 shrink-0 mt-0.5 animate-pulse">
                     <AlertCircle size={12} />
                   </div>
@@ -719,12 +719,12 @@ export default function StudentClassroom() {
                 </div>
 
                 {geoError && (
-                  <p className="text-xs font-bold text-red-500 bg-red-50/50 p-3 rounded-xl border border-red-100 max-w-xl mt-4 leading-relaxed">
+                  <p className="text-xs font-bold text-red-500 bg-red-50/50 p-3 rounded-xl border border-red-100 max-w-xl mt-3 leading-relaxed">
                     ❌ {geoError}
                   </p>
                 )}
                 {geoSuccess && checkInMessage && (
-                  <p className={`text-xs font-bold p-3 rounded-xl border mt-4 leading-relaxed ${
+                  <p className={`text-xs font-bold p-3 rounded-xl border mt-3 leading-relaxed ${
                     checkInMessage.includes('Absent') 
                       ? 'text-red-600 bg-red-50/50 border-red-100' 
                       : checkInMessage.includes('Late') 
@@ -735,7 +735,7 @@ export default function StudentClassroom() {
                   </p>
                 )}
                 {alreadyCheckedIn && (
-                  <p className="text-xs font-bold text-indigo-600 bg-indigo-50/30 p-3 rounded-xl border border-indigo-100 max-w-xl mt-4 leading-relaxed">
+                  <p className="text-xs font-bold text-indigo-600 bg-indigo-50/30 p-3 rounded-xl border border-indigo-100 max-w-xl mt-3 leading-relaxed">
                     ℹ️ You are already checked in for the active academic week slot!
                   </p>
                 )}
@@ -756,12 +756,12 @@ export default function StudentClassroom() {
             </div>
 
             {/* Attendance matrix blocks */}
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100/80 shadow-sm">
-              <h3 className="font-black text-base text-slate-800 uppercase tracking-tight mb-6 flex items-center gap-2">
+            <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100/80 shadow-sm">
+              <h3 className="font-black text-base text-slate-800 uppercase tracking-tight mb-4 flex items-center gap-2">
                 <Calendar size={18} className="text-indigo-600" /> Attendance Matrix Logs
               </h3>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {Array.from({ length: 17 }, (_, i) => i + 1).map(week => {
                   const record = studentAttendance.find(r => r.week === week);
                   const statusCode = getOriginalStatus(record);
@@ -784,7 +784,7 @@ export default function StudentClassroom() {
                   }
 
                   return (
-                    <div key={week} className={`p-5 border-2 rounded-3xl flex items-center justify-between shadow-xs transition-all duration-300 hover:shadow-md ${cardStyles}`}>
+                    <div key={week} className={`p-4 border-2 rounded-2xl flex items-center justify-between shadow-xs transition-all duration-300 hover:shadow-md ${cardStyles}`}>
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Week {week}</p>
                         <p className="text-xs font-black uppercase mt-1 tracking-tight leading-tight">{STATUS_LABELS[statusCode] || 'Unmarked'}</p>
@@ -817,19 +817,17 @@ export default function StudentClassroom() {
                 lecturerName = item;
               }
             });
-          } else if (subject && typeof subject.lecturer_names === 'string') {
-            lecturerName = subject.lecturer_names;
           }
 
           return (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 animate-in fade-in slide-in-from-bottom-3 duration-300">
               
               {/* Left Column: Metadata */}
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100/80 shadow-sm space-y-6">
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100/80 shadow-sm space-y-4">
                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">Course Metadata</h4>
                 
-                <div className="space-y-4">
-                  <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                <div className="space-y-3">
+                  <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
                       <Hash size={18} />
                     </div>
@@ -839,8 +837,8 @@ export default function StudentClassroom() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                       <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
                         <Calendar size={18} />
                       </div>
@@ -850,7 +848,7 @@ export default function StudentClassroom() {
                       </div>
                     </div>
 
-                    <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                    <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                       <div className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center shrink-0">
                         <MapPin size={18} />
                       </div>
@@ -861,7 +859,7 @@ export default function StudentClassroom() {
                     </div>
                   </div>
 
-                  <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                  <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                     <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
                       <Calendar size={18} />
                     </div>
@@ -876,11 +874,11 @@ export default function StudentClassroom() {
               </div>
 
               {/* Right Column: Faculty */}
-              <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100/80 shadow-sm space-y-6">
+              <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-100/80 shadow-sm space-y-4">
                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-3">Lecturer & Timing</h4>
                 
-                <div className="space-y-4">
-                  <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                <div className="space-y-3">
+                  <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
                       <User size={18} />
                     </div>
@@ -890,8 +888,8 @@ export default function StudentClassroom() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300 overflow-hidden">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300 overflow-hidden">
                       <div className="w-10 h-10 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center shrink-0">
                         <Mail size={18} />
                       </div>
@@ -901,7 +899,7 @@ export default function StudentClassroom() {
                       </div>
                     </div>
 
-                    <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                    <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                       <div className="w-10 h-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center shrink-0">
                         <Phone size={18} />
                       </div>
@@ -912,8 +910,8 @@ export default function StudentClassroom() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                       <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0">
                         <Clock size={18} />
                       </div>
@@ -923,7 +921,7 @@ export default function StudentClassroom() {
                       </div>
                     </div>
 
-                    <div className="p-5 bg-slate-50/50 rounded-2xl flex items-center gap-4 border border-transparent hover:border-indigo-100 transition-colors duration-300">
+                    <div className="p-3.5 bg-slate-50/50 rounded-xl flex items-center gap-3 border border-transparent hover:border-indigo-100 transition-colors duration-300">
                       <div className="w-10 h-10 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center shrink-0">
                         <Clock size={18} />
                       </div>
@@ -932,13 +930,12 @@ export default function StudentClassroom() {
                         <p className="text-sm font-black text-slate-800 mt-0.5">{subject?.class_end_time || 'N/A'}</p>
                       </div>
                     </div>
-                  </div>
                 </div>
-              </div>
-
             </div>
-          );
-        })()}
+          </div>
+        </div>
+      );
+    })()}
       </div>
 
       {/* Assignment Submission Modal */}

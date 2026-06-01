@@ -341,7 +341,7 @@ export default function LecturerManagement() {
   const approved = teachers.filter(t => t.is_approved)
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-300 font-sans select-text">
+    <div className="space-y-6 animate-in fade-in duration-300 font-sans select-text">
       
       {/* Pending Approvals Section */}
       <section>
@@ -354,7 +354,7 @@ export default function LecturerManagement() {
         <div className="grid gap-4">
           {pending.length > 0 ? (
             pending.map(t => (
-              <div key={t.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
+              <div key={t.id} className="bg-white border border-slate-100 p-4 sm:p-5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-4 text-left min-w-0">
                   <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-sm uppercase shrink-0">
                     {t.full_name?.[0] || 'T'}
@@ -391,7 +391,7 @@ export default function LecturerManagement() {
               </div>
             ))
           ) : (
-            <div className="py-12 text-center bg-white rounded-[2rem] border border-dashed border-slate-200">
+            <div className="py-8 text-center bg-white rounded-3xl border border-dashed border-slate-200">
               <Sparkles size={24} className="mx-auto text-slate-300 mb-2" />
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No pending lecturer registration logs found.</p>
             </div>
@@ -407,20 +407,20 @@ export default function LecturerManagement() {
           <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-lg text-[10px] font-black tracking-widest">{approved.length}</span>
         </div>
         
-        <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lecturer Profile Details</th>
-                  <th className="p-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Account Options</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lecturer Profile Details</th>
+                  <th className="px-5 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Account Options</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {approved.length > 0 ? (
                   approved.map(t => (
                     <tr key={t.id} className="group hover:bg-slate-50/20 transition-colors">
-                      <td className="p-6">
+                      <td className="px-5 py-4">
                         <div className="font-bold text-sm text-slate-800 uppercase tracking-tight">{t.full_name}</div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mt-0.5 text-[9.5px]">
                           <span className="text-slate-400 font-bold uppercase tracking-wider truncate">{t.email || 'No email provided'}</span>
@@ -438,7 +438,7 @@ export default function LecturerManagement() {
                           )}
                         </div>
                       </td>
-                      <td className="p-6 text-right">
+                      <td className="px-5 py-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button 
                             onClick={() => {
@@ -466,7 +466,7 @@ export default function LecturerManagement() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={2} className="p-12 text-center text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
+                    <td colSpan={2} className="p-8 text-center text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50/30">
                       No verified lecturing faculty found.
                     </td>
                   </tr>
@@ -480,7 +480,7 @@ export default function LecturerManagement() {
       {/* Edit Lecturer Modal */}
       {isEditModalOpen && editingLecturer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-6 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
             <button
               onClick={() => setIsEditModalOpen(false)}
               className="absolute top-6 right-6 p-2 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-350 hover:text-slate-600 dark:hover:text-slate-100 rounded-xl transition-all cursor-pointer"
@@ -570,7 +570,7 @@ export default function LecturerManagement() {
       {/* Premium Alert/Confirm Dialog Modal */}
       {alertConfig.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-sm shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300 font-sans">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300 font-sans">
             <div>
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
                 alertConfig.type === 'error' 

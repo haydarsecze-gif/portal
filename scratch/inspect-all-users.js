@@ -18,15 +18,20 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 });
 
 async function run() {
-  const tables = ['subjects', 'classes', 'materials', 'assignments', 'student_classes', 'profiles'];
-  for (const t of tables) {
-    const { data, error } = await supabase.from(t).select('*').limit(1);
-    if (error) {
-      console.error(`Error fetching ${t}:`, error.message);
-    } else {
-      console.log(`Table ${t} properties:`, Object.keys(data[0] || {}));
-    }
-  }
+  console.log('=== ALL USER PROFILES ===');
+  const { data: profiles, error: pErr } = await supabase.from('profiles').select('*');
+  if (pErr) console.error("Profiles error:", pErr);
+  else console.log(profiles);
+
+  console.log('=== ALL STUDENTS ===');
+  const { data: students, error: sErr } = await supabase.from('students').select('*');
+  if (sErr) console.error("Students error:", sErr);
+  else console.log(students);
+
+  console.log('=== ALL SUBJECTS ===');
+  const { data: subjects, error: subErr } = await supabase.from('subjects').select('*');
+  if (subErr) console.error("Subjects error:", subErr);
+  else console.log(subjects);
 }
 
 run();

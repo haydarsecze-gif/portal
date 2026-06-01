@@ -368,7 +368,7 @@ export default function StudentDirectory() {
   )
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 font-sans select-none">
+    <div className="space-y-5 animate-in fade-in duration-300 font-sans select-none">
       
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -411,29 +411,29 @@ export default function StudentDirectory() {
 
       {/* TABLE SECTION */}
       {filtered.length === 0 && !debugInfo ? (
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 py-20 text-center">
+        <div className="bg-white rounded-3xl border border-slate-100 py-20 text-center">
           <GraduationCap className="mx-auto text-slate-200 mb-4 animate-pulse" size={56} />
           <p className="font-black text-slate-400 uppercase text-xs tracking-widest">No matching student directories located.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <th className="p-6">Student Identity</th>
-                  <th className="p-6">Date Registered</th>
-                  <th className="p-6 text-center">Semester</th>
-                  <th className="p-6">Birthday</th>
-                  <th className="p-6">Details</th>
-                  <th className="p-6 text-right">Actions</th>
+                  <th className="p-4 sm:p-5">Student Identity</th>
+                  <th className="p-4 sm:p-5">Date Registered</th>
+                  <th className="p-4 sm:p-5 text-center">Semester</th>
+                  <th className="p-4 sm:p-5">Birthday</th>
+                  <th className="p-4 sm:p-5">Details</th>
+                  <th className="p-4 sm:p-5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 text-sm font-bold text-slate-700">
                 {filtered.map(s => (
                   <tr key={s.student_id || s.id} className="group hover:bg-slate-50/20 transition-colors">
-                    <td className="p-6">
+                    <td className="p-4 sm:p-5">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-sm uppercase group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300 shrink-0">
                           {s.full_name?.charAt(0) || 'S'}
@@ -444,7 +444,7 @@ export default function StudentDirectory() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-6">
+                    <td className="p-4 sm:p-5">
                       <div className="text-xs text-slate-800 dark:text-slate-200 font-black leading-none">
                         {formatDate(s.created_at)}
                       </div>
@@ -454,7 +454,7 @@ export default function StudentDirectory() {
                         </div>
                       )}
                     </td>
-                    <td className="p-6 text-center">
+                    <td className="p-4 sm:p-5 text-center">
                       <span className={`inline-block px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest leading-none ${
                         s.semester && s.semester !== 'N/A' 
                           ? 'bg-purple-50 border border-purple-100 text-purple-600' 
@@ -463,17 +463,17 @@ export default function StudentDirectory() {
                         {s.semester && s.semester !== 'N/A' ? `Sem ${s.semester}` : 'N/A'}
                       </span>
                     </td>
-                    <td className="p-6">
+                    <td className="p-4 sm:p-5">
                       <div className="text-xs text-slate-850 dark:text-slate-200 font-black leading-none">
                         {s.birthday ? formatDate(s.birthday) : 'Not set'}
                       </div>
                     </td>
-                    <td className="p-6">
+                    <td className="p-4 sm:p-5">
                       <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate font-medium normal-case tracking-normal">
                         {s.more_detail || 'No details added'}
                       </p>
                     </td>
-                    <td className="p-6 text-right flex justify-end gap-2">
+                    <td className="p-4 sm:p-5 text-right flex justify-end gap-2">
                       <button 
                         onClick={() => {
                           setEditingStudent(s)
@@ -505,7 +505,7 @@ export default function StudentDirectory() {
           {/* Mobile Card Stack View */}
           <div className="block md:hidden divide-y divide-slate-100">
             {filtered.map(s => (
-              <div key={s.student_id || s.id} className="p-5 flex flex-col gap-4 hover:bg-slate-50/20 transition-colors">
+              <div key={s.student_id || s.id} className="p-4 flex flex-col gap-3 hover:bg-slate-50/20 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-black text-xs uppercase shrink-0">
                     {s.full_name?.charAt(0) || 'S'}
