@@ -60,6 +60,7 @@ body {
   background: var(--bg-portal);
   color: var(--text-title);
   font-family: var(--font-geist-sans), sans-serif;
+  overflow-x: hidden;
 }
 
 /* Premium Custom Scrollbars */

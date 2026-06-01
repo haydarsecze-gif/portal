@@ -401,7 +401,7 @@ export default function LecturerDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none animate-in fade-in duration-300">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none animate-in fade-in duration-300 overflow-x-hidden">
       {/* Sticky top header bar */}
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-3 sm:py-4 flex items-center justify-between">
