@@ -424,7 +424,6 @@ export default function StudentDirectory() {
                   <th className="p-6">Student Identity</th>
                   <th className="p-6">Date Registered</th>
                   <th className="p-6 text-center">Semester</th>
-                  <th className="p-6 text-center">Engagement Log</th>
                   <th className="p-6">Birthday</th>
                   <th className="p-6">Details</th>
                   <th className="p-6 text-right">Actions</th>
@@ -462,12 +461,6 @@ export default function StudentDirectory() {
                       }`}>
                         {s.semester && s.semester !== 'N/A' ? `Sem ${s.semester}` : 'N/A'}
                       </span>
-                    </td>
-                    <td className="p-6 text-center">
-                      <div className="inline-flex flex-col items-center">
-                        <span className="text-base font-black text-slate-800 leading-none">{s.days_present || 0}</span>
-                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-widest mt-1">Days Present</span>
-                      </div>
                     </td>
                     <td className="p-6">
                       <div className="text-xs text-slate-850 dark:text-slate-200 font-black leading-none">
