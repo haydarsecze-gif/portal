@@ -347,14 +347,14 @@ export default function Login() {
                   <div className="flex items-center gap-2 shrink-0">
                     <div 
                       onClick={() => handleQuickLogin(acc)}
-                      className="text-[7.5px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1 cursor-pointer"
+                      className="hidden md:inline text-[7.5px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1 cursor-pointer"
                     >
                       Switch →
                     </div>
                     <button
                       type="button"
                       onClick={(e) => handleRemoveAccount(acc.email, e)}
-                      className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-350 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all cursor-pointer"
+                      className="p-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all cursor-pointer"
                       title="Remove Account"
                     >
                       <Trash2 size={13} />

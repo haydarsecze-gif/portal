@@ -270,8 +270,8 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full mt-3 w-72 sm:w-80 bg-white dark:bg-slate-950 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl z-[999] p-4 flex flex-col gap-3 max-h-[480px] overflow-hidden animate-in zoom-in-95 duration-200 ${
-          align === 'left' ? 'left-0 right-auto' : 'right-0 left-auto'
+        <div className={`fixed sm:absolute inset-x-4 sm:inset-x-auto top-20 sm:top-auto sm:mt-3 w-auto sm:w-80 h-fit bg-white dark:bg-slate-950 border border-slate-200/50 dark:border-slate-800/50 rounded-3xl shadow-2xl z-[999] p-4 flex flex-col gap-3 max-sm:max-h-[80vh] sm:max-h-[480px] overflow-hidden animate-in zoom-in-95 duration-200 ${
+          align === 'left' ? 'sm:left-0 sm:right-auto' : 'sm:right-0 sm:left-auto'
         }`}>
           
           {/* Active Profile Info */}
