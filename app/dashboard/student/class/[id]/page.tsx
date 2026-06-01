@@ -525,7 +525,7 @@ export default function StudentClassroom() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)} 
-              className={`shrink-0 flex-1 sm:flex-none py-3 px-4 sm:px-6 rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${
+              className={`shrink-0 flex-1 py-3 px-4 sm:px-6 rounded-xl font-black text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer ${
                 activeTab === tab.id 
                   ? 'bg-slate-900 text-white shadow' 
                   : 'text-slate-400 hover:text-slate-700'
