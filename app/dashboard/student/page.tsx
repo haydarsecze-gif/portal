@@ -212,7 +212,7 @@ export default function StudentDashboard() {
           <div className="flex items-center gap-3">
             <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100">
               <span className="hidden sm:inline">Student Dashboard Console</span>
-              <span className="sm:hidden">Portal</span>
+              <span className="sm:hidden">Student Portal</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3">

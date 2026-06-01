@@ -408,7 +408,7 @@ export default function LecturerDashboard() {
           <div className="flex items-center gap-3">
             <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100">
               <span className="hidden sm:inline">Lecturer Portal Console</span>
-              <span className="sm:hidden">Portal</span>
+              <span className="sm:hidden">Lecturer Portal</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3">
