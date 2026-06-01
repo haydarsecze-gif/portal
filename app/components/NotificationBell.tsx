@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseRaw } from '@/lib/supabase'
 import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X } from 'lucide-react'
 
 export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
@@ -64,8 +64,8 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
 
     let channel: any;
     try {
-      // 3. Set up real-time listener for incoming notifications
-      channel = supabase
+      // 3. Set up real-time listener for incoming notifications (using raw Supabase URL for WebSockets)
+      channel = supabaseRaw
         .channel(`realtime_notifications_${userId}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -80,11 +80,29 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
 
               // Show native system popup/banner notification like an app
               if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-                new Notification(newNotif.title || 'Student Portal Alert', {
+                const title = newNotif.title || 'Student Portal Alert'
+                const options = {
                   body: newNotif.message || '',
                   icon: '/icon.svg',
-                  badge: '/icon.svg'
-                })
+                  badge: '/icon.svg',
+                  data: {
+                    url: newNotif.link || '/'
+                  }
+                }
+
+                // Show notification via Service Worker (crucial for PWA standalone on Android & iOS home screen)
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.ready.then((reg) => {
+                    reg.showNotification(title, options).catch((err) => {
+                      console.warn('SW showNotification failed, falling back to window.Notification:', err)
+                      new Notification(title, options)
+                    })
+                  }).catch(() => {
+                    new Notification(title, options)
+                  })
+                } else {
+                  new Notification(title, options)
+                }
               }
             }
           } catch (e) {
@@ -105,7 +123,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
     return () => {
       if (channel) {
         try {
-          supabase.removeChannel(channel)
+          supabaseRaw.removeChannel(channel)
         } catch (e) {
           console.error('Error removing channel:', e)
         }
@@ -127,6 +145,14 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
 
   const handleToggle = () => {
     setIsOpen(!isOpen)
+    // Request permission on direct user interaction to satisfy iOS strict PWA rules
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        console.log('Notification permission status on click:', permission)
+      }).catch((err) => {
+        console.warn('Notification permission request failed:', err)
+      })
+    }
   }
 
   const markAllAsRead = async () => {

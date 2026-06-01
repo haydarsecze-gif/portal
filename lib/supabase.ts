@@ -37,6 +37,28 @@ const client = createClient(
 
 export const supabase = client
 
+// ✅ Raw Supabase client for real-time WebSocket connections (bypasses Next.js rewrites which block WebSockets)
+export const supabaseRaw = createClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: true,
+      storageKey: `sb-${projectRef}-auth-token`,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    },
+    global: {
+      fetch: (url, options) => {
+        return fetch(url, {
+          ...options,
+          credentials: 'omit'
+        })
+      }
+    }
+  }
+)
+
 /**
  * Completely purges all possible Supabase session storage, cookies, and tokens
  * from the browser client to prevent cross-account session contamination.

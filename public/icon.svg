@@ -11,16 +11,6 @@
   <!-- Background with premium rounded squircle shape -->
   <rect x="32" y="32" width="448" height="448" rx="128" fill="url(#grad)" />
   
-  <!-- Stylized graduation cap & shield database graphic inside -->
-  <g filter="url(#shadow)" fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Outer shield of security & portal gate -->
-    <path d="M256 96 L400 144 L400 272 C400 360 256 416 256 416 C256 416 112 360 112 272 L112 144 Z" stroke-width="20" />
-    
-    <!-- Central premium database layers representing system network -->
-    <ellipse cx="256" cy="200" rx="60" ry="24" fill="#ffffff" fill-opacity="0.1" />
-    <path d="M196 200 C196 215 256 224 256 224 C256 224 316 215 316 200" />
-    
-    <path d="M196 200 L196 250 C196 265 256 274 256 274 C256 274 316 265 316 250 L316 200" />
-    <path d="M196 250 L196 300 C196 315 256 324 256 324 C256 324 316 315 316 300 L316 250" />
-  </g>
+  <!-- LKW Typography centered -->
+  <text x="256" y="310" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="140" fill="#ffffff" text-anchor="middle" letter-spacing="-4" filter="url(#shadow)">LKW</text>
 </svg>

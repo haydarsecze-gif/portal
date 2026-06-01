@@ -399,6 +399,7 @@ export default function ContentModal({
       }
 
       let dbError;
+      let insertedId = '';
       if (initialData) {
         // Update existing item
         const updatePayload: any = {
@@ -435,10 +436,15 @@ export default function ContentModal({
           payload.allow_late = formData.allowLate
         }
 
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from(type === 'assignment' ? 'assignments' : 'materials')
           .insert([payload])
+          .select()
+          .single()
         dbError = error
+        if (insertedData) {
+          insertedId = insertedData.id
+        }
       }
 
       if (dbError) throw dbError
@@ -479,7 +485,8 @@ export default function ContentModal({
               user_id: m.student_id,
               title: type === 'assignment' ? "New Assignment Added" : "New Material Added",
               message: message,
-              type: type
+              type: type,
+              link: insertedId ? `/dashboard/student/class/${classId}?select=${insertedId}` : `/dashboard/student/class/${classId}`
             }))
 
             const { error: notifErr } = await supabase
