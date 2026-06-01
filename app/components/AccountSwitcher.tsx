@@ -101,75 +101,22 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     setIsSwitching(true)
     setIsOpen(false)
     try {
-      await supabase.auth.signOut()
-
-      // Password-only authentication — no token fallback (tokens cause cross-account contamination)
+      // 1. Password validation check
       if (!targetAccount.password) {
-        throw new Error('No saved password. Please log in manually to re-establish this account.')
+        throw new Error('No saved password. Please log in manually.')
       }
 
-      let decPassword = ''
-      try {
-        decPassword = decodeURIComponent(escape(atob(targetAccount.password)))
-      } catch (e) {
-        try {
-          decPassword = atob(targetAccount.password)
-        } catch (err) {
-          decPassword = targetAccount.password
-        }
-      }
+      // 2. Store credentials securely in sessionStorage for the tab session
+      sessionStorage.setItem('switch_account_email', targetAccount.email)
+      sessionStorage.setItem('switch_account_password', targetAccount.password)
 
-      if (!decPassword || decPassword === 'undefined' || decPassword === 'null') {
-        throw new Error('Saved password is invalid. Please log in manually to re-establish this account.')
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: targetAccount.email,
-        password: decPassword
-      })
-
-      if (error || !data.user || !data.session) {
-        throw error || new Error('Authentication failed. Please log in manually.')
-      }
-
-      const user = data.user
-      if (user) {
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, full_name')
-          .eq('id', user.id)
-          .single()
-
-        const role = profile?.role || targetAccount.role
-
-        // Update name/role in localStorage — never store tokens
-        const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
-        const idx = saved.findIndex((a: any) => a.email.toLowerCase() === targetAccount.email.toLowerCase())
-        if (idx > -1) {
-          saved[idx].role = role
-          saved[idx].name = profile?.full_name || saved[idx].name
-          // Ensure no stale tokens persist
-          delete saved[idx].access_token
-          delete saved[idx].refresh_token
-          localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
-        }
-
-        const targetUrl = role === 'admin'
-          ? '/admin/students'
-          : role === 'teacher'
-            ? '/dashboard/lecturer'
-            : '/dashboard/student'
-        
-        setTimeout(() => {
-          window.location.replace(targetUrl)
-        }, 500)
-      }
+      // 3. Immediately replace location to login where intercept takes place cleanly
+      window.location.replace('/auth/login')
     } catch (err: any) {
       setAlertConfig({
         isOpen: true,
-        title: 'Session Expired',
-        message: 'Session expired. Please log in manually to re-establish this account.',
+        title: 'Switch Failed',
+        message: err.message || 'Saved credentials expired. Please log in manually.',
         type: 'error',
         onConfirm: () => {
           window.location.replace('/auth/login')

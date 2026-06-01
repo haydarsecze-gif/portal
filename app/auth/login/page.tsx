@@ -14,6 +14,75 @@ export default function Login() {
   const router = useRouter()
 
   useEffect(() => {
+    // 1. Switch Account Intercept Route Check
+    const switchEmail = sessionStorage.getItem('switch_account_email')
+    const switchPasswordEncoded = sessionStorage.getItem('switch_account_password')
+
+    if (switchEmail && switchPasswordEncoded) {
+      setLoading(true)
+      sessionStorage.removeItem('switch_account_email')
+      sessionStorage.removeItem('switch_account_password')
+
+      const performSwitch = async () => {
+        try {
+          nukeSession()
+
+          let decPassword = ''
+          try {
+            decPassword = decodeURIComponent(escape(atob(switchPasswordEncoded)))
+          } catch (e) {
+            try {
+              decPassword = atob(switchPasswordEncoded)
+            } catch (err) {
+              decPassword = switchPasswordEncoded
+            }
+          }
+
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: switchEmail,
+            password: decPassword
+          })
+
+          if (error || !data.user) {
+            throw error || new Error('Switch authentication failed.')
+          }
+
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, full_name')
+            .eq('id', data.user.id)
+            .single()
+
+          const role = profile?.role || 'student'
+          
+          // Update name/role in localStorage
+          const saved = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+          const idx = saved.findIndex((a: any) => a.email.toLowerCase() === switchEmail.toLowerCase())
+          if (idx > -1) {
+            saved[idx].role = role
+            saved[idx].name = profile?.full_name || saved[idx].name
+            delete saved[idx].access_token
+            delete saved[idx].refresh_token
+            localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))
+          }
+
+          const targetUrl = role === 'admin'
+            ? '/admin/students'
+            : role === 'teacher'
+              ? '/dashboard/lecturer'
+              : '/dashboard/student'
+
+          window.location.replace(targetUrl)
+        } catch (err: any) {
+          console.error("Auto-switch error:", err)
+          setMessage('❌ Auto-switch failed: Please log in manually.')
+          setLoading(false)
+        }
+      }
+      performSwitch()
+      return
+    }
+
     nukeSession() // Nuke any stale session cookies/tokens immediately upon visiting the login screen!
     
     // Force clear any browser autofill after a small delay to keep fields pristine
