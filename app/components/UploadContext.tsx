@@ -243,12 +243,28 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
           let lecturers: any[] = [];
           if (subjectDetails?.lecturer_names && subjectDetails.lecturer_names.length > 0) {
-            const { data: matchedLecs } = await supabase
-              .from('profiles')
-              .select('id')
-              .eq('role', 'teacher')
-              .in('full_name', subjectDetails.lecturer_names);
-            lecturers = matchedLecs || [];
+            const plainNames = subjectDetails.lecturer_names.filter((n: string) => !n.startsWith('email:') && !n.startsWith('phone:'));
+            const emails = subjectDetails.lecturer_names
+              .filter((n: string) => n.startsWith('email:'))
+              .map((n: string) => n.substring(6).trim());
+
+            let orFilter = '';
+            if (plainNames.length > 0) {
+              orFilter += `full_name.in.(${plainNames.map((n: string) => `"${n}"`).join(',')})`;
+            }
+            if (emails.length > 0) {
+              if (orFilter) orFilter += ',';
+              orFilter += `email.in.(${emails.map((e: string) => `"${e}"`).join(',')})`;
+            }
+
+            if (orFilter) {
+              const { data: matchedLecs } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('role', 'teacher')
+                .or(orFilter);
+              lecturers = matchedLecs || [];
+            }
           }
 
           // Fallback to all approved teachers if no specific lecturers are found

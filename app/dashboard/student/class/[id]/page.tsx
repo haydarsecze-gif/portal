@@ -360,11 +360,29 @@ export default function StudentClassroom() {
             // Send notification to lecturers of this subject
             try {
               if (subject?.lecturer_names && subject.lecturer_names.length > 0) {
-                const { data: matchedLecturers } = await supabase
-                  .from('profiles')
-                  .select('id')
-                  .eq('role', 'teacher')
-                  .in('full_name', subject.lecturer_names);
+                const plainNames = subject.lecturer_names.filter((n: string) => !n.startsWith('email:') && !n.startsWith('phone:'));
+                const emails = subject.lecturer_names
+                  .filter((n: string) => n.startsWith('email:'))
+                  .map((n: string) => n.substring(6).trim());
+
+                let orFilter = '';
+                if (plainNames.length > 0) {
+                  orFilter += `full_name.in.(${plainNames.map((n: string) => `"${n}"`).join(',')})`;
+                }
+                if (emails.length > 0) {
+                  if (orFilter) orFilter += ',';
+                  orFilter += `email.in.(${emails.map((e: string) => `"${e}"`).join(',')})`;
+                }
+
+                let matchedLecturers: any[] = [];
+                if (orFilter) {
+                  const { data } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('role', 'teacher')
+                    .or(orFilter);
+                  matchedLecturers = data || [];
+                }
 
                 if (matchedLecturers && matchedLecturers.length > 0) {
                   const checkInMsgForLec = `${profile?.full_name || 'A student'} checked in for Week ${targetWeek} (Status: ${checkInStatus}) in "${subject.name}".`;
