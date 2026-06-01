@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase, nukeSession } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, LogIn, ArrowLeft, RefreshCw } from 'lucide-react'
+import { Loader2, Mail, Lock, LogIn, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Login() {
@@ -197,6 +197,13 @@ export default function Login() {
     }
   }
 
+  const handleRemoveAccount = (emailToRemove: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const updated = savedAccounts.filter(a => a?.email && emailToRemove && a.email.toLowerCase() !== emailToRemove.toLowerCase())
+    setSavedAccounts(updated)
+    localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-tr from-[#f3f4f6] via-[#e5e7eb] to-[#f5f3ff] dark:from-[#05070e] dark:via-[#0b0e1e] dark:to-[#040508] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
       
@@ -297,27 +304,26 @@ export default function Login() {
           <a href="/auth/reset-password" className="text-[9px] font-black text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 uppercase tracking-widest transition-colors mt-2">
             Forgot Password?
           </a>
-        </div>
-
-        {savedAccounts.length > 0 && (
-          <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-900/60">
+          {savedAccounts.length > 0 && (
+          <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-900/60 w-full">
             <p className="text-center text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-4">
               Saved Accounts
             </p>
             <div className="grid gap-2 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
               {savedAccounts.map((acc, index) => (
-                <button
+                <div
                   key={index}
-                  type="button"
-                  onClick={() => handleQuickLogin(acc)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-100/50 dark:bg-slate-900/20 hover:bg-slate-150/50 dark:hover:bg-slate-900/50 border border-slate-200/60 dark:border-slate-900 hover:border-indigo-500/20 text-left rounded-2xl cursor-pointer active:scale-98 transition-all duration-300 group"
+                  className="w-full flex items-center justify-between p-3 bg-slate-100/50 dark:bg-slate-900/20 border border-slate-200/60 dark:border-slate-900 hover:border-indigo-500/20 text-left rounded-2xl transition-all duration-300 group"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    onClick={() => handleQuickLogin(acc)}
+                    className="flex items-center gap-3 min-w-0 cursor-pointer flex-1"
+                  >
                     <div className="w-8 h-8 bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-650 dark:text-slate-400 text-[10px] font-black uppercase rounded-xl flex items-center justify-center group-hover:border-indigo-500/10 transition-colors">
                       {acc.name ? acc.name.substring(0, 2).toUpperCase() : acc.email.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate leading-none">
+                      <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase truncate leading-none group-hover:text-indigo-500 transition-colors">
                         {acc.name}
                       </p>
                       <p className="text-[8px] font-bold text-slate-500 dark:text-slate-500 truncate mt-1.5 leading-none">
@@ -325,14 +331,28 @@ export default function Login() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-[7.5px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1">
-                    Switch →
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div 
+                      onClick={() => handleQuickLogin(acc)}
+                      className="text-[7.5px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity pr-1 cursor-pointer"
+                    >
+                      Switch →
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleRemoveAccount(acc.email, e)}
+                      className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-350 hover:text-red-500 dark:hover:text-red-400 rounded-xl transition-all cursor-pointer"
+                      title="Remove Account"
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>
         )}
+        </div>
       </form>
     </div>
   )
