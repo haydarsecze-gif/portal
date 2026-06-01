@@ -28,7 +28,11 @@ export default function Login() {
           const { access_token, refresh_token, ...rest } = acc as any
           let decPassword = ''
           if (rest.password) {
-            try { decPassword = atob(rest.password) } catch (e) { decPassword = rest.password }
+            try { 
+              decPassword = decodeURIComponent(escape(atob(rest.password)))
+            } catch (e) { 
+              try { decPassword = atob(rest.password) } catch (err) { decPassword = rest.password }
+            }
           }
           if (decPassword === 'undefined' || decPassword === 'null' || !decPassword) {
             const { password: _pw, ...noPass } = rest
@@ -89,7 +93,11 @@ export default function Login() {
           name: profile?.full_name || cleanEmail
         }
         if (password) {
-          newAcc.password = btoa(password)
+          try {
+            newAcc.password = btoa(unescape(encodeURIComponent(password)))
+          } catch (e) {
+            newAcc.password = btoa(password)
+          }
         }
         if (index > -1) {
           saved[index] = newAcc
@@ -127,9 +135,13 @@ export default function Login() {
 
       let decPassword = ''
       try {
-        decPassword = atob(acc.password)
+        decPassword = decodeURIComponent(escape(atob(acc.password)))
       } catch (e) {
-        decPassword = acc.password
+        try {
+          decPassword = atob(acc.password)
+        } catch (err) {
+          decPassword = acc.password
+        }
       }
 
       if (!decPassword || decPassword === 'undefined' || decPassword === 'null') {

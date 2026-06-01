@@ -146,7 +146,11 @@ export default function Register() {
               name: fullName
             }
             if (password) {
-              newAcc.password = btoa(password)
+              try {
+                newAcc.password = btoa(unescape(encodeURIComponent(password)))
+              } catch (e) {
+                newAcc.password = btoa(password)
+              }
             }
             if (index > -1) {
               saved[index] = newAcc

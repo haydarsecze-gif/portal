@@ -64,7 +64,11 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
           // Heal corrupt 'undefined'/'null' password values
           let decPassword = ''
           if (rest.password) {
-            try { decPassword = atob(rest.password) } catch (e) { decPassword = rest.password }
+            try { 
+              decPassword = decodeURIComponent(escape(atob(rest.password)))
+            } catch (e) { 
+              try { decPassword = atob(rest.password) } catch (err) { decPassword = rest.password }
+            }
           }
           if (decPassword === 'undefined' || decPassword === 'null' || !decPassword) {
             const { password: _pw, ...noPass } = rest
@@ -106,9 +110,13 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
 
       let decPassword = ''
       try {
-        decPassword = atob(targetAccount.password)
+        decPassword = decodeURIComponent(escape(atob(targetAccount.password)))
       } catch (e) {
-        decPassword = targetAccount.password
+        try {
+          decPassword = atob(targetAccount.password)
+        } catch (err) {
+          decPassword = targetAccount.password
+        }
       }
 
       if (!decPassword || decPassword === 'undefined' || decPassword === 'null') {
