@@ -476,9 +476,9 @@ export default function StudentClassroom() {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => router.push('/dashboard/student')} 
-              className="flex items-center gap-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-black text-[9px] uppercase tracking-widest transition duration-300 cursor-pointer"
+              className="flex items-center gap-2 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-black text-xs uppercase tracking-widest transition duration-300 cursor-pointer"
             >
-              <ArrowLeft size={12} /> Back to Dashboard
+              <ArrowLeft size={15} /> Back to Dashboard
             </button>
           </div>
           <div className="flex items-center gap-3">
@@ -499,18 +499,18 @@ export default function StudentClassroom() {
       <div className="p-4 sm:p-8 md:p-10 flex-1 w-full max-w-[1600px] mx-auto">
         
         {/* Header Section */}
-        <header className="mb-8 flex flex-col gap-4">
+        <header className="mb-8 flex flex-col gap-5">
           {/* Subject Title and Badges */}
-          <div className="flex flex-col gap-2 mt-1">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
-              <GraduationCap className="text-indigo-600 shrink-0" size={24} />
+          <div className="flex flex-col gap-3 mt-1">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
+              <GraduationCap className="text-indigo-600 shrink-0 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" />
               {subject?.name || 'Classroom'}
             </h1>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="bg-indigo-50 border border-indigo-100 text-indigo-600 px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest shadow-sm">
                 Room {subject?.room || 'N/A'}
               </span>
-              <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+              <span className="bg-slate-100 text-slate-500 px-4 py-2 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest shadow-sm">
                 Sem {subject?.semester || 'N/A'}
               </span>
             </div>
