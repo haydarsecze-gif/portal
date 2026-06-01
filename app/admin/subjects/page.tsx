@@ -501,10 +501,10 @@ export default function AdminCurriculum() {
   )
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-350 font-sans select-none">
+    <div className="space-y-5 animate-in fade-in duration-350 font-sans select-none">
       
       {/* Header section */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 lg:gap-6">
         <div>
           <h2 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Curriculum Management</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configure subjects, classrooms & rosters</p>
@@ -532,17 +532,17 @@ export default function AdminCurriculum() {
         {subjects.filter(s => s.name?.toLowerCase().includes(search.toLowerCase())).map((s) => (
           <div 
             key={s.id} 
-            className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 hover:border-indigo-100 shadow-xs hover:shadow-xl hover:shadow-indigo-950/2 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+            className="group bg-white p-5 md:p-6 rounded-3xl border border-slate-100 hover:border-indigo-100 shadow-xs hover:shadow-xl hover:shadow-indigo-950/2 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6"
           >
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center w-full">
-              <div className="bg-slate-900 group-hover:bg-indigo-600 text-white w-16 h-16 rounded-[2rem] flex flex-col items-center justify-center font-black transition-colors duration-300 shrink-0 select-none">
-                <span className="text-[8px] opacity-75 tracking-wider font-mono">SEM</span>
-                <span className="text-lg leading-none mt-0.5">{s.semester}</span>
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center w-full">
+              <div className="bg-slate-900 group-hover:bg-indigo-600 text-white w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[2rem] flex flex-col items-center justify-center font-black transition-colors duration-300 shrink-0 select-none">
+                <span className="text-[7px] md:text-[8px] opacity-75 tracking-wider font-mono">SEM</span>
+                <span className="text-sm md:text-lg leading-none mt-0.5">{s.semester}</span>
               </div>
               
               <div className="space-y-1.5 w-full">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight leading-none group-hover:text-indigo-600 transition-colors duration-300">{s.name}</h3>
+                  <h3 className="font-black text-base sm:text-lg text-slate-800 uppercase tracking-tight leading-none group-hover:text-indigo-600 transition-colors duration-300">{s.name}</h3>
                   <button 
                     onClick={() => openRosterSheet(s)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50/50 hover:bg-indigo-600 text-indigo-600 hover:text-white border border-indigo-100/50 text-[9px] font-black tracking-wider uppercase transition-all shadow-xs cursor-pointer shrink-0"
@@ -557,11 +557,11 @@ export default function AdminCurriculum() {
                   <span className="flex items-center gap-1.5"><Calendar size={12} className="text-indigo-500" /> Start: {s.start_date || 'No Date'}</span>
                   <span className="flex items-center gap-1.5"><Clock size={12} className="text-indigo-500" /> Timing: {s.class_start_time || '--'} - {s.class_end_time || '--'}</span>
                 </div>
-                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-wider">Lecturers: {s.lecturer_names?.join(', ') || 'Faculty Unassigned'}</p>
+                <p className="text-[9px] font-black text-indigo-500 uppercase tracking-wider mt-1">Lecturers: {s.lecturer_names?.join(', ') || 'Faculty Unassigned'}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end md:justify-start border-t border-slate-50 md:border-none pt-4 md:pt-0">
+            <div className="flex items-center gap-2 shrink-0 w-full md:w-auto justify-end md:justify-start border-t border-slate-50 md:border-none pt-3 md:pt-0">
               <button 
                 onClick={() => openEditModal(s)} 
                 className="p-3 text-slate-450 hover:text-slate-800 hover:bg-slate-50 rounded-2xl active:scale-95 transition-all cursor-pointer"
