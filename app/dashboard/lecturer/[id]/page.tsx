@@ -205,7 +205,7 @@ export default function SubjectDetail() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full max-w-lg bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full max-w-md bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {['curriculum', 'students', 'attendance', 'settings'].map((t) => (
             <button 
               key={t} 
