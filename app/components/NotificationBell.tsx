@@ -220,12 +220,12 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={handleToggle}
-        className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md relative"
+        className="p-2 sm:p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer flex items-center justify-center backdrop-blur-md relative"
         title="Notifications"
       >
-        <Bell size={20} className={unreadCount > 0 ? "animate-pulse" : ""} />
+        <Bell className={`w-[18px] h-[18px] sm:w-5 sm:h-5 ${unreadCount > 0 ? "animate-pulse" : ""}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-red-500 border-2 border-white dark:border-slate-900 text-white text-[9px] font-black rounded-full flex items-center justify-center animate-bounce">
+          <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 min-w-4 sm:min-w-5 h-4 sm:h-5 px-1 bg-red-500 border-2 border-white dark:border-slate-900 text-white text-[8px] sm:text-[9px] font-black rounded-full flex items-center justify-center animate-bounce">
             {unreadCount}
           </span>
         )}

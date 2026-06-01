@@ -244,10 +244,10 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
 
       <button
         onClick={handleToggle}
-        className="flex items-center gap-2 pl-3 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-700 dark:text-slate-200 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer backdrop-blur-md relative"
+        className="flex items-center gap-1.5 sm:gap-2 pl-2 sm:pl-3 pr-2.5 sm:pr-4 py-1.5 sm:py-2 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-700 dark:text-slate-200 rounded-2xl shadow-md hover:shadow-indigo-500/5 transition-all duration-300 active:scale-95 cursor-pointer backdrop-blur-md relative"
         title="Switch Account"
       >
-        <div className="w-6 h-6 bg-gradient-to-tr from-indigo-600 to-blue-600 text-white rounded-xl flex items-center justify-center text-[10px] font-black shrink-0 shadow-sm">
+        <div className="w-5.5 h-5.5 sm:w-6 sm:h-6 bg-gradient-to-tr from-indigo-600 to-blue-600 text-white rounded-xl flex items-center justify-center text-[9.5px] sm:text-[10px] font-black shrink-0 shadow-sm">
           {getInitials()}
         </div>
         <div className="text-left hidden md:block max-w-[80px]">
@@ -258,7 +258,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
             {getRoleLabel(currentProfile?.role)}
           </p>
         </div>
-        <ChevronDown size={12} className="text-slate-400 dark:text-slate-650 shrink-0" />
+        <ChevronDown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-400 dark:text-slate-650 shrink-0" />
       </button>
 
       {isOpen && (

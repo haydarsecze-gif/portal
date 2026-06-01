@@ -404,36 +404,37 @@ export default function LecturerDashboard() {
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans select-none animate-in fade-in duration-300">
       {/* Sticky top header bar */}
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
-        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-4 flex items-center justify-between">
+        <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100">
+            <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100 hidden sm:block">
               Lecturer Portal Console
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             <AccountSwitcher />
             <NotificationBell />
             <ThemeToggle />
             <button 
               onClick={() => setShowSettingsModal(true)} 
-              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              className="p-2 sm:p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Profile Settings"
             >
-              <Settings size={20} />
+              <Settings size={18} className="sm:w-5 sm:h-5" />
             </button>
             <button 
               onClick={triggerHardReload} 
-              className="p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
+              className="p-2 sm:p-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-indigo-500/30 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer flex items-center justify-center"
               title="Hard Reload Page"
             >
-              <RefreshCw size={20} className={isReloading ? "animate-spin text-indigo-500" : ""} />
+              <RefreshCw size={18} className={`sm:w-5 sm:h-5 ${isReloading ? "animate-spin text-indigo-500" : ""}`} />
             </button>
             <button 
               onClick={handleLogout} 
-              className="flex items-center gap-2 px-5 py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-red-500/30 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
+              className="flex items-center gap-1.5 sm:gap-2 p-2 sm:px-5 sm:py-3 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-slate-800/50 hover:border-red-500/30 text-slate-700 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-2xl shadow-md active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer text-xs font-black uppercase tracking-widest"
               title="Sign Out"
             >
-              <LogOut size={14} /> Sign Out
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>
