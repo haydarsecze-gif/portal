@@ -75,7 +75,8 @@ export default function SubjectDetail() {
     
     try {
       // Verify lecturer profile still exists (Kick-out if deleted)
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (user) {
         const { data: prof, error: profErr } = await supabase.from('profiles').select('id').eq('id', user.id).single()
         if (profErr || !prof) {

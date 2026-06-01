@@ -54,7 +54,8 @@ export default function StudentTab({ students, classId, subjectName, onRefresh }
       // Notify the added student
       try {
         let lecturerName = "Lecturer"
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user
         if (user) {
           const { data: prof } = await supabase
             .from('profiles')

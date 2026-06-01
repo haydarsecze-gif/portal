@@ -28,14 +28,25 @@ export default function StudentDashboard() {
     else setIsSyncing(true)
     
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) return router.push('/auth/login')
 
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      const [profRes, enrollmentRes] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('student_classes').select(`
+          subject_id,
+          subjects (
+            id,
+            name,
+            room,
+            lecturer_names
+          )
+        `).eq('student_id', user.id)
+      ])
+
+      if (enrollmentRes.error) throw enrollmentRes.error
+      const prof = profRes.data
       setProfile(prof)
 
       if (prof) {
@@ -60,22 +71,7 @@ export default function StudentDashboard() {
         }
       }
 
-      const { data: enrollments, error } = await supabase
-        .from('student_classes')
-        .select(`
-          subject_id,
-          subjects (
-            id,
-            name,
-            room,
-            lecturer_names
-          )
-        `)
-        .eq('student_id', user.id)
-
-      if (error) throw error
-
-      const classes = (enrollments || [])
+      const classes = (enrollmentRes.data || [])
         .map((e: any) => e.subjects)
         .filter(Boolean)
         
@@ -102,7 +98,8 @@ export default function StudentDashboard() {
     setSettingsLoading(true)
     setSettingsMessage('')
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('No session active.')
 
       // 1. Update Auth Email if changed

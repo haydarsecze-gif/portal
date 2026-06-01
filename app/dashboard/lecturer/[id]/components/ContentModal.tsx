@@ -85,7 +85,7 @@ export default function ContentModal({
 
         // Query the lecturer's own drive folder ID if defined
         let targetParentId = parentFolderId
-        const { data: { user } } = await supabase.auth.getUser()
+        const user = session?.user
         if (user) {
           const { data: prof } = await supabase
             .from('profiles')
@@ -454,7 +454,8 @@ export default function ContentModal({
           if (mappings && mappings.length > 0) {
             // Resolve Lecturer Name
             let lecturerName = "Lecturer"
-            const { data: { user } } = await supabase.auth.getUser()
+            const { data: { session } } = await supabase.auth.getSession()
+            const user = session?.user
             if (user) {
               const { data: prof } = await supabase
                 .from('profiles')

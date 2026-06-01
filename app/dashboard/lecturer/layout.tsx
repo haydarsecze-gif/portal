@@ -33,7 +33,7 @@ export default function LecturerDashboardLayout({
     if (isCheckingRef.current) return verifiedUserIdRef.current
     isCheckingRef.current = true
     try {
-      const user = passedUser || (await supabase.auth.getUser()).data.user
+      const user = passedUser || (await supabase.auth.getSession()).data.session?.user
       if (!user) {
         verifiedUserIdRef.current = null
         if (active) {

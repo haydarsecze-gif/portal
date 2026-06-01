@@ -119,7 +119,8 @@ export default function StudentClassroom() {
   const fetchClassData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) {
         router.push('/auth/login');
         return;
@@ -302,7 +303,8 @@ export default function StudentClassroom() {
         }
 
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { session } } = await supabase.auth.getSession();
+          const user = session?.user;
           if (!user) throw new Error("Authentication dropped");
 
           let targetWeek = studentAttendance.length < 17 ? studentAttendance.length + 1 : 17;

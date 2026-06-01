@@ -99,7 +99,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     }));
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       const uploadedLinks: string[] = [];
       const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 
@@ -299,7 +300,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
     }));
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       await enqueueSubmissionAction(assignmentTitle, async () => {
         // Query the absolute latest submission from the database first
@@ -386,7 +388,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
 
         // Query the lecturer's own drive folder ID if defined
         let targetParentId = parentFolderId;
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = session?.user;
         if (user) {
           const { data: prof } = await supabase
             .from('profiles')
@@ -795,7 +797,8 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
             
             // Resolve Lecturer Name
             let lecturerName = "Lecturer";
-            const { data: { user } } = await supabase.auth.getUser();
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
             if (user) {
               const { data: prof } = await supabase
                 .from('profiles')

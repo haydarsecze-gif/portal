@@ -28,7 +28,8 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     // 1. Fetch current session user
     const getUserData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        const { data: { session } } = await supabase.auth.getSession()
+        const user = session?.user
         if (user) {
           setCurrentUser(user)
           const { data: profile } = await supabase
@@ -123,8 +124,7 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
         throw error || new Error('Authentication failed. Please log in manually.')
       }
 
-      // Successful login
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = data.user
       if (user) {
 
         const { data: profile } = await supabase

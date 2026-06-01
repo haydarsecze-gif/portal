@@ -87,7 +87,8 @@ export default function LecturerDashboard() {
     else setIsSyncing(true)
     
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) return router.push('/auth/login')
 
       const { data: p, error: pErr } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -198,7 +199,8 @@ export default function LecturerDashboard() {
         setSettingsDrive(finalDriveId);
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error('No session active.')
 
       // 1. Update Auth Email if changed
