@@ -302,7 +302,7 @@ export default function AttendanceTab({ classId }: { classId: string }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm relative overflow-visible">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
