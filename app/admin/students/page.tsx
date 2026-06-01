@@ -417,7 +417,8 @@ export default function StudentDirectory() {
         </div>
       ) : (
         <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -499,6 +500,72 @@ export default function StudentDirectory() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card Stack View */}
+          <div className="block md:hidden divide-y divide-slate-100">
+            {filtered.map(s => (
+              <div key={s.student_id || s.id} className="p-5 flex flex-col gap-4 hover:bg-slate-50/20 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center font-black text-xs uppercase shrink-0">
+                    {s.full_name?.charAt(0) || 'S'}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-black text-slate-800 uppercase tracking-tight truncate leading-tight">{s.full_name}</p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1 leading-none truncate">{s.email || 'No email provided'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <div className="min-w-0">
+                    <span className="block text-[8px] font-black text-slate-350 tracking-wider leading-none mb-1">Registered</span>
+                    <span className="text-slate-700 block truncate">{formatDate(s.created_at)}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[8px] font-black text-slate-350 tracking-wider leading-none mb-1">Semester</span>
+                    <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-black ${
+                      s.semester && s.semester !== 'N/A' 
+                        ? 'bg-purple-50 border border-purple-100 text-purple-600' 
+                        : 'bg-slate-100 border border-slate-200 text-slate-400'
+                    }`}>
+                      {s.semester && s.semester !== 'N/A' ? `Sem ${s.semester}` : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[8px] font-black text-slate-350 tracking-wider leading-none mb-1">Birthday</span>
+                    <span className="text-slate-700 block truncate">{s.birthday ? formatDate(s.birthday) : 'Not set'}</span>
+                  </div>
+                  <div className="min-w-0 col-span-2">
+                    <span className="block text-[8px] font-black text-slate-350 tracking-wider leading-none mb-1">Details</span>
+                    <span className="text-slate-600 block truncate normal-case tracking-normal font-medium">{s.more_detail || 'No details added'}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5">
+                  <button 
+                    onClick={() => {
+                      setEditingStudent(s)
+                      setEditEmail(s.email || '')
+                      setEditBirthday(s.birthday ? s.birthday.substring(0, 10) : '')
+                      setEditMoreDetail(s.more_detail || '')
+                      setEditSemester(s.semester && s.semester !== 'N/A' ? s.semester.toString() : '')
+                      setIsEditModalOpen(true)
+                    }}
+                    className="flex-1 py-3 inline-flex items-center justify-center gap-1.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 text-slate-500 hover:text-indigo-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                    title="Edit Student Details"
+                  >
+                    <Pencil size={12} /> Edit Profile
+                  </button>
+                  <button 
+                    onClick={() => deleteStudent(s.student_id || s.id)} 
+                    className="flex-1 py-3 inline-flex items-center justify-center gap-1.5 bg-slate-50 hover:bg-red-50 border border-slate-100 hover:border-red-100 text-slate-500 hover:text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer active:scale-95"
+                    title="Delete Student"
+                  >
+                    <UserMinus size={12} /> Remove
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
