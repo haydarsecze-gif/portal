@@ -96,19 +96,14 @@ export default function Home() {
       {/* Glassmorphic Portal Gateway Container */}
       <div className="bg-bg-card border border-border-card p-10 md:p-12 rounded-[3.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.1)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.45)] w-full max-w-[380px] text-center relative z-10 hover:border-slate-300 dark:hover:border-slate-800/80 transition-all duration-500 animate-in zoom-in-95 duration-300">
         
-        {/* Glow behind logo */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-20 h-20 bg-indigo-600/25 rounded-full blur-xl pointer-events-none" />
-        
-        {/* Premium database logo */}
-        <div className="relative w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-500/20 group hover:rotate-6 transition-transform duration-300">
-          <Database size={26} className="text-slate-100" />
-        </div>
-
         <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-none mb-1">
           Limkokwing
         </h1>
         <p className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-[0.25em] mb-1">
           Student Portal
+        </p>
+        <p className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mt-1.5">
+          by Ratha Nit
         </p>
         <div className="w-10 h-[2px] bg-indigo-500/30 mx-auto mt-3 mb-8 rounded-full" />
 
