@@ -516,7 +516,7 @@ export default function StudentClassroom() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full max-w-md bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {[
             { id: 'content', label: 'Coursework' },
             { id: 'attendance', label: 'My Attendance' },
