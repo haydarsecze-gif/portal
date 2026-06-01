@@ -34,6 +34,12 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // Bypass service worker caching entirely in local development (localhost)
+  // to prevent stale hot-reload chunk crashes.
+  if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+    return;
+  }
+
   const url = new URL(e.request.url);
 
   // 2. Bypass cache entirely for Supabase endpoints, NextJS hot-reload, and API routes
@@ -130,4 +136,32 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   );
+});
+
+// Listen to push events dispatched from the server
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  try {
+    const payload = event.data.json();
+    const title = payload.title || 'Student Portal Alert';
+    
+    const options = {
+      body: payload.message || '',
+      icon: '/icon.svg',
+      badge: '/icon.svg',
+      vibrate: [100, 50, 100], // Double-buzz to alert the user
+      tag: payload.id || 'student-portal-alert',
+      renotify: true,
+      data: {
+        url: payload.link || '/'
+      }
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    );
+  } catch (err) {
+    console.error('Error handling Web Push event in Service Worker:', err);
+  }
 });

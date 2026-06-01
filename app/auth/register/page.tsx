@@ -143,7 +143,8 @@ export default function Register() {
             const newAcc: any = {
               email: cleanEmail,
               role: 'teacher',
-              name: fullName
+              name: fullName,
+              userId: authData.user.id
             }
             if (password) {
               try {

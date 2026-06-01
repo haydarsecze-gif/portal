@@ -291,12 +291,21 @@ export default function AdminCurriculum() {
     }
   }
 
+  const formatTimeToHM = (timeStr?: string) => {
+    if (!timeStr) return ''
+    const parts = timeStr.split(':')
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`
+    }
+    return timeStr
+  }
+
   const openCreateModal = () => {
     setEditingId(null); setName(''); setRoom(''); setSemester('1'); setStartDate(''); setStartTime(''); setEndTime(''); setSelectedLecturers([]); setIsModalOpen(true);
   }
 
   const openEditModal = (subject: any) => {
-    setEditingId(subject.id); setName(subject.name || ''); setRoom(subject.room || ''); setSemester(String(subject.semester || '1')); setStartDate(subject.start_date || ''); setStartTime(subject.class_start_time || ''); setEndTime(subject.class_end_time || ''); setSelectedLecturers(subject.lecturer_names || []); setIsModalOpen(true);
+    setEditingId(subject.id); setName(subject.name || ''); setRoom(subject.room || ''); setSemester(String(subject.semester || '1')); setStartDate(subject.start_date || ''); setStartTime(formatTimeToHM(subject.class_start_time) || ''); setEndTime(formatTimeToHM(subject.class_end_time) || ''); setSelectedLecturers(subject.lecturer_names || []); setIsModalOpen(true);
   }
 
   const handleDeleteSubject = (s: any) => {
@@ -400,22 +409,41 @@ export default function AdminCurriculum() {
     try {
       let activeSubjectId = editingId
       if (editingId) {
-        await supabase.from('subjects').update(payload).eq('id', editingId)
-        await supabase.from('classes').update({
-          name: name,
-          subject_name: name,
-          semester: parseInt(semester),
-          room: room || 'Unassigned',
-          start_time: startTime || '08:00:00',
-          end_time: endTime || '11:30:00',
-          class_date: startDate || new Date().toISOString().split('T')[0]
-        }).eq('id', editingId)
+        const { data: updatedSubj, error: subjectsError } = await supabase
+          .from('subjects')
+          .update(payload)
+          .eq('id', editingId)
+          .select()
+
+        if (subjectsError) throw subjectsError
+        if (!updatedSubj || updatedSubj.length === 0) {
+          throw new Error("Update failed for subjects table. Check your database Row-Level Security (RLS) policies.")
+        }
+
+        const { data: updatedClass, error: classesError } = await supabase
+          .from('classes')
+          .update({
+            name: name,
+            subject_name: name,
+            semester: parseInt(semester),
+            room: room || 'Unassigned',
+            start_time: startTime || '08:00:00',
+            end_time: endTime || '11:30:00',
+            class_date: startDate || new Date().toISOString().split('T')[0]
+          })
+          .eq('id', editingId)
+          .select()
+
+        if (classesError) throw classesError
+        if (!updatedClass || updatedClass.length === 0) {
+          throw new Error("Update failed for classes table. Check your database Row-Level Security (RLS) policies.")
+        }
       } else {
         const { data: insertedData, error: insertError } = await supabase.from('subjects').insert([payload]).select().single()
         if (insertError) throw insertError
         if (insertedData) {
           activeSubjectId = insertedData.id
-          await supabase.from('classes').insert({
+          const { error: classInsertError } = await supabase.from('classes').insert({
             id: insertedData.id,
             name: name,
             subject_name: name,
@@ -425,6 +453,7 @@ export default function AdminCurriculum() {
             end_time: endTime || '11:30:00',
             class_date: startDate || new Date().toISOString().split('T')[0]
           })
+          if (classInsertError) throw classInsertError
         }
       }
 

@@ -4,13 +4,71 @@ import { useRouter } from 'next/navigation'
 import { supabase, supabaseRaw } from '@/lib/supabase'
 import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X } from 'lucide-react'
 
+// Helper function to convert base64 VAPID public key to Uint8Array
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export default function NotificationBell({ align = 'right' }: { align?: 'left' | 'right' }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
   const [userId, setUserId] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [activeToast, setActiveToast] = useState<any | null>(null)
+  
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const knownNotifIds = useRef<Set<string>>(new Set())
+  const isFirstLoad = useRef(true)
+  const toastTimeoutRef = useRef<any>(null)
+
+  const triggerNotification = useCallback((newNotif: any) => {
+    // 1. Show native browser notification if allowed and granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      const title = newNotif.title || 'Student Portal Alert'
+      const options = {
+        body: newNotif.message || '',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        data: {
+          url: newNotif.link || '/'
+        }
+      }
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg.showNotification(title, options).catch((err) => {
+            console.warn('SW showNotification failed, falling back to window.Notification:', err)
+            new Notification(title, options)
+          })
+        }).catch(() => {
+          new Notification(title, options)
+        })
+      } else {
+        new Notification(title, options)
+      }
+    }
+
+    // 2. Show beautiful in-app toast notification
+    setActiveToast(newNotif)
+    
+    // Clear old timeout
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    toastTimeoutRef.current = setTimeout(() => {
+      setActiveToast(null)
+    }, 6000)
+  }, [])
 
   const fetchNotifications = useCallback(async (uId: string) => {
     try {
@@ -22,10 +80,81 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
         .limit(20)
 
       if (error) throw error
-      setNotifications(data || [])
-      setUnreadCount((data || []).filter((n: any) => !n.is_read).length)
+      
+      const newNotifs = data || []
+      
+      if (isFirstLoad.current) {
+        // First load, just record existing IDs to prevent historical popup spam
+        newNotifs.forEach((n: any) => knownNotifIds.current.add(n.id))
+        isFirstLoad.current = false
+      } else {
+        // Find any notifications that are new (not in knownNotifIds) and unread
+        const freshUnread = newNotifs.filter((n: any) => !knownNotifIds.current.has(n.id) && !n.is_read)
+        
+        // Show native + in-app notification for each fresh unread
+        freshUnread.forEach((n: any) => {
+          triggerNotification(n)
+          knownNotifIds.current.add(n.id)
+        })
+        
+        // Ensure all currently fetched IDs are marked as known
+        newNotifs.forEach((n: any) => knownNotifIds.current.add(n.id))
+      }
+
+      setNotifications(newNotifs)
+      setUnreadCount(newNotifs.filter((n: any) => !n.is_read).length)
     } catch (err) {
       console.error('Error fetching notifications:', err)
+    }
+  }, [triggerNotification])
+
+  const syncPushSubscription = useCallback(async (uId: string) => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) return
+    if (Notification.permission !== 'granted') return
+
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!publicVapidKey) return
+
+      let subscription = await reg.pushManager.getSubscription()
+      
+      if (!subscription) {
+        subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        })
+      }
+
+      // Gather other saved account userIds to enable push notifications on multiple accounts on the same device
+      let savedAccs = []
+      try {
+        savedAccs = JSON.parse(localStorage.getItem('portal_saved_accounts') || '[]')
+      } catch (e) {}
+      
+      const savedUserIds = Array.isArray(savedAccs)
+        ? savedAccs.map((a: any) => a.userId).filter(Boolean)
+        : []
+
+      const allUserIds = [...new Set([uId, ...savedUserIds])]
+
+      const sessionRes = await supabase.auth.getSession()
+      const token = sessionRes.data.session?.access_token
+
+      await fetch('/api/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        },
+        body: JSON.stringify({
+          userId: uId,
+          userIds: allUserIds,
+          subscription: subscription
+        })
+      })
+    } catch (err) {
+      console.warn('Background push subscription sync failed:', err)
     }
   }, [])
 
@@ -36,11 +165,16 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
       if (session?.user) {
         setUserId(session.user.id)
         fetchNotifications(session.user.id)
+        syncPushSubscription(session.user.id)
 
         // Request browser permission for system notifications (PWA / Android / Phone app shortcut)
         if (typeof window !== 'undefined' && 'Notification' in window) {
           if (Notification.permission === 'default') {
-            Notification.requestPermission().catch((err) => {
+            Notification.requestPermission().then((perm) => {
+              if (perm === 'granted') {
+                syncPushSubscription(session.user.id)
+              }
+            }).catch((err) => {
               console.warn('Notification permission request rejected/failed:', err)
             })
           }
@@ -56,8 +190,11 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [fetchNotifications])
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [fetchNotifications, syncPushSubscription])
 
   useEffect(() => {
     if (!userId) return
@@ -75,35 +212,12 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
           try {
             const newNotif = payload.new
             if (newNotif && (newNotif.user_id === userId || !newNotif.user_id)) {
+              if (knownNotifIds.current.has(newNotif.id)) return // Already handled by polling or previous event
+              knownNotifIds.current.add(newNotif.id)
+              
               setNotifications(prev => [newNotif, ...prev])
               setUnreadCount(c => c + 1)
-
-              // Show native system popup/banner notification like an app
-              if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-                const title = newNotif.title || 'Student Portal Alert'
-                const options = {
-                  body: newNotif.message || '',
-                  icon: '/icon.svg',
-                  badge: '/icon.svg',
-                  data: {
-                    url: newNotif.link || '/'
-                  }
-                }
-
-                // Show notification via Service Worker (crucial for PWA standalone on Android & iOS home screen)
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.ready.then((reg) => {
-                    reg.showNotification(title, options).catch((err) => {
-                      console.warn('SW showNotification failed, falling back to window.Notification:', err)
-                      new Notification(title, options)
-                    })
-                  }).catch(() => {
-                    new Notification(title, options)
-                  })
-                } else {
-                  new Notification(title, options)
-                }
-              }
+              triggerNotification(newNotif)
             }
           } catch (e) {
             console.error('Error handling realtime notification insert:', e)
@@ -129,19 +243,44 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
         }
       }
     }
-  }, [userId])
+  }, [userId, triggerNotification])
 
-  // 4. Setup resilient background fallback polling mechanism every 10 seconds
-  // to bypass private DNS (e.g. NextDNS) blocks on WebSocket connections.
+  // 4. Setup resilient background fallback polling mechanism to bypass private DNS
+  // blocks or WebSocket failures. Polls every 3 seconds when active for instant notifications.
   useEffect(() => {
     if (!userId) return
-    const interval = setInterval(() => {
+
+    const runPolling = () => {
       fetchNotifications(userId)
-    }, 10000)
-    return () => clearInterval(interval)
+    }
+
+    runPolling()
+
+    let intervalId: any;
+    const startInterval = (delay: number) => {
+      if (intervalId) clearInterval(intervalId)
+      intervalId = setInterval(runPolling, delay)
+    }
+
+    // Dynamic throttling: fast polling (3s) when active, slow (20s) in background
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startInterval(3000)
+      } else {
+        startInterval(20000)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Initial start
+    startInterval(document.visibilityState === 'visible' ? 3000 : 20000)
+
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [userId, fetchNotifications])
-
-
 
   const handleToggle = () => {
     setIsOpen(!isOpen)
@@ -278,6 +417,39 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
             )}
           </div>
 
+          {/* System Notification Permission Request Banner */}
+          {typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted' && (
+            <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100/30 dark:border-indigo-900/30 p-3.5 rounded-2xl flex flex-col gap-2 mb-1 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                <Bell size={12} className="animate-bounce" /> Enable Lock Screen Alerts
+              </div>
+              <p className="text-[8px] font-bold text-slate-500 dark:text-slate-450 leading-normal uppercase tracking-wide">
+                Get instant notifications on your system & lock screen when coursework is uploaded!
+              </p>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const permission = await Notification.requestPermission()
+                    if (permission === 'granted' && userId) {
+                      await syncPushSubscription(userId)
+                      triggerNotification({
+                        title: 'System Alerts Activated! 🎉',
+                        message: 'You will now receive lock screen and instant device notifications.',
+                        type: 'system'
+                      })
+                    }
+                  } catch (err) {
+                    console.error('Error enabling lock screen alerts:', err)
+                  }
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all cursor-pointer text-center shadow-sm"
+              >
+                Allow Lock Screen Alerts
+              </button>
+            </div>
+          )}
+
           <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2 max-h-[320px] pr-1">
             {notifications.length > 0 ? (
               notifications.map((n) => (
@@ -300,6 +472,9 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                       if (!n.is_read) markAsRead(n.id)
                       if (n.link) {
                         router.push(n.link)
+                        setIsOpen(false)
+                      } else if (n.type === 'assignment' || n.type === 'material') {
+                        router.push('/dashboard/student')
                         setIsOpen(false)
                       }
                     }}
@@ -327,6 +502,43 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* In-App Slide-down Toast Notification Banner */}
+      {activeToast && (
+        <div 
+          onClick={() => {
+            if (!activeToast.is_read) markAsRead(activeToast.id)
+            if (activeToast.link) {
+              router.push(activeToast.link)
+            } else if (activeToast.type === 'assignment' || activeToast.type === 'material') {
+              router.push('/dashboard/student')
+            }
+            setActiveToast(null)
+          }}
+          className="fixed top-4 left-4 right-4 sm:left-auto sm:right-6 sm:w-96 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 p-4 rounded-3xl shadow-2xl z-[99999] flex gap-3 cursor-pointer items-start animate-in slide-in-from-top-12 duration-300 hover:shadow-indigo-500/5 select-none"
+        >
+          <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-850 flex items-center justify-center shrink-0 shadow-sm">
+            {getIcon(activeToast.type)}
+          </div>
+          <div className="flex-1 min-w-0 pr-2">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-[8px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 rounded-md mb-1 border border-indigo-100/30">
+              ⚡ Alert
+            </span>
+            <h5 className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-tight">{activeToast.title}</h5>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 leading-normal break-words">{activeToast.message}</p>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setActiveToast(null)
+            }}
+            className="p-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-450 dark:text-slate-400 rounded-xl transition-all cursor-pointer shrink-0 border border-transparent hover:border-slate-200/50"
+            title="Dismiss Alert"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
     </div>

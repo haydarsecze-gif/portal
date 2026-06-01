@@ -104,6 +104,7 @@ export default function StudentClassroom() {
   const [geoError, setGeoError] = useState<string | null>(null);
   const [geoSuccess, setGeoSuccess] = useState(false);
   const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false);
+  const [showLocationHelpModal, setShowLocationHelpModal] = useState(false);
 
   // Premium Alert/Confirm Dialog Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -412,6 +413,7 @@ export default function StudentClassroom() {
         let msg = "GPS Signal blocked. Ensure location tracking permissions are granted to this site.";
         if (error.code === 1) {
           msg = "Location permission denied. Please enable location permissions for this app/site in settings.";
+          setShowLocationHelpModal(true);
         } else if (error.code === 2) {
           msg = "GPS/Location signal unavailable. Please ensure your device's location services (GPS) are turned ON.";
         } else if (error.code === 3) {
@@ -1171,6 +1173,76 @@ export default function StudentClassroom() {
                 </>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Location Permission Help Modal */}
+      {showLocationHelpModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button 
+              onClick={() => setShowLocationHelpModal(false)} 
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+            
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-950/30 flex items-center justify-center text-rose-500 mb-4 border border-rose-100 dark:border-rose-900/30 animate-pulse">
+                <MapPin size={28} />
+              </div>
+              <h3 className="text-xl font-black text-slate-850 dark:text-white uppercase tracking-tight leading-none">
+                Location Access Blocked
+              </h3>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-3 leading-relaxed">
+                Attendance verification requires your precise location. Please enable location permissions using the instructions below.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4.5 rounded-2xl border border-slate-100 dark:border-slate-800/80">
+                <h4 className="text-[10px] font-black text-slate-450 dark:text-slate-400 uppercase tracking-widest mb-2.5">
+                  How to enable permissions
+                </h4>
+                
+                <div className="space-y-3">
+                  <div className="flex gap-3 text-xs text-slate-700 dark:text-slate-350 font-bold">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-black shrink-0">1</span>
+                    <p className="leading-snug">Tap the <span className="font-black text-slate-900 dark:text-white">Lock Icon 🔒</span> or <span className="font-black text-slate-900 dark:text-white">Settings Icon ⚙️</span> located in your browser's address bar.</p>
+                  </div>
+                  
+                  <div className="flex gap-3 text-xs text-slate-700 dark:text-slate-350 font-bold">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-black shrink-0">2</span>
+                    <p className="leading-snug">Find the <span className="font-black text-slate-900 dark:text-white">Location</span> settings toggle and change it to <span className="font-black text-indigo-600 dark:text-indigo-400">Allow</span> / <span className="font-black text-indigo-600 dark:text-indigo-400">Ask</span>.</p>
+                  </div>
+                  
+                  <div className="flex gap-3 text-xs text-slate-700 dark:text-slate-350 font-bold">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-black shrink-0">3</span>
+                    <p className="leading-snug">Close this dialog, reload the page, and try checking in again.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={() => setShowLocationHelpModal(false)}
+                className="flex-1 py-3.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-300 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowLocationHelpModal(false);
+                  window.location.reload();
+                }}
+                className="flex-1 py-3.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-indigo-950/10 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <RefreshCw size={10} className="animate-spin" style={{ animationDuration: '3s' }} />
+                Reload Page
+              </button>
+            </div>
           </div>
         </div>
       )}

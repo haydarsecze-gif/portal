@@ -127,20 +127,52 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
     }
   }
 
-  const handleRemoveAccount = (emailToRemove: string, e: React.MouseEvent) => {
+  const performUnsubscribe = async (targetUserId: string) => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) return
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        await fetch('/api/notifications/unsubscribe', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: targetUserId,
+            endpoint: sub.endpoint
+          })
+        })
+      }
+    } catch (err) {
+      console.warn('Failed to delete push subscription on signout/removal:', err)
+    }
+  }
+
+  const handleRemoveAccount = async (emailToRemove: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    const target = savedAccounts.find(a => a?.email && emailToRemove && a.email.toLowerCase() === emailToRemove.toLowerCase())
+    if (target && target.userId) {
+      await performUnsubscribe(target.userId)
+    }
     const updated = savedAccounts.filter(a => a?.email && emailToRemove && a.email.toLowerCase() !== emailToRemove.toLowerCase())
     setSavedAccounts(updated)
     localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
   }
 
   const handleAddNewAccount = async () => {
+    if (currentUser?.id) {
+      await performUnsubscribe(currentUser.id)
+    }
     await supabase.auth.signOut()
     nukeSession() // Completely nuke leftover cookies/tokens
     window.location.replace('/auth/login')
   }
 
   const handleLogout = async () => {
+    if (currentUser?.id) {
+      await performUnsubscribe(currentUser.id)
+    }
     await supabase.auth.signOut()
     nukeSession() // Completely nuke leftover cookies/tokens
     window.location.replace('/auth/login')

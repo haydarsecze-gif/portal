@@ -167,7 +167,8 @@ export default function Login() {
         const newAcc: any = {
           email: cleanEmail,
           role: profile?.role || 'student',
-          name: profile?.full_name || cleanEmail
+          name: profile?.full_name || cleanEmail,
+          userId: data.user.id
         }
         if (password) {
           try {
@@ -251,6 +252,7 @@ export default function Login() {
         if (idx > -1) {
           saved[idx].name = profile?.full_name || acc.email
           saved[idx].role = profile?.role || acc.role
+          saved[idx].userId = user.id
           delete saved[idx].access_token
           delete saved[idx].refresh_token
           localStorage.setItem('portal_saved_accounts', JSON.stringify(saved))

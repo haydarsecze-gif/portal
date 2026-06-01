@@ -128,4 +128,112 @@ GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO postgres, service_role, authentic
 
 NOTIFY pgrst, 'reload schema';
 
+-- 11. Row-Level Security (RLS) policies for subjects and classes tables
+-- Enable RLS
+ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies to prevent duplicate errors
+DROP POLICY IF EXISTS "Allow select on subjects for authenticated users" ON public.subjects;
+DROP POLICY IF EXISTS "Allow insert on subjects for admins and teachers" ON public.subjects;
+DROP POLICY IF EXISTS "Allow update on subjects for admins and teachers" ON public.subjects;
+DROP POLICY IF EXISTS "Allow delete on subjects for admins" ON public.subjects;
+DROP POLICY IF EXISTS "Allow public select on subjects" ON public.subjects;
+DROP POLICY IF EXISTS "Allow admin insert on subjects" ON public.subjects;
+DROP POLICY IF EXISTS "Allow admin update on subjects" ON public.subjects;
+DROP POLICY IF EXISTS "Allow admin delete on subjects" ON public.subjects;
+
+DROP POLICY IF EXISTS "Allow select on classes for authenticated users" ON public.classes;
+DROP POLICY IF EXISTS "Allow insert on classes for admins and teachers" ON public.classes;
+DROP POLICY IF EXISTS "Allow update on classes for admins and teachers" ON public.classes;
+DROP POLICY IF EXISTS "Allow delete on classes for admins" ON public.classes;
+DROP POLICY IF EXISTS "Allow public select on classes" ON public.classes;
+DROP POLICY IF EXISTS "Allow admin insert on classes" ON public.classes;
+DROP POLICY IF EXISTS "Allow admin update on classes" ON public.classes;
+DROP POLICY IF EXISTS "Allow admin delete on classes" ON public.classes;
+
+-- Create Policies for subjects table
+CREATE POLICY "Allow select on subjects for authenticated users" ON public.subjects
+    FOR SELECT
+    USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow insert on subjects for admins and teachers" ON public.subjects
+    FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role IN ('admin', 'teacher')
+        )
+    );
+
+CREATE POLICY "Allow update on subjects for admins and teachers" ON public.subjects
+    FOR UPDATE
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role IN ('admin', 'teacher')
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role IN ('admin', 'teacher')
+        )
+    );
+
+CREATE POLICY "Allow delete on subjects for admins" ON public.subjects
+    FOR DELETE
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role = 'admin'
+        )
+    );
+
+-- Create Policies for classes table
+CREATE POLICY "Allow select on classes for authenticated users" ON public.classes
+    FOR SELECT
+    USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Allow insert on classes for admins and teachers" ON public.classes
+    FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role IN ('admin', 'teacher')
+        )
+    );
+
+CREATE POLICY "Allow update on classes for admins and teachers" ON public.classes
+    FOR UPDATE
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role IN ('admin', 'teacher')
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role IN ('admin', 'teacher')
+        )
+    );
+
+CREATE POLICY "Allow delete on classes for admins" ON public.classes
+    FOR DELETE
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid() 
+              AND profiles.role = 'admin'
+        )
+    );
+
+NOTIFY pgrst, 'reload schema';

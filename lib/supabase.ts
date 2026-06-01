@@ -108,6 +108,32 @@ export const nukeSession = () => {
  * it catches the exception and retries the insert without the 'link' field to ensure
  * notifications are still delivered.
  */
+// Helper to trigger push notifications asynchronously in the background
+const triggerPush = (payloads: any[]) => {
+  try {
+    const baseUrl = typeof window !== 'undefined'
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+
+    fetch(`${baseUrl}/api/notifications/send-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ payloads })
+    }).catch(err => {
+      console.warn('Background web push dispatch failed:', err)
+    })
+  } catch (err) {
+    console.warn('Failed to trigger send-push API:', err)
+  }
+}
+
+/**
+ * Safely inserts notification records. If the database schema is missing the 'link' column,
+ * it catches the exception and retries the insert without the 'link' field to ensure
+ * notifications are still delivered.
+ */
 export const safeInsertNotifications = async (payloads: any | any[]) => {
   const normalized = Array.isArray(payloads) ? payloads : [payloads]
   if (normalized.length === 0) return { data: [], error: null }
@@ -129,10 +155,19 @@ export const safeInsertNotifications = async (payloads: any | any[]) => {
       const strippedPayloads = normalized.map(({ link, ...rest }) => rest)
       
       // Attempt 2: Insert without 'link' column
-      return await supabase
+      const result = await supabase
         .from('notifications')
         .insert(strippedPayloads)
+
+      if (!result.error) {
+        triggerPush(normalized)
+      }
+      return result
     }
+  }
+
+  if (!error) {
+    triggerPush(normalized)
   }
 
   return { data, error }
