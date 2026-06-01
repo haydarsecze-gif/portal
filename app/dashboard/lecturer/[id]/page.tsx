@@ -186,10 +186,10 @@ export default function SubjectDetail() {
         </div>
       </header>
 
-      <div className="p-4 sm:p-6 md:p-8 flex-1 w-full max-w-[1600px] mx-auto">
+      <div className="p-4 sm:p-5 md:p-6 flex-1 w-full max-w-[1600px] mx-auto">
         
         {/* Header Section */}
-        <header className="mb-6 flex flex-col gap-5">
+        <header className="mb-4 flex flex-col gap-3">
           {/* Subject Title and Badges */}
           <div className="flex flex-col gap-3 mt-1">
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-800 uppercase leading-tight flex items-center gap-3">
@@ -208,7 +208,7 @@ export default function SubjectDetail() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-4 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {['curriculum', 'students', 'attendance', 'settings'].map((t) => (
             <button 
               key={t} 

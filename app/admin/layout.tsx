@@ -304,7 +304,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <div className="flex-1 p-4 sm:p-6 md:p-8">
+        <div className="flex-1 p-4 sm:p-5 md:p-6">
           {children}
         </div>
       </main>
@@ -312,7 +312,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Premium Alert/Confirm Dialog Modal */}
       {alertConfig.isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] w-full max-w-sm shadow-2xl p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl p-6 relative flex flex-col gap-6 animate-in zoom-in-95 duration-300">
             <div>
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
                 alertConfig.type === 'error' 
