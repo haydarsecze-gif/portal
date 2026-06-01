@@ -116,8 +116,8 @@ export default function StudentClassroom() {
     isConfirm?: boolean;
   }>({ isOpen: false, title: '', message: '', type: 'info' })
 
-  const fetchClassData = useCallback(async () => {
-    setLoading(true);
+  const fetchClassData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
@@ -401,7 +401,7 @@ export default function StudentClassroom() {
             }
           }
 
-          fetchClassData(); 
+          fetchClassData(true); 
         } catch (err: any) {
           setGeoError("Database issue: " + err.message);
         } finally {
@@ -459,7 +459,7 @@ export default function StudentClassroom() {
         accessToken,
         existingSubmission,
         onComplete: () => {
-          fetchClassData();
+          fetchClassData(true);
         }
       });
     } catch (err: any) {
@@ -483,7 +483,7 @@ export default function StudentClassroom() {
           existingSubmission,
           subjectTrueUUID,
           onComplete: () => {
-            fetchClassData();
+            fetchClassData(true);
           }
         });
       }
@@ -1045,6 +1045,51 @@ export default function StudentClassroom() {
                                 </span>
                               </div>
 
+                              {uploadProgress[selectedItem.title] && (
+                                <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-100/30 dark:border-indigo-900/10 rounded-2xl flex flex-col gap-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                      {uploadProgress[selectedItem.title].status === 'success' && (
+                                        uploadProgress[selectedItem.title].type === 'submission_delete' 
+                                          ? '✅ File Deleted Successfully!' 
+                                          : '✅ Submission Uploaded Successfully!'
+                                      )}
+                                      {uploadProgress[selectedItem.title].status === 'failed' && (
+                                        uploadProgress[selectedItem.title].type === 'submission_delete'
+                                          ? `❌ Delete Failed: ${uploadProgress[selectedItem.title].error}`
+                                          : `❌ Upload Failed: ${uploadProgress[selectedItem.title].error}`
+                                      )}
+                                      {uploadProgress[selectedItem.title].status === 'uploading' && (
+                                        uploadProgress[selectedItem.title].type === 'submission_delete' 
+                                          ? '🗑️ Deleting file from Google Drive...' 
+                                          : `⚡ Syncing to Google Drive... (${uploadProgress[selectedItem.title].progress}%)`
+                                      )}
+                                    </span>
+                                    {uploadProgress[selectedItem.title].status !== 'uploading' && (
+                                      <button 
+                                        type="button"
+                                        onClick={() => setUploadProgress(prev => {
+                                          const copy = { ...prev };
+                                          delete copy[selectedItem.title];
+                                          return copy;
+                                        })} 
+                                        className="text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                                      >
+                                        <X size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="w-full bg-slate-100 dark:bg-slate-900 h-1.5 rounded-full overflow-hidden relative">
+                                    <div 
+                                      className={`h-full bg-indigo-600 rounded-full transition-all duration-300 ${
+                                        uploadProgress[selectedItem.title].status === 'uploading' ? '' : 'smooth-progress-width'
+                                      }`}
+                                      style={{ width: `${uploadProgress[selectedItem.title].progress}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
                               <div className="grid gap-2">
                                 {hasSubmission.file_urls?.map((combined: string, i: number) => {
                                   const [filename, url] = combined.includes(':::') ? combined.split(':::') : [`File ${i+1}`, combined];
@@ -1056,9 +1101,11 @@ export default function StudentClassroom() {
                                       </a>
                                       <div className="flex items-center gap-2">
                                         <a href={url} target="_blank" rel="noreferrer"><Cloud size={14} className="text-slate-300 hover:text-indigo-500 transition-colors" /></a>
-                                        <button type="button" onClick={() => handleRemoveExistingFile(combined)} className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer">
-                                          <Trash2 size={14} />
-                                        </button>
+                                        {isResubmitting && (
+                                          <button type="button" onClick={() => handleRemoveExistingFile(combined)} className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer">
+                                            <Trash2 size={14} />
+                                          </button>
+                                        )}
                                       </div>
                                     </div>
                                   );
