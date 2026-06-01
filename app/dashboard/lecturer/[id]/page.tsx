@@ -205,7 +205,7 @@ export default function SubjectDetail() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full max-w-md bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {['curriculum', 'students', 'attendance', 'settings'].map((t) => (
             <button 
               key={t} 
@@ -231,13 +231,13 @@ export default function SubjectDetail() {
               <Plus size={14} /> Create Curriculum Log
             </button>
             
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {Object.entries(uploadProgress)
                 .filter(([_, progressItem]) => progressItem.type === 'assignment' || progressItem.type === 'material')
                 .map(([tempId, progressItem]) => (
                   <div 
                     key={tempId}
-                    className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col gap-4 glowing-upload-card"
+                    className="bg-white p-4 sm:p-5 rounded-2xl shadow-sm flex flex-col gap-3 glowing-upload-card"
                   >
                     <div className="flex justify-between items-center w-full">
                       <div className="flex items-center gap-4">

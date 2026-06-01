@@ -120,7 +120,7 @@ export default function ContentCard({ item, isAssignment, onRefresh, studentCoun
     <>
       <div className={`bg-white rounded-2xl border transition-all duration-300 ${
         isDeleting ? 'opacity-50 scale-[0.98] border-blue-200 bg-blue-50/10' : 'border-gray-100 hover:border-blue-100 shadow-sm'
-      } mb-4 overflow-hidden`}>
+      } overflow-hidden`}>
         
         <div 
           className={`p-5 flex justify-between items-center ${isDeleting ? 'cursor-not-allowed' : 'cursor-pointer select-none'}`} 

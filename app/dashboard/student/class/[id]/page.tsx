@@ -516,7 +516,7 @@ export default function StudentClassroom() {
         </header>
 
         {/* Tab Navigation Pill Bar */}
-        <nav className="flex w-full max-w-sm bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-6 overflow-x-auto custom-scrollbar whitespace-nowrap">
+        <nav className="flex w-full bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-10 overflow-x-auto custom-scrollbar whitespace-nowrap">
           {[
             { id: 'content', label: 'Coursework' },
             { id: 'attendance', label: 'My Attendance' },
@@ -538,7 +538,7 @@ export default function StudentClassroom() {
 
         {/* Tab 1: Coursework */}
         {activeTab === 'content' && (
-          <div className="grid gap-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <div className="grid gap-3 animate-in fade-in slide-in-from-bottom-3 duration-300">
             {content.length > 0 ? content.map(item => {
               const hasSub = getSub(item.title);
               return (
@@ -549,7 +549,7 @@ export default function StudentClassroom() {
                       setSelectedItem(item);
                     }
                   }} 
-                  className={`bg-white p-6 rounded-[2rem] border border-slate-100/80 shadow-sm flex flex-col gap-4 cursor-pointer premium-hover-card ${
+                  className={`bg-white p-4 sm:p-5 rounded-2xl border border-slate-100/80 shadow-sm flex flex-col gap-3 cursor-pointer premium-hover-card ${
                     uploadProgress[item.title]?.status === 'uploading' ? 'glowing-upload-card' : ''
                   }`}
                 >
