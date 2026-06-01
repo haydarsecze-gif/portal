@@ -180,10 +180,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* MOBILE NAVIGATION TABS */}
-      <nav className="lg:hidden bg-slate-950 border-b border-slate-900 px-4 py-2.5 flex gap-2 overflow-x-auto custom-scrollbar sticky top-[68px] z-40">
+      <nav className="lg:hidden bg-slate-950 border-b border-slate-900 px-4 py-2.5 flex w-full gap-2 sticky top-[68px] z-40">
         <Link 
           href="/admin/lecturers" 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
             pathname === '/admin/lecturers' 
               ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow' 
               : 'text-slate-400 hover:bg-slate-900/50'
@@ -194,7 +194,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Link>
         <Link 
           href="/admin/students" 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
             pathname === '/admin/students' 
               ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow' 
               : 'text-slate-400 hover:bg-slate-900/50'
@@ -205,7 +205,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Link>
         <Link 
           href="/admin/subjects" 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all whitespace-nowrap text-[9px] font-black uppercase tracking-widest cursor-pointer ${
             pathname === '/admin/subjects' 
               ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow' 
               : 'text-slate-400 hover:bg-slate-900/50'
