@@ -31,6 +31,7 @@ export default function SettingsTab({ subject, onRefresh }: any) {
   const [lecturerPhone, setLecturerPhone] = useState('')
 
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -195,6 +196,56 @@ export default function SettingsTab({ subject, onRefresh }: any) {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleDeleteClick = () => {
+    setAlertConfig({
+      isOpen: true,
+      title: 'Delete Subject Completely',
+      message: `Are you sure you want to permanently delete "${subjectName || 'this subject'}"? This will erase all curriculum files, student submissions, and roster data. This action cannot be undone.`,
+      type: 'warning',
+      isConfirm: true,
+      onConfirm: async () => {
+        setDeleting(true);
+        setError(null);
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) throw new Error("Unauthorized: No active session located.");
+
+          const response = await fetch(`/api/subjects/settings?subjectId=${subject.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          });
+
+          const resData = await response.json();
+          if (!response.ok) {
+            throw new Error(resData.error || "Failed to delete classroom from institutional database.");
+          }
+
+          setAlertConfig({
+            isOpen: true,
+            title: 'Subject Deleted',
+            message: 'Classroom has been successfully removed. Redirecting to lecturer dashboard...',
+            type: 'success',
+            onConfirm: () => {
+              window.location.href = '/dashboard/lecturer';
+            }
+          });
+        } catch (err: any) {
+          setError(err.message);
+          setAlertConfig({
+            isOpen: true,
+            title: 'Deletion Failed',
+            message: err.message || 'An error occurred during deletion.',
+            type: 'error'
+          });
+        } finally {
+          setDeleting(false);
+        }
+      }
+    });
   }
 
   return (
@@ -432,6 +483,36 @@ export default function SettingsTab({ subject, onRefresh }: any) {
           </button>
         </div>
       </form>
+
+      {/* Danger Zone */}
+      <div className="bg-red-50/50 dark:bg-rose-950/10 border border-red-100 dark:border-rose-900/30 rounded-[2.5rem] p-8 md:p-10 space-y-6">
+        <div>
+          <h2 className="text-xl font-black text-rose-600 tracking-tight uppercase">Danger Zone</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Critical operations that cannot be undone</p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-red-100/50 dark:border-rose-950/20">
+          <div className="space-y-1">
+            <h4 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Delete Classroom / Subject</h4>
+            <p className="text-xs font-bold text-slate-450 dark:text-slate-500 leading-relaxed max-w-md">
+              Permanently delete this classroom and all of its associated assignments, materials, student enrollment mappings, and attendance logs. This action is irreversible.
+            </p>
+          </div>
+          
+          <button
+            type="button"
+            onClick={handleDeleteClick}
+            disabled={deleting}
+            className="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 text-white disabled:bg-slate-100 disabled:text-slate-400 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-rose-100/20 cursor-pointer flex items-center justify-center gap-2 shrink-0"
+          >
+            {deleting ? (
+              <><Loader2 className="animate-spin" size={14} /> Deleting Subject...</>
+            ) : (
+              'Delete Subject'
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Premium custom alert/confirm glassmorphic modal */}
       {alertConfig.isOpen && (
