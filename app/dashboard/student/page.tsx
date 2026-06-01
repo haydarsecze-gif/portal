@@ -283,15 +283,15 @@ export default function StudentDashboard() {
               <div 
                 key={cls.id} 
                 onClick={() => router.push(`/dashboard/student/class/${cls.id}`)} 
-                className="group bg-bg-card p-8 rounded-[2rem] border border-border-card shadow-sm hover:shadow-xl hover:shadow-indigo-950/5 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[220px]"
+                className="group bg-bg-card p-5 sm:p-6 rounded-3xl border border-border-card shadow-sm hover:shadow-xl hover:shadow-indigo-950/5 hover:-translate-y-1 hover:border-indigo-200 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[190px]"
               >
                 <div>
-                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                    <BookOpen size={20} />
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 bg-indigo-50 text-indigo-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                    <BookOpen size={18} />
                   </div>
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight leading-tight group-hover:text-indigo-600 transition-colors duration-300 mb-3">{cls.name}</h3>
+                  <h3 className="text-base sm:text-lg font-black text-slate-800 uppercase tracking-tight leading-tight group-hover:text-indigo-600 transition-colors duration-300 mb-2">{cls.name}</h3>
                   
-                  <div className="flex flex-col gap-1.5 mt-4">
+                  <div className="flex flex-col gap-1.5 mt-3">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       <Clock size={12} className="text-slate-300" /> Room {cls.room}
                     </div>
@@ -304,7 +304,7 @@ export default function StudentDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-8 pt-5 border-t border-slate-50 flex justify-between items-center shrink-0">
+                <div className="mt-5 pt-4 border-t border-slate-50 flex justify-between items-center shrink-0">
                   <span className="text-[9px] text-slate-300 font-mono">TRACK: {cls.id.substring(0, 8).toUpperCase()}</span>
                   <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 group-hover:translate-x-1 transition-transform flex items-center gap-1">
                     Enter <ArrowRight size={12} />
