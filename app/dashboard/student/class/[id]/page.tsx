@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
@@ -393,7 +393,7 @@ export default function StudentClassroom() {
                     type: "system",
                     link: `/dashboard/lecturer/${subjectTrueUUID}`
                   }));
-                  await supabase.from('notifications').insert(notifInserts);
+                  await safeInsertNotifications(notifInserts);
                 }
               }
             } catch (notifErr) {

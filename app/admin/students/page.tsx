@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { Search, Loader2, UserMinus, GraduationCap, AlertTriangle, RefreshCcw, Pencil, X, Save } from 'lucide-react'
 
 // Relative time formatter: e.g. "1 day ago", "2 months ago", "1 year 2 months ago"
@@ -298,7 +298,7 @@ export default function StudentDirectory() {
         const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
 
         // Notify the target student
-        await supabase.from('notifications').insert({
+        await safeInsertNotifications({
           user_id: studentId,
           title: "Profile Information Updated",
           message: `Your profile details were updated by admin ${adminName} at ${currentTime}.`,
@@ -320,7 +320,7 @@ export default function StudentDirectory() {
             type: "approval",
             link: "/admin/students"
           }))
-          await supabase.from('notifications').insert(adminNotifs)
+          await safeInsertNotifications(adminNotifs)
         }
       } catch (notifErr) {
         console.error("Error creating student profile change notifications:", notifErr)

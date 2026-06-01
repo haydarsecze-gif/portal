@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { UserPlus, X, Search, Mail, User, Loader2, AlertCircle } from 'lucide-react'
 
 export default function StudentTab({ students, classId, subjectName, onRefresh }: any) {
@@ -67,7 +67,7 @@ export default function StudentTab({ students, classId, subjectName, onRefresh }
           }
         }
 
-        await supabase.from('notifications').insert({
+        await safeInsertNotifications({
           user_id: studentId,
           title: "Added to Subject Class",
           message: `You have been added to the subject "${subjectName || 'Classroom'}" by lecturer ${lecturerName}.`,

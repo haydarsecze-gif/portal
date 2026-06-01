@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { Search, Plus, Trash2, X, Check, Calendar, Clock, BookOpen, Pencil, Users, UserCheck, Save, HelpCircle, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
 
 // Institutional attendance status mapping matching requirements
@@ -360,7 +360,7 @@ export default function AdminCurriculum() {
                 type: "approval",
                 link: "/admin/subjects"
               }))
-              await supabase.from('notifications').insert(adminNotifs)
+              await safeInsertNotifications(adminNotifs)
             }
           } catch (err) {
             console.error("Error creating deletion notification:", err)
@@ -458,7 +458,7 @@ export default function AdminCurriculum() {
               type: "approval",
               link: `/dashboard/lecturer/${activeSubjectId}`
             }))
-            await supabase.from('notifications').insert(lecturerNotifs)
+            await safeInsertNotifications(lecturerNotifs)
           }
         }
 
@@ -476,7 +476,7 @@ export default function AdminCurriculum() {
             type: "approval",
             link: "/admin/subjects"
           }))
-          await supabase.from('notifications').insert(adminNotifs)
+          await safeInsertNotifications(adminNotifs)
         }
       } catch (notifErr) {
         console.error("Error creating subject notifications:", notifErr)

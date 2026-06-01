@@ -102,3 +102,38 @@ export const nukeSession = () => {
     console.error('Error clearing cookies:', e)
   }
 }
+
+/**
+ * Safely inserts notification records. If the database schema is missing the 'link' column,
+ * it catches the exception and retries the insert without the 'link' field to ensure
+ * notifications are still delivered.
+ */
+export const safeInsertNotifications = async (payloads: any | any[]) => {
+  const normalized = Array.isArray(payloads) ? payloads : [payloads]
+  if (normalized.length === 0) return { data: [], error: null }
+
+  // Attempt 1: Full insert with 'link' column
+  const { data, error } = await supabase
+    .from('notifications')
+    .insert(normalized)
+
+  if (error) {
+    // Check for missing 'link' column error (Postgres error code '42703' or message check)
+    const isMissingLink = error.code === '42703' || 
+      (error.message && error.message.toLowerCase().includes("'link'") && error.message.toLowerCase().includes("column"))
+
+    if (isMissingLink) {
+      console.warn("Database is missing the 'link' column in public.notifications. Falling back to inserting without link column.")
+      
+      // Strip 'link' key from all payload items
+      const strippedPayloads = normalized.map(({ link, ...rest }) => rest)
+      
+      // Attempt 2: Insert without 'link' column
+      return await supabase
+        .from('notifications')
+        .insert(strippedPayloads)
+    }
+  }
+
+  return { data, error }
+}

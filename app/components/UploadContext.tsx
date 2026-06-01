@@ -1,6 +1,6 @@
 'use client'
 import React, { createContext, useContext, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { Loader2 } from 'lucide-react'
 
 interface UploadProgressItem {
@@ -298,7 +298,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               type: "submission",
               link: `/dashboard/lecturer/${subjectTrueUUID}?select=${assignmentTitle}`
             }));
-            await supabase.from('notifications').insert(notificationsToInsert);
+            await safeInsertNotifications(notificationsToInsert);
           }
         } catch (err) {
           console.error("Error creating notifications:", err);
@@ -866,7 +866,7 @@ export function UploadProvider({ children }: { children: React.ReactNode }) {
               link: linkPath
             }));
 
-            await supabase.from('notifications').insert(notificationsToInsert);
+            await safeInsertNotifications(notificationsToInsert);
           }
         } catch (err) {
           console.error("Error creating coursework notifications:", err);

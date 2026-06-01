@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { X, Upload, Trash2, Loader2, AlertCircle } from 'lucide-react'
 
 interface ContentModalProps {
@@ -489,9 +489,7 @@ export default function ContentModal({
               link: insertedId ? `/dashboard/student/class/${classId}?select=${insertedId}` : `/dashboard/student/class/${classId}`
             }))
 
-            const { error: notifErr } = await supabase
-              .from('notifications')
-              .insert(notificationsToInsert)
+            const { error: notifErr } = await safeInsertNotifications(notificationsToInsert)
 
             if (notifErr) {
               console.error("Failed to insert student notifications:", notifErr)

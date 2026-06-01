@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { Loader2, Mail, Lock, User, KeyRound, ArrowLeft, UserCheck, RefreshCw, HelpCircle, X, Smartphone, Share, PlusSquare } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
@@ -126,7 +126,7 @@ export default function Register() {
                 type: "approval"
               }))
 
-              await supabase.from('notifications').insert(notificationsToInsert)
+              await safeInsertNotifications(notificationsToInsert)
             }
           } catch (err) {
             console.error("Error creating registration notifications for admins:", err)

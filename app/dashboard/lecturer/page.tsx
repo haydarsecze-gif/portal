@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase, nukeSession } from '@/lib/supabase'
+import { supabase, nukeSession, safeInsertNotifications } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
@@ -353,7 +353,7 @@ export default function LecturerDashboard() {
             type: "approval",
             link: "/admin/subjects"
           }))
-          await supabase.from('notifications').insert(adminNotifs)
+          await safeInsertNotifications(adminNotifs)
         }
       } catch (notifErr) {
         console.error('Error creating notifications:', notifErr)

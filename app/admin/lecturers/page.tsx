@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { Check, X, Trash2, Mail, Clock, ShieldAlert, Loader2, Sparkles, UserCheck, Pencil, Save } from 'lucide-react'
 
 // Relative time formatter: e.g. "1 day ago", "2 months ago", "1 year 2 months ago"
@@ -132,7 +132,7 @@ export default function LecturerManagement() {
 
         if (approved) {
           // Notify the lecturer
-          await supabase.from('notifications').insert({
+          await safeInsertNotifications({
             user_id: id,
             title: "Lecturer Account Approved",
             message: `Your lecturer account has been approved by ${adminName} at ${currentTime}.`,
@@ -154,7 +154,7 @@ export default function LecturerManagement() {
               type: "approval",
               link: "/admin/lecturers"
             }))
-            await supabase.from('notifications').insert(adminNotifs)
+            await safeInsertNotifications(adminNotifs)
           }
         }
       } catch (err) {
@@ -244,7 +244,7 @@ export default function LecturerManagement() {
                 type: "approval",
                 link: "/admin/lecturers"
               }))
-              await supabase.from('notifications').insert(adminNotifs)
+              await safeInsertNotifications(adminNotifs)
             }
           } catch (err) {
             console.error("Error creating deletion notification:", err)
