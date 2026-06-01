@@ -129,6 +129,66 @@ export async function POST(req: Request) {
     // 2. Resolve Upload Target Parent (Standard student folder, or new resubmit folder if resubmitting)
     let uploadParentFolderId = studentFolderId;
  
+    console.log("=== API UPLOAD CALL ===");
+    console.log("isResubmission:", isResubmission);
+    console.log("resubmitFolderName:", resubmitFolderName);
+    console.log("oldFileUrls:", oldFileUrls);
+
+    // Robust database lookup fallback for existing submission file URLs
+    let dbFileUrls: string[] = [];
+    if (isResubmission) {
+      try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+          auth: { persistSession: false }
+        });
+
+        // 1. Resolve student ID
+        let resolvedStudentId = null;
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('full_name', studentName)
+          .eq('role', 'student')
+          .maybeSingle();
+
+        if (prof?.id) {
+          resolvedStudentId = prof.id;
+        } else {
+          const { data: stud } = await supabase
+            .from('students')
+            .select('id')
+            .eq('name', studentName)
+            .maybeSingle();
+          if (stud?.id) resolvedStudentId = stud.id;
+        }
+
+        // 2. Resolve assignment class_id and title
+        const { data: assignment } = await supabase
+          .from('assignments')
+          .select('class_id, title')
+          .eq('folder_id', targetFolderId)
+          .maybeSingle();
+
+        if (resolvedStudentId && assignment) {
+          const { data: existingSub } = await supabase
+            .from('submissions')
+            .select('file_urls')
+            .eq('class_id', assignment.class_id)
+            .eq('student_id', resolvedStudentId)
+            .eq('assignment_name', assignment.title)
+            .maybeSingle();
+          if (existingSub && existingSub.file_urls) {
+            dbFileUrls = existingSub.file_urls;
+            console.log("Database lookup succeeded! Found old files:", dbFileUrls);
+          }
+        }
+      } catch (dbErr) {
+        console.error("Database query failed inside drive upload API:", dbErr);
+      }
+    }
+
     if (isResubmission && resubmitFolderName) {
       try {
         const resubmitListResponse = await drive.files.list({
@@ -139,6 +199,7 @@ export async function POST(req: Request) {
         });
  
         let resubmitFolderId = resubmitListResponse.data.files?.[0]?.id;
+        console.log("Found existing resubmitFolderId:", resubmitFolderId);
  
         if (!resubmitFolderId) {
           const folderRes = await drive.files.create({
@@ -156,8 +217,9 @@ export async function POST(req: Request) {
           });
 
           // Copy old files if they exist and are passed
-          if (oldFileUrls && Array.isArray(oldFileUrls) && oldFileUrls.length > 0) {
-            for (const url of oldFileUrls) {
+          const filesToCopy = dbFileUrls.length > 0 ? dbFileUrls : (oldFileUrls || []);
+          if (filesToCopy && Array.isArray(filesToCopy) && filesToCopy.length > 0) {
+            for (const url of filesToCopy) {
               const fileId = extractFileIdFromUrl(url);
               if (fileId) {
                 try {
@@ -170,6 +232,7 @@ export async function POST(req: Request) {
                     },
                     supportsAllDrives: true
                   });
+                  console.log(`Successfully copied file ${originalName} (${fileId}) to resubmit folder.`);
                 } catch (copyErr) {
                   console.error(`Failed to copy old file ${fileId} to resubmit folder:`, copyErr);
                 }
