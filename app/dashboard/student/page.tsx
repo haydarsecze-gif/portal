@@ -210,8 +210,9 @@ export default function StudentDashboard() {
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100 hidden sm:block">
-              Student Dashboard Console
+            <span className="font-black text-[10px] uppercase tracking-widest text-slate-850 dark:text-slate-100">
+              <span className="hidden sm:inline">Student Dashboard Console</span>
+              <span className="sm:hidden">Portal</span>
             </span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3">
