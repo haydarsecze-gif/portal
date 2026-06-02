@@ -107,28 +107,47 @@ self.addEventListener('notificationclick', (event) => {
 
 // Listen to push events dispatched from the server
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
+  let promise = Promise.resolve();
 
-  try {
-    const payload = event.data.json();
-    const title = payload.title || 'Student Portal Alert';
-    
-    const options = {
-      body: payload.message || '',
-      icon: '/icon.svg',
-      badge: '/icon.svg',
-      vibrate: [100, 50, 100], // Double-buzz to alert the user
-      tag: payload.id || 'student-portal-alert',
-      renotify: true,
-      data: {
-        url: payload.link || '/'
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      const title = payload.title || 'Student Portal Alert';
+      
+      const options = {
+        body: payload.message || '',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
+        vibrate: [100, 50, 100], // Double-buzz to alert the user
+        tag: payload.id || 'student-portal-alert',
+        renotify: true,
+        data: {
+          url: payload.link || '/'
+        }
+      };
+
+      promise = self.registration.showNotification(title, options);
+    } catch (err) {
+      console.error('Error parsing push data:', err);
+      // Robust fallback if the payload is not JSON
+      try {
+        const text = event.data.text() || 'New notification received.';
+        promise = self.registration.showNotification('Student Portal Alert', {
+          body: text,
+          icon: '/icon.svg',
+          badge: '/icon.svg',
+          data: { url: '/' }
+        });
+      } catch (e) {
+        promise = self.registration.showNotification('Student Portal Alert', {
+          body: 'New alert received.',
+          icon: '/icon.svg',
+          badge: '/icon.svg',
+          data: { url: '/' }
+        });
       }
-    };
-
-    event.waitUntil(
-      self.registration.showNotification(title, options)
-    );
-  } catch (err) {
-    console.error('Error handling Web Push event in Service Worker:', err);
+    }
   }
+
+  event.waitUntil(promise);
 });

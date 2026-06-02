@@ -86,7 +86,13 @@ export async function POST(req: Request) {
             ? JSON.parse(row.subscription)
             : row.subscription
 
-          await webpush.sendNotification(subscriptionObj, pushPayload)
+          const options = {
+            TTL: 86400, // 24 hours (time-to-live in seconds)
+            headers: {
+              'Urgency': 'high' // Force high urgency to wake up swiped away/sleeping mobile devices
+            }
+          }
+          await webpush.sendNotification(subscriptionObj, pushPayload, options)
           totalDispatched++
         } catch (err: any) {
           // Status 410 (Gone) or 404 (Not Found) means the push service has expired or deleted the token
