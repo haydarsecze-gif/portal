@@ -206,7 +206,7 @@ export default function StudentDashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-bg-portal flex flex-col font-sans select-none animate-in fade-in duration-300 text-text-title overflow-x-hidden">
+    <div className="h-[100dvh] bg-bg-portal flex flex-col font-sans select-none animate-in fade-in duration-300 text-text-title overflow-hidden">
       {/* Sticky top header bar */}
       <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/50 dark:border-slate-800/50 backdrop-blur-md shadow-xs">
         <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-8 md:px-12 py-3 sm:py-4 flex items-center justify-between">
@@ -246,7 +246,7 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      <div className="p-4 sm:p-5 md:p-6 flex-1 w-full max-w-[1600px] mx-auto">
+      <div className="p-4 sm:p-5 md:p-6 flex-1 w-full max-w-[1600px] mx-auto overflow-y-auto custom-scrollbar">
         
         {/* Modern radial gradient greeting block */}
         <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-3xl p-5 md:p-6 mb-5 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

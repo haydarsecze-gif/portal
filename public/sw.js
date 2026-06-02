@@ -35,78 +35,45 @@ self.addEventListener('fetch', (e) => {
   }
 
   // Bypass service worker caching entirely in local development (localhost)
-  // to prevent stale hot-reload chunk crashes.
   if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
     return;
   }
 
   const url = new URL(e.request.url);
 
-  // 2. Bypass cache entirely for Supabase endpoints, NextJS hot-reload, and API routes
-  if (
-    url.origin.includes('supabase.co') || 
-    url.pathname.startsWith('/_supabase') || 
-    url.pathname.startsWith('/api/') || 
-    url.pathname.includes('_next/webpack-hmr')
-  ) {
-    return;
-  }
+  // 2. Only cache static public assets (icons, manifest)
+  const isStaticAsset = url.pathname === '/icon.svg' || 
+                        url.pathname === '/manifest.json' || 
+                        url.pathname === '/favicon.ico' || 
+                        url.pathname.startsWith('/icons/');
 
-  // 3. Stale-While-Revalidate for Next.js assets, routes, and dynamic pages
-  // This achieves sub-100ms loading speeds on cellular networks, while keeping code fresh in the background
-  if (
-    url.pathname.includes('_next/') || 
-    url.pathname === '/' || 
-    url.pathname.startsWith('/auth') || 
-    url.pathname.startsWith('/dashboard') || 
-    url.pathname.startsWith('/admin')
-  ) {
+  if (isStaticAsset) {
     e.respondWith(
       caches.match(e.request).then((cachedResponse) => {
-        const fetchPromise = fetch(e.request)
-          .then((response) => {
-            if (response.status === 200) {
-              const responseClone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(e.request, responseClone);
-              });
-            }
-            return response;
-          })
-          .catch(() => {
-            // Silently catch background network failures
+        return cachedResponse || fetch(e.request).then((response) => {
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(e.request, responseClone);
+            });
+          }
+          return response;
+        }).catch(() => {
+          return new Response('Offline: Limkokwing Network Connection Interrupted.', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({ 'Content-Type': 'text/plain' })
           });
-
-        return cachedResponse || fetchPromise || new Response('Offline: Limkokwing Network Connection Interrupted.', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({ 'Content-Type': 'text/plain' })
         });
       })
     );
     return;
   }
 
-  // 4. Cache First for static public files (manifest, logo, icons)
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      return cachedResponse || fetch(e.request).then((response) => {
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseClone);
-          });
-        }
-        return response;
-      }).catch(() => {
-        return new Response('Offline: Limkokwing Network Connection Interrupted.', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({ 'Content-Type': 'text/plain' })
-        });
-      });
-    })
-  );
+  // 3. For all other files (Next.js scripts, API routes, Supabase, page HTML, etc.), 
+  // do a clean, direct network pass-through to prevent any stale cache or loading hangs!
+  // This guarantees that the app always loads the fresh live version when reopened.
+  return;
 });
 
 // Handle notification click event to open/focus the PWA window and navigate to the redirect link

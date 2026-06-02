@@ -146,7 +146,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-[#F8FAFC] font-sans select-none">
+    <div className="flex flex-col lg:flex-row h-[100dvh] bg-[#F8FAFC] font-sans select-none overflow-hidden">
       
       {/* MOBILE HEADER */}
       <header className="lg:hidden bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
