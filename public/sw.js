@@ -118,9 +118,10 @@ self.addEventListener('push', (event) => {
         body: payload.message || '',
         icon: '/icon.svg',
         badge: '/icon.svg',
-        vibrate: [100, 50, 100], // Double-buzz to alert the user
+        vibrate: [300, 100, 300, 100, 300], // Stronger triple-buzz to wake device & grab attention
         tag: payload.id || 'student-portal-alert',
         renotify: true,
+        requireInteraction: true, // Force heads-up popup & persist on lock screen
         data: {
           url: payload.link || '/'
         }
@@ -136,6 +137,8 @@ self.addEventListener('push', (event) => {
           body: text,
           icon: '/icon.svg',
           badge: '/icon.svg',
+          vibrate: [300, 100, 300],
+          requireInteraction: true,
           data: { url: '/' }
         });
       } catch (e) {
@@ -143,6 +146,8 @@ self.addEventListener('push', (event) => {
           body: 'New alert received.',
           icon: '/icon.svg',
           badge: '/icon.svg',
+          vibrate: [300, 100, 300],
+          requireInteraction: true,
           data: { url: '/' }
         });
       }
