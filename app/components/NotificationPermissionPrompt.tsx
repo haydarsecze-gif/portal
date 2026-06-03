@@ -257,7 +257,7 @@ export default function NotificationPermissionPrompt() {
                     1
                   </div>
                   <p className="text-[10px] font-bold text-slate-600 dark:text-slate-350 leading-relaxed uppercase tracking-tight">
-                    Look at the **URL bar** at the bottom of your browser screen.
+                    Look at the <span className="font-extrabold text-indigo-600 dark:text-indigo-400">URL bar</span> at the bottom of your browser screen.
                   </p>
                 </div>
                 
@@ -266,7 +266,7 @@ export default function NotificationPermissionPrompt() {
                     2
                   </div>
                   <p className="text-[10px] font-bold text-slate-600 dark:text-slate-350 leading-relaxed uppercase tracking-tight">
-                    Tap the **bell with a line through it (🚫 🔔)** icon on the left of the website domain.
+                    Tap the <span className="font-extrabold text-indigo-600 dark:text-indigo-400">bell icon (🚫 🔔)</span> on the left of the website domain.
                   </p>
                 </div>
 
@@ -275,8 +275,20 @@ export default function NotificationPermissionPrompt() {
                     3
                   </div>
                   <p className="text-[10px] font-bold text-slate-600 dark:text-slate-350 leading-relaxed uppercase tracking-tight">
-                    Change notifications from **Blocked** to **ALLOWED** (or slide the switch ON).
+                    Change notifications from <span className="font-extrabold text-red-500">Blocked</span> to <span className="font-extrabold text-emerald-500">ALLOWED</span> (or slide the switch ON).
                   </p>
+                </div>
+
+                <div className="flex items-start gap-3 bg-amber-500/5 dark:bg-amber-500/5 border border-amber-500/10 p-3.5 rounded-2xl">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center text-[10px] font-black shrink-0">
+                    💡
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[9px] font-black uppercase text-amber-700 dark:text-amber-500 tracking-wider">Android Background Settings</p>
+                    <p className="text-[9px] font-bold text-amber-600 dark:text-amber-500/90 leading-normal mt-0.5 uppercase tracking-tight">
+                      If you swipe close the app, Android may block background notifications. Go to Phone Settings → Apps → Student Portal → Battery, and choose &quot;Unrestricted&quot; (No Restrictions).
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
