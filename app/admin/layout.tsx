@@ -7,7 +7,6 @@ import { ShieldCheck, UserCheck, Users, BookOpen, LogOut, RefreshCw, Loader2 } f
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
-import NotificationPermissionPrompt from '@/app/components/NotificationPermissionPrompt'
 import { useUpload } from '@/app/components/UploadContext'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -306,7 +305,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         <div className="flex-1 p-4 sm:p-5 md:p-6">
-          <NotificationPermissionPrompt />
           {children}
         </div>
       </main>

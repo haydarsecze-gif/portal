@@ -26,8 +26,8 @@ export default function PWAClient() {
           .then((registration) => {
             console.log('PWA Service Worker registered successfully:', registration.scope);
             
-            // 2. Perform global push subscription sync for all saved accounts if permission is granted
-            if ('PushManager' in window && Notification.permission === 'granted') {
+            // 2. Perform global push subscription sync for all saved accounts
+            const syncPush = async () => {
               const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
               if (publicVapidKey) {
                 navigator.serviceWorker.ready.then(async (reg) => {
@@ -67,6 +67,21 @@ export default function PWAClient() {
                   } catch (err) {
                     console.warn('Global push subscription sync failed:', err);
                   }
+                });
+              }
+            };
+
+            if ('PushManager' in window) {
+              if (Notification.permission === 'granted') {
+                syncPush();
+              } else if (Notification.permission === 'default') {
+                // Automatically request permission on page load
+                Notification.requestPermission().then((perm) => {
+                  if (perm === 'granted') {
+                    syncPush();
+                  }
+                }).catch((err) => {
+                  console.warn('Auto notification permission request error:', err);
                 });
               }
             }

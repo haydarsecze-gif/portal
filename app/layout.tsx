@@ -4,6 +4,7 @@ import "./globals.css";
 import PWAClient from "./components/PWAClient";
 import InstallApp from "./components/InstallApp";
 import GlobalErrorReporter from "./components/GlobalErrorReporter";
+import NotificationPermissionPrompt from "./components/NotificationPermissionPrompt";
 import { UploadProvider } from "./components/UploadContext";
 
 const geistSans = Geist({
@@ -93,6 +94,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-bg-portal text-text-title transition-colors duration-300">
         <GlobalErrorReporter />
         <PWAClient />
+        <NotificationPermissionPrompt />
         <UploadProvider>
           {children}
         </UploadProvider>

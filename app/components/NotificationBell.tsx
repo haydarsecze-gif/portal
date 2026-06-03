@@ -419,33 +419,60 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
 
           {/* System Notification Permission Request Banner */}
           {typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== 'granted' && (
-            <div className="bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100/30 dark:border-indigo-900/30 p-3.5 rounded-2xl flex flex-col gap-2 mb-1 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="flex items-center gap-1.5 text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                <Bell size={12} className="animate-bounce" /> Enable Lock Screen Alerts
+            <div className={`p-3.5 rounded-2xl flex flex-col gap-2 mb-1 animate-in fade-in slide-in-from-top-2 duration-300 ${
+              Notification.permission === 'denied'
+                ? 'bg-red-50 dark:bg-red-950/20 border border-red-100/30 dark:border-red-900/30'
+                : 'bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100/30 dark:border-indigo-900/30'
+            }`}>
+              <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider ${
+                Notification.permission === 'denied' ? 'text-red-650 dark:text-red-400' : 'text-indigo-600 dark:text-indigo-400'
+              }`}>
+                {Notification.permission === 'denied' ? (
+                  <>
+                    <ShieldAlert size={12} className="animate-pulse" /> System Alerts Blocked 🚫
+                  </>
+                ) : (
+                  <>
+                    <Bell size={12} className="animate-bounce" /> Enable Lock Screen Alerts
+                  </>
+                )}
               </div>
               <p className="text-[8px] font-bold text-slate-500 dark:text-slate-450 leading-normal uppercase tracking-wide">
-                Get instant notifications on your system & lock screen when coursework is uploaded!
+                {Notification.permission === 'denied'
+                  ? 'Notifications are blocked in your browser settings. Tap below to see how to unblock them.'
+                  : 'Get instant notifications on your system & lock screen when coursework is uploaded!'}
               </p>
               <button
                 type="button"
                 onClick={async () => {
                   try {
-                    const permission = await Notification.requestPermission()
-                    if (permission === 'granted' && userId) {
+                    if (Notification.permission === 'denied') {
+                      window.dispatchEvent(new Event('trigger-notification-prompt'))
+                      return
+                    }
+
+                    const perm = await Notification.requestPermission()
+                    if (perm === 'granted' && userId) {
                       await syncPushSubscription(userId)
                       triggerNotification({
                         title: 'System Alerts Activated! 🎉',
                         message: 'You will now receive lock screen and instant device notifications.',
                         type: 'system'
                       })
+                    } else if (perm === 'denied') {
+                      window.dispatchEvent(new Event('trigger-notification-prompt'))
                     }
                   } catch (err) {
                     console.error('Error enabling lock screen alerts:', err)
                   }
                 }}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-3 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all cursor-pointer text-center shadow-sm"
+                className={`py-2 px-3 rounded-xl font-black text-[8px] uppercase tracking-widest transition-all cursor-pointer text-center shadow-sm ${
+                  Notification.permission === 'denied'
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                }`}
               >
-                Allow Lock Screen Alerts
+                {Notification.permission === 'denied' ? 'Unblock Alerts' : 'Allow Lock Screen Alerts'}
               </button>
             </div>
           )}
