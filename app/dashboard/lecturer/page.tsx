@@ -6,6 +6,7 @@ import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Sett
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
+import NotificationPermissionPrompt from '@/app/components/NotificationPermissionPrompt'
 import { useUpload } from '@/app/components/UploadContext'
 
 // Helper function to format time (e.g., 08:00 -> 8:00 AM)
@@ -443,6 +444,7 @@ export default function LecturerDashboard() {
       </header>
 
       <div className="p-4 sm:p-5 md:p-6 flex-1 w-full max-w-[1600px] mx-auto overflow-y-auto custom-scrollbar">
+        <NotificationPermissionPrompt />
         
         {/* Modern radial gradient heading block */}
         <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-3xl p-5 md:p-6 mb-5 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
