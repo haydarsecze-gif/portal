@@ -1,6 +1,6 @@
 const CACHE_NAME = 'student-portal-v3';
 const STATIC_ASSETS = [
-  '/icon.svg',
+  '/icon.png',
   '/manifest.json'
 ];
 
@@ -42,7 +42,7 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
   // 2. Only cache static public assets (icons, manifest)
-  const isStaticAsset = url.pathname === '/icon.svg' || 
+  const isStaticAsset = url.pathname === '/icon.png' || 
                         url.pathname === '/manifest.json' || 
                         url.pathname === '/favicon.ico' || 
                         url.pathname.startsWith('/icons/');
@@ -116,8 +116,8 @@ self.addEventListener('push', (event) => {
       
       const options = {
         body: payload.message || '',
-        icon: '/icon.svg',
-        badge: '/icon.svg',
+        icon: '/icon.png',
+        badge: '/icon.png',
         vibrate: [300, 100, 300, 100, 300], // Stronger triple-buzz to wake device & grab attention
         tag: payload.id || 'student-portal-alert',
         renotify: true,
@@ -135,8 +135,8 @@ self.addEventListener('push', (event) => {
         const text = event.data.text() || 'New notification received.';
         promise = self.registration.showNotification('Student Portal Alert', {
           body: text,
-          icon: '/icon.svg',
-          badge: '/icon.svg',
+          icon: '/icon.png',
+          badge: '/icon.png',
           vibrate: [300, 100, 300],
           requireInteraction: true,
           data: { url: '/' }
@@ -144,8 +144,8 @@ self.addEventListener('push', (event) => {
       } catch (e) {
         promise = self.registration.showNotification('Student Portal Alert', {
           body: 'New alert received.',
-          icon: '/icon.svg',
-          badge: '/icon.svg',
+          icon: '/icon.png',
+          badge: '/icon.png',
           vibrate: [300, 100, 300],
           requireInteraction: true,
           data: { url: '/' }
