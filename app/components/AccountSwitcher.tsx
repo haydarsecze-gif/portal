@@ -161,18 +161,12 @@ export default function AccountSwitcher({ align = 'right' }: { align?: 'left' | 
   }
 
   const handleAddNewAccount = async () => {
-    if (currentUser?.id) {
-      await performUnsubscribe(currentUser.id)
-    }
     await supabase.auth.signOut()
     nukeSession() // Completely nuke leftover cookies/tokens
     window.location.replace('/auth/login')
   }
 
   const handleLogout = async () => {
-    if (currentUser?.id) {
-      await performUnsubscribe(currentUser.id)
-    }
     await supabase.auth.signOut()
     nukeSession() // Completely nuke leftover cookies/tokens
     window.location.replace('/auth/login')

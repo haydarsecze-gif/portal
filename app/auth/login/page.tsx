@@ -276,8 +276,31 @@ export default function Login() {
     }
   }
 
-  const handleRemoveAccount = (emailToRemove: string, e: React.MouseEvent) => {
+  const handleRemoveAccount = async (emailToRemove: string, e: React.MouseEvent) => {
     e.stopPropagation()
+    const target = savedAccounts.find(a => a?.email && emailToRemove && a.email.toLowerCase() === emailToRemove.toLowerCase())
+    if (target && target.userId) {
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const reg = await navigator.serviceWorker.ready
+          const sub = await reg.pushManager.getSubscription()
+          if (sub) {
+            await fetch('/api/notifications/unsubscribe', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                userId: target.userId,
+                endpoint: sub.endpoint
+              })
+            })
+          }
+        } catch (err) {
+          console.warn('Failed to delete push subscription on removal:', err)
+        }
+      }
+    }
     const updated = savedAccounts.filter(a => a?.email && emailToRemove && a.email.toLowerCase() !== emailToRemove.toLowerCase())
     setSavedAccounts(updated)
     localStorage.setItem('portal_saved_accounts', JSON.stringify(updated))
