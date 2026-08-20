@@ -51,6 +51,43 @@
   --color-text-title: var(--text-title);
   --color-text-desc: var(--text-desc);
   --color-text-muted: var(--text-muted);
+
+  /* Redefine all Tailwind Indigo/Blue/Purple system colors to map to our custom warm-neutral variables */
+  --color-indigo-50: var(--purple-light);
+  --color-indigo-100: var(--purple-border);
+  --color-indigo-200: var(--purple-border);
+  --color-indigo-300: var(--text-muted);
+  --color-indigo-400: var(--text-muted);
+  --color-indigo-500: var(--purple-accent);
+  --color-indigo-600: var(--purple-accent);
+  --color-indigo-700: var(--purple-accent-hover);
+  --color-indigo-800: var(--purple-accent-hover);
+  --color-indigo-900: var(--bg-portal);
+  --color-indigo-950: var(--bg-portal);
+
+  --color-blue-50: var(--purple-light);
+  --color-blue-100: var(--purple-border);
+  --color-blue-200: var(--purple-border);
+  --color-blue-300: var(--text-muted);
+  --color-blue-400: var(--text-muted);
+  --color-blue-500: var(--purple-accent);
+  --color-blue-600: var(--purple-accent);
+  --color-blue-700: var(--purple-accent-hover);
+  --color-blue-800: var(--purple-accent-hover);
+  --color-blue-900: var(--bg-portal);
+  --color-blue-950: var(--bg-portal);
+
+  --color-purple-50: var(--purple-light);
+  --color-purple-100: var(--purple-border);
+  --color-purple-200: var(--purple-border);
+  --color-purple-300: var(--text-muted);
+  --color-purple-400: var(--text-muted);
+  --color-purple-500: var(--purple-accent);
+  --color-purple-600: var(--purple-accent);
+  --color-purple-700: var(--purple-accent-hover);
+  --color-purple-800: var(--purple-accent-hover);
+  --color-purple-900: var(--bg-portal);
+  --color-purple-950: var(--bg-portal);
   
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -300,6 +337,21 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(128, 125, 125, 0.5) !important; /* Mustang 50% */
+}
+
+/* 6. Explicit Gradient Button override rules (guarantees monochrome/neutral rendering) */
+button.bg-gradient-to-r, button.bg-gradient-to-br, button.bg-gradient-to-tr {
+  background: linear-gradient(135deg, #5C5551 0%, #312E2E 100%) !important; /* Saddle to Rein */
+  color: #FFFFFF !important;
+  border: none !important;
+}
+.dark button.bg-gradient-to-r, .dark button.bg-gradient-to-br, .dark button.bg-gradient-to-tr {
+  background: #FFFFFF !important; /* High contrast White in dark mode */
+  color: #010101 !important; /* Caviar text */
+  border: none !important;
+}
+.dark button.bg-gradient-to-r *, .dark button.bg-gradient-to-br *, .dark button.bg-gradient-to-tr * {
+  color: #010101 !important;
 }
 
 /* ==========================================================================

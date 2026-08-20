@@ -169,7 +169,7 @@ export default function Home() {
 
         <button
           onClick={() => setShowIosInstructions(true)}
-          className="mt-6 text-[9px] font-black text-indigo-400/80 hover:text-indigo-300 uppercase tracking-widest cursor-pointer underline decoration-indigo-500/20 hover:decoration-indigo-500 transition duration-300 block mx-auto"
+          className="mt-6 text-[9px] font-black text-slate-450 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 uppercase tracking-widest cursor-pointer underline decoration-slate-500/20 hover:decoration-slate-400 transition duration-300 block mx-auto"
         >
           Want it as an app on iOS?
         </button>
