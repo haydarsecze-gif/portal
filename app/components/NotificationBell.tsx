@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, supabaseRaw } from '@/lib/supabase'
-import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X } from 'lucide-react'
+import { Bell, BookOpen, FileText, CheckSquare, ShieldAlert, Trash2, X, Zap } from 'lucide-react'
 
 // Helper function to convert base64 VAPID public key to Uint8Array
 function urlBase64ToUint8Array(base64String: string) {
@@ -429,7 +429,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
               }`}>
                 {Notification.permission === 'denied' ? (
                   <>
-                    <ShieldAlert size={12} className="animate-pulse" /> System Alerts Blocked 🚫
+                    <ShieldAlert size={12} className="animate-pulse" /> System Alerts Blocked
                   </>
                 ) : (
                   <>
@@ -455,7 +455,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
                     if (perm === 'granted' && userId) {
                       await syncPushSubscription(userId)
                       triggerNotification({
-                        title: 'System Alerts Activated! 🎉',
+                        title: 'System Alerts Activated! ',
                         message: 'You will now receive lock screen and instant device notifications.',
                         type: 'system'
                       })
@@ -551,7 +551,7 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
           </div>
           <div className="flex-1 min-w-0 pr-2">
             <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-[8px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 rounded-md mb-1 border border-indigo-100/30">
-              ⚡ Alert
+              <Zap size={8} className="fill-indigo-500 text-indigo-500 animate-pulse" /> Alert
             </span>
             <h5 className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-tight">{activeToast.title}</h5>
             <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 leading-normal break-words">{activeToast.message}</p>

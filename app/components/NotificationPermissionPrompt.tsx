@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Bell, ShieldAlert, X } from 'lucide-react'
+import { Bell, ShieldAlert, X, Lightbulb } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 export default function NotificationPermissionPrompt() {
@@ -266,7 +266,7 @@ export default function NotificationPermissionPrompt() {
                     2
                   </div>
                   <p className="text-[10px] font-bold text-slate-600 dark:text-slate-350 leading-relaxed uppercase tracking-tight">
-                    Tap the <span className="font-extrabold text-indigo-600 dark:text-indigo-400">bell icon (🚫 🔔)</span> on the left of the website domain.
+                    Tap the <span className="font-extrabold text-indigo-600 dark:text-indigo-400">bell / site settings icon</span> on the left of the website domain.
                   </p>
                 </div>
 
@@ -280,8 +280,8 @@ export default function NotificationPermissionPrompt() {
                 </div>
 
                 <div className="flex items-start gap-3 bg-amber-500/5 dark:bg-amber-500/5 border border-amber-500/10 p-3.5 rounded-2xl">
-                  <div className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center text-[10px] font-black shrink-0">
-                    💡
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                    <Lightbulb size={12} className="text-amber-600 fill-amber-500/20" />
                   </div>
                   <div className="text-left">
                     <p className="text-[9px] font-black uppercase text-amber-700 dark:text-amber-500 tracking-wider">Android Background Settings</p>
