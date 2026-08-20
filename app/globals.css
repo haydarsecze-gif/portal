@@ -60,6 +60,33 @@
   --color-text-desc: var(--text-desc);
   --color-text-muted: var(--text-muted);
 
+  /* Redefine default Tailwind Slate & Gray scales to align with our custom warm-neutral variables */
+  --color-slate-50: var(--purple-light);
+  --color-slate-100: var(--purple-border);
+  --color-slate-200: var(--purple-border);
+  --color-slate-300: var(--text-muted);
+  --color-slate-400: var(--text-muted);
+  --color-slate-505: var(--text-muted);
+  --color-slate-500: var(--text-muted);
+  --color-slate-600: var(--text-desc);
+  --color-slate-700: var(--text-desc);
+  --color-slate-800: var(--text-title);
+  --color-slate-900: var(--text-title);
+  --color-slate-950: var(--background);
+
+  --color-gray-50: var(--purple-light);
+  --color-gray-100: var(--purple-border);
+  --color-gray-200: var(--purple-border);
+  --color-gray-300: var(--text-muted);
+  --color-gray-400: var(--text-muted);
+  --color-gray-500: var(--text-muted);
+  --color-gray-600: var(--text-desc);
+  --color-gray-700: var(--text-desc);
+  --color-gray-850: var(--text-title);
+  --color-gray-800: var(--text-title);
+  --color-gray-900: var(--text-title);
+  --color-gray-950: var(--background);
+
   /* Redefine all Tailwind Indigo/Blue/Purple system colors to map to our custom warm-neutral variables */
   --color-indigo-50: var(--purple-light);
   --color-indigo-100: var(--purple-border);
