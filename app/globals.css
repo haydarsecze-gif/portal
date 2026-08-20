@@ -210,49 +210,96 @@ body {
 }
 
 /* ==========================================================================
-   GLOBAL ACCENT & EXQUISITE PURPLE THEME MAPPINGS
+   GLOBAL ACCENT & EXQUISITE WARM-NEUTRAL THEME OVERRIDES
    ========================================================================== */
 
-/* 1. Purple accent texts */
-.text-indigo-600, .text-indigo-500, .text-blue-600, .text-indigo-400, .text-purple-600 {
-  color: var(--purple-accent) !important;
+/* 1. Accent/Indigo Text Color Overrides */
+.text-indigo-600, .text-indigo-500, .text-blue-600, .text-indigo-400, .text-purple-600, .text-indigo-300, .text-indigo-305 {
+  color: #312E2E !important; /* Rein - Elegant warm dark gray for light mode */
 }
-.dark .text-indigo-600, .dark .text-indigo-500, .dark .text-blue-600, .dark .text-indigo-400, .dark .text-purple-600, .dark .text-indigo-300 {
-  color: #C084FC !important; /* Extremely high contrast glowing purple */
+.dark .text-indigo-600, 
+.dark .text-indigo-500, 
+.dark .text-blue-600, 
+.dark .text-indigo-400, 
+.dark .text-purple-600, 
+.dark .text-indigo-300, 
+.dark .text-indigo-305 {
+  color: #FFFFFF !important; /* High-contrast white for dark mode highlights */
 }
 
-/* 2. Purple active background badges and primary CTA buttons */
-.bg-indigo-600, .bg-blue-600, .bg-indigo-500, .bg-purple-600,
-.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover, .hover\:from-indigo-500:hover,
-.bg-gradient-to-r.from-indigo-600.to-blue-600 {
-  background: var(--purple-accent) !important;
+/* 2. Accent Background Overrides (Primary buttons / badges / active selectors) */
+.bg-indigo-600, .bg-blue-600, .bg-indigo-500, .bg-purple-600, .bg-indigo-600\/90, .bg-indigo-500\/10 {
+  background-color: #5C5551 !important; /* Saddle background for light mode */
   color: #FFFFFF !important;
 }
-.bg-gradient-to-r.from-indigo-600.to-blue-600 {
-  background: linear-gradient(135deg, var(--purple-accent) 0%, #A855F7 100%) !important;
+.dark .bg-indigo-600, 
+.dark .bg-blue-600, 
+.dark .bg-indigo-500, 
+.dark .bg-purple-600,
+.dark .bg-indigo-600\/90,
+.dark .bg-indigo-500\/10 {
+  background-color: #FFFFFF !important; /* High-contrast White background in dark mode */
+  color: #010101 !important; /* Caviar text for white buttons */
+}
+.dark .bg-indigo-600 *, 
+.dark .bg-blue-600 *, 
+.dark .bg-indigo-500 *, 
+.dark .bg-purple-600 * {
+  color: #010101 !important;
 }
 
-/* Make sure button contents are white */
-.dark .bg-indigo-600 *, .dark .bg-blue-600 *, .dark .bg-purple-600 *, .dark .bg-indigo-500 * {
+/* Hover background states */
+.hover\:bg-indigo-700:hover, .hover\:bg-indigo-600:hover, .hover\:from-indigo-500:hover {
+  background-color: #312E2E !important; /* Rein on hover in light mode */
+}
+.dark .hover\:bg-indigo-700:hover, .dark .hover\:bg-indigo-600:hover {
+  background-color: #E2E8F0 !important; /* Hover state for white buttons in dark mode */
+}
+
+/* 3. Subtly tinted container/badge backgrounds (e.g. icon boxes, notifications tab) */
+.bg-indigo-50, .bg-blue-50, .bg-purple-50, .bg-indigo-500\/5 {
+  background-color: #F3F4F6 !important; /* Clean light gray */
+  color: #312E2E !important;
+}
+.dark .bg-indigo-50, 
+.dark .bg-blue-50, 
+.dark .bg-purple-50, 
+.dark .bg-indigo-500\/5,
+.dark .bg-indigo-950\/20,
+.dark .bg-indigo-950\/30 {
+  background-color: #4E4949 !important; /* Shadow background in dark mode */
   color: #FFFFFF !important;
 }
-
-/* 3. Subtly tinted purple/lavender backgrounds (badges and light panels) */
-.bg-indigo-50, .bg-blue-50, .bg-purple-50 {
-  background-color: var(--purple-light) !important;
-  color: var(--purple-accent) !important;
-}
-.dark .bg-indigo-50, .dark .bg-blue-50, .dark .bg-purple-50 {
-  background-color: #201738 !important;
-  color: #C084FC !important;
+.dark .bg-indigo-50 *, 
+.dark .bg-blue-50 *, 
+.dark .bg-purple-50 *,
+.dark .bg-indigo-950\/30 * {
+  color: #FFFFFF !important;
 }
 
 /* 4. Active outlines and focus rings */
 .border-indigo-500, .border-blue-500, .border-indigo-200, .border-indigo-100 {
-  border-color: var(--purple-border) !important;
+  border-color: #5C5551 !important; /* Saddle */
+}
+.dark .border-indigo-500, 
+.dark .border-blue-500, 
+.dark .border-indigo-200, 
+.dark .border-indigo-100 {
+  border-color: #807D7D !important; /* Mustang border in dark mode */
 }
 .group-hover\:border-indigo-200:hover, .hover\:border-indigo-200:hover {
-  border-color: var(--purple-accent) !important;
+  border-color: #312E2E !important;
+}
+.dark .group-hover\:border-indigo-200:hover, .dark .hover\:border-indigo-200:hover {
+  border-color: #FFFFFF !important;
+}
+
+/* 5. Custom scrollbar styling using Mustang gray */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(128, 125, 125, 0.3) !important; /* Mustang 30% */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 125, 125, 0.5) !important; /* Mustang 50% */
 }
 
 /* ==========================================================================

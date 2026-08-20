@@ -249,22 +249,22 @@ export default function StudentDashboard() {
       <div className="p-4 sm:p-5 md:p-6 flex-1 w-full max-w-[1600px] mx-auto overflow-y-auto custom-scrollbar">
         
         {/* Modern radial gradient greeting block */}
-        <div className="relative z-30 bg-gradient-to-br from-slate-900 via-[#10142d] to-slate-900 rounded-3xl p-5 md:p-6 mb-5 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="relative z-30 bg-gradient-to-br from-[#010101] via-[#312E2E] to-[#010101] rounded-3xl p-5 md:p-6 mb-5 shadow-xl shadow-slate-900/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border border-[#5C5551]/20">
           {/* Absolute Background Wrapper to safely clip the glow blobs without clipping dropdowns */}
           <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none z-0">
-            <div className="absolute top-[-30%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none" />
-            <div className="absolute bottom-[-30%] left-[-10%] w-[250px] h-[250px] bg-blue-500/5 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute top-[-30%] right-[-10%] w-[300px] h-[300px] bg-[#807D7D]/5 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute bottom-[-30%] left-[-10%] w-[250px] h-[250px] bg-[#5C5551]/5 rounded-full blur-[80px] pointer-events-none" />
           </div>
           
           <div className="relative z-10 space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-full text-[9px] font-black uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#807D7D]/10 border border-[#807D7D]/20 text-[#807D7D] rounded-full text-[9px] font-black uppercase tracking-widest">
               <Sparkles size={10} /> Authorized Session Active
             </span>
             <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight uppercase leading-none mt-2">
               Student Dashboard
             </h1>
             <p className="text-slate-400 text-sm font-bold">
-              Welcome back, <span className="text-indigo-400">{profile?.full_name || 'Student'}</span>
+              Welcome back, <span className="text-[#807D7D] font-extrabold">{profile?.full_name || 'Student'}</span>
             </p>
           </div>
         </div>
