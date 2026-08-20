@@ -39,8 +39,8 @@ export default function NotificationBell({ align = 'right' }: { align?: 'left' |
       const title = newNotif.title || 'Student Portal Alert'
       const options = {
         body: newNotif.message || '',
-        icon: '/icon.svg',
-        badge: '/icon.svg',
+        icon: '/icon.png',
+        badge: '/icon.png',
         data: {
           url: newNotif.link || '/'
         }
