@@ -438,7 +438,7 @@ export default function StudentDirectory() {
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           {/* Desktop Table View */}
           <div className="hidden md:block overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[950px] text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <th className="p-4 sm:p-5">Student Identity</th>
