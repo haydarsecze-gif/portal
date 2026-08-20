@@ -81,7 +81,7 @@ export default function StudentDirectory() {
       let profiles: any[] = []
       const { data: profs, error: profErr } = await supabase
         .from('profiles')
-        .select('id, class_id, created_at, birthday, more_detail, semester, email')
+        .select('id, class_id, created_at, birthday, more_detail, semester, email, registered_with_lecturer_id')
         .eq('role', 'student')
 
       if (profErr) {
@@ -95,11 +95,18 @@ export default function StudentDirectory() {
           ...p,
           birthday: null,
           more_detail: '',
-          semester: null
+          semester: null,
+          registered_with_lecturer_id: null
         }))
       } else {
         profiles = profs || []
       }
+
+      // Fetch all lecturers/teachers to resolve lecturer IDs to names/codes
+      const { data: lecturers } = await supabase
+        .from('profiles')
+        .select('id, full_name, invite_code')
+        .eq('role', 'teacher')
 
       const [overviewRes, classesRes] = await Promise.all([
         supabase.from('admin_student_overview').select('*'),
@@ -114,6 +121,7 @@ export default function StudentDirectory() {
       const combined = overview.map(o => {
         const prof = profiles.find(p => p.id === o.student_id)
         const cls = classes.find(c => c.id === prof?.class_id)
+        const referringLecturer = lecturers?.find(l => l.id === prof?.registered_with_lecturer_id)
         return {
           ...o,
           email: prof?.email || o.email || 'No email provided',
@@ -121,7 +129,9 @@ export default function StudentDirectory() {
           more_detail: prof?.more_detail || '',
           semester: prof?.semester !== undefined && prof?.semester !== null ? prof.semester : (cls ? cls.semester : 'N/A'),
           class_name: cls ? cls.name : (o.subject_name || 'Unassigned'),
-          created_at: prof?.created_at || o.created_at
+          created_at: prof?.created_at || o.created_at,
+          lecturer_name: referringLecturer?.full_name || null,
+          lecturer_code: referringLecturer?.invite_code || null
         }
       })
 
@@ -144,8 +154,15 @@ export default function StudentDirectory() {
         const classes = classesData || []
         setClassesList(classes)
         
+        // Fetch lecturers here too
+        const { data: lecturers } = await supabase
+          .from('profiles')
+          .select('id, full_name, invite_code')
+          .eq('role', 'teacher')
+
         const mappedFallback = (fallbackData || []).map(p => {
           const cls = classes.find(c => c.id === p.class_id)
+          const referringLecturer = lecturers?.find(l => l.id === p.registered_with_lecturer_id)
           return {
             id: p.id,
             student_id: p.id,
@@ -156,7 +173,9 @@ export default function StudentDirectory() {
             class_name: cls ? cls.name : 'Unassigned',
             birthday: p.birthday || null,
             more_detail: p.more_detail || '',
-            days_present: 0
+            days_present: 0,
+            lecturer_name: referringLecturer?.full_name || null,
+            lecturer_code: referringLecturer?.invite_code || null
           }
         })
         setStudents(mappedFallback)
@@ -424,6 +443,7 @@ export default function StudentDirectory() {
                 <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                   <th className="p-4 sm:p-5">Student Identity</th>
                   <th className="p-4 sm:p-5">Date Registered</th>
+                  <th className="p-4 sm:p-5">Registered With</th>
                   <th className="p-4 sm:p-5 text-center">Semester</th>
                   <th className="p-4 sm:p-5">Birthday</th>
                   <th className="p-4 sm:p-5">Details</th>
@@ -452,6 +472,18 @@ export default function StudentDirectory() {
                         <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-1.5 leading-none">
                           Registered: {formatRelativeTime(s.created_at)}
                         </div>
+                      )}
+                    </td>
+                    <td className="p-4 sm:p-5">
+                      {s.lecturer_name ? (
+                        <div>
+                          <p className="text-xs text-slate-800 dark:text-slate-200 font-black uppercase tracking-tight">{s.lecturer_name}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Code: {s.lecturer_code}</p>
+                        </div>
+                      ) : (
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-900/60 px-2.5 py-1 rounded-md border border-slate-100 dark:border-slate-800">
+                          Direct / Admin
+                        </span>
                       )}
                     </td>
                     <td className="p-4 sm:p-5 text-center">
@@ -538,6 +570,12 @@ export default function StudentDirectory() {
                   <div className="min-w-0 col-span-2">
                     <span className="block text-[8px] font-black text-slate-350 tracking-wider leading-none mb-1">Details</span>
                     <span className="text-slate-600 block truncate normal-case tracking-normal font-medium">{s.more_detail || 'No details added'}</span>
+                  </div>
+                  <div className="min-w-0 col-span-2 border-t border-slate-100 dark:border-slate-800 pt-2.5 mt-0.5">
+                    <span className="block text-[8px] font-black text-slate-355 tracking-wider leading-none mb-1">Registered With</span>
+                    <span className="text-slate-700 dark:text-slate-300 block truncate leading-none">
+                      {s.lecturer_name ? `${s.lecturer_name} (Code: ${s.lecturer_code})` : 'Direct / Admin'}
+                    </span>
                   </div>
                 </div>
 

@@ -80,19 +80,27 @@ export default function Register() {
     const cleanEmail = email.trim().toLowerCase()
 
     try {
-      let classId = null
+      let registeredWithLecturerId = null
+      let inviteCodeForTeacher = null
 
       if (role === 'student') {
-        const { data: codeData, error: codeError } = await supabase
-          .from('invite_codes')
-          .select('class_id')
-          .eq('code', inviteCode.toUpperCase().trim())
+        const { data: lecturerData, error: lecturerError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'teacher')
+          .eq('invite_code', inviteCode.toUpperCase().trim())
           .single()
 
-        if (codeError || !codeData) {
+        if (lecturerError || !lecturerData) {
           throw new Error("Invalid or expired invite code")
         }
-        classId = codeData.class_id
+        registeredWithLecturerId = lecturerData.id
+      } else if (role === 'teacher') {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        const numbers = '0123456789'
+        inviteCodeForTeacher = ''
+        for (let i = 0; i < 4; i++) inviteCodeForTeacher += chars.charAt(Math.floor(Math.random() * chars.length))
+        for (let i = 0; i < 3; i++) inviteCodeForTeacher += numbers.charAt(Math.floor(Math.random() * numbers.length))
       }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -111,10 +119,12 @@ export default function Register() {
           full_name: fullName,
           role: userRole,
           status: status,
-          class_id: classId,
+          class_id: null,
           email: cleanEmail,
           drive_folder_id: null,
-          is_approved: role === 'student'
+          is_approved: role === 'student',
+          invite_code: inviteCodeForTeacher,
+          registered_with_lecturer_id: registeredWithLecturerId
         })
 
         if (profileError) throw profileError
@@ -124,7 +134,7 @@ export default function Register() {
             id: authData.user.id,
             name: fullName,
             email: cleanEmail,
-            class_id: classId
+            class_id: null
           })
           if (studentError) throw studentError
         }

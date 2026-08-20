@@ -430,10 +430,16 @@ export default function LecturerManagement() {
                               <span className="text-indigo-500 dark:text-indigo-400 font-black uppercase tracking-wider">Created: {formatRelativeTime(t.created_at)}</span>
                             </>
                           )}
-                          {t.drive_folder_id && (
+                           {t.drive_folder_id && (
                             <>
                               <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
                               <span className="text-emerald-500 dark:text-emerald-400 font-black uppercase tracking-wider truncate max-w-[150px]" title={t.drive_folder_id}>Drive ID: {t.drive_folder_id}</span>
+                            </>
+                          )}
+                          {t.invite_code && (
+                            <>
+                              <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+                              <span className="text-indigo-500 dark:text-indigo-400 font-black uppercase tracking-wider">Invite Code: {t.invite_code}</span>
                             </>
                           )}
                         </div>

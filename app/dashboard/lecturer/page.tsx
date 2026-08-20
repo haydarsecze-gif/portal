@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, nukeSession, safeInsertNotifications } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock, AlertCircle, CheckCircle2, Check, Copy } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -70,6 +70,7 @@ export default function LecturerDashboard() {
   const [settingsPassword, setSettingsPassword] = useState('')
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState('')
+  const [copiedLink, setCopiedLink] = useState(false)
 
   // Create Subject modal states
   const [showCreateSubjectModal, setShowCreateSubjectModal] = useState(false)
@@ -113,11 +114,30 @@ export default function LecturerDashboard() {
         router.push('/auth/login')
         return
       }
-      setProfile(p)
-      if (p) {
-        setSettingsName(p.full_name || '')
+      let profileObj = p
+      if (p && p.role === 'teacher' && !p.invite_code) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        const numbers = '0123456789'
+        let generatedCode = ''
+        for (let i = 0; i < 4; i++) generatedCode += chars.charAt(Math.floor(Math.random() * chars.length))
+        for (let i = 0; i < 3; i++) generatedCode += numbers.charAt(Math.floor(Math.random() * numbers.length))
+
+        const { data: updatedProfile } = await supabase
+          .from('profiles')
+          .update({ invite_code: generatedCode })
+          .eq('id', user.id)
+          .select()
+          .single()
+
+        if (updatedProfile) {
+          profileObj = updatedProfile
+        }
+      }
+      setProfile(profileObj)
+      if (profileObj) {
+        setSettingsName(profileObj.full_name || '')
         setSettingsEmail(user.email || '')
-        setSettingsDrive(p.drive_folder_id || '')
+        setSettingsDrive(profileObj.drive_folder_id || '')
       }
 
       const { data: s } = await supabase
@@ -641,6 +661,41 @@ export default function LecturerDashboard() {
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Personal Invite Code Card */}
+              <div className="p-5 bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-slate-900/60 shadow-xs flex justify-between items-center gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                    Student Registration Code
+                  </label>
+                  <p className="text-xl font-mono font-black text-indigo-600 dark:text-indigo-400 mt-1 select-all tracking-widest uppercase">
+                    {profile?.invite_code || 'None'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!profile?.invite_code) return
+                    const link = `${window.location.origin}/auth/register?code=${profile.invite_code}`
+                    navigator.clipboard.writeText(link)
+                    setCopiedLink(true)
+                    setTimeout(() => setCopiedLink(false), 2000)
+                  }}
+                  className="text-[9px] font-black uppercase tracking-widest bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white px-4 py-3 rounded-xl transition active:scale-95 shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check size={12} strokeWidth={3} />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={12} />
+                      <span>Copy Link</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* New Password field (Optional) */}

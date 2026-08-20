@@ -43,7 +43,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     google_refresh_token TEXT,
     birthday DATE,
     more_detail TEXT,
-    semester INTEGER
+    semester INTEGER,
+    invite_code TEXT UNIQUE,
+    registered_with_lecturer_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL
 );
 
 -- Add teacher_id constraint to public.classes referencing public.profiles
