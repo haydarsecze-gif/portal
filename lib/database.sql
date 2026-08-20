@@ -28,9 +28,22 @@ CREATE TABLE IF NOT EXISTS public.notifications (
 -- 1.1 Support dynamic link column addition for existing database instances
 ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link TEXT;
 
+-- 1.2 Create the push_subscriptions table in the public schema if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    subscription JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 
 -- 2. Enable Row-Level Security (RLS)
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- 2.1 Create indexes for push_subscriptions table for fast query lookups
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON public.push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON public.push_subscriptions((subscription->>'endpoint'));
 
 -- 3. Drop existing policies defensively to prevent duplicate errors
 DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
