@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, nukeSession } from '@/lib/supabase'
-import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw, Settings, Mail, Lock, X } from 'lucide-react'
+import { BookOpen, Clock, User, LogOut, Loader2, ArrowRight, Sparkles, RefreshCw, Settings, Mail, Lock, X, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
@@ -22,6 +22,22 @@ export default function StudentDashboard() {
   const [settingsPassword, setSettingsPassword] = useState('')
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [settingsMessage, setSettingsMessage] = useState('')
+
+  const renderMessageText = (msg: string) => {
+    if (!msg) return null
+    const isSuccess = msg.includes('✅')
+    const isError = msg.includes('❌')
+    const isWarning = msg.includes('⚠️')
+    const cleaned = msg.replace(/[✅❌⚠️]/gu, '').trim()
+    return (
+      <span className="flex items-center justify-center gap-1.5">
+        {isSuccess && <CheckCircle2 size={13} className="shrink-0" />}
+        {isError && <AlertCircle size={13} className="shrink-0" />}
+        {isWarning && <AlertCircle size={13} className="shrink-0" />}
+        <span>{cleaned}</span>
+      </span>
+    )
+  }
 
   const loadDashboard = useCallback(async (showFullLoader = false) => {
     if (showFullLoader) setLoading(true)
@@ -394,7 +410,7 @@ export default function StudentDashboard() {
                   ? 'text-emerald-550 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/60' 
                   : 'text-red-550 dark:text-red-450 bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/60'
               }`}>
-                {settingsMessage}
+                {renderMessageText(settingsMessage)}
               </p>
             )}
 

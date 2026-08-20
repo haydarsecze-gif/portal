@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase, safeInsertNotifications } from '@/lib/supabase'
-import { Search, Plus, Trash2, X, Check, Calendar, Clock, BookOpen, Pencil, Users, UserCheck, Save, HelpCircle, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, Sparkles, ShieldAlert, ArrowRight } from 'lucide-react'
+import { Search, Plus, Trash2, X, Check, Calendar, Clock, BookOpen, Pencil, Users, UserCheck, Save, HelpCircle, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2, Sparkles, ShieldAlert, ArrowRight, Lock } from 'lucide-react'
 
 // Institutional attendance status mapping matching requirements
 const ATTENDANCE_STATUSES = [
@@ -636,8 +636,18 @@ export default function AdminCurriculum() {
                   </button>
                 </div>
                 <h2 className="font-black text-2xl text-slate-800 uppercase tracking-tight mt-2.5 leading-none">{selectedSubject.name} Attendance Matrix</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                  {isEditable ? "⚠️ EDIT MODE ENABLED: Dropdown matrix cells unlocked for entry overrides." : "🔒 READ ONLY VIEW: Unlock editor below to make cell updates."}
+                <p className="text-[10px] font-bold text-slate-405 uppercase tracking-widest mt-1 flex items-center gap-1">
+                  {isEditable ? (
+                    <>
+                      <AlertCircle size={10} className="text-amber-500 animate-pulse shrink-0" />
+                      <span>Edit Mode Enabled: Dropdown matrix cells unlocked for entry overrides.</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={10} className="text-slate-400 shrink-0" />
+                      <span>Read Only View: Unlock editor below to make cell updates.</span>
+                    </>
+                  )}
                 </p>
               </div>
               <button 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase, nukeSession } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, LogIn, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react'
+import { Loader2, Mail, Lock, LogIn, ArrowLeft, RefreshCw, Trash2, AlertCircle } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function Login() {
@@ -12,6 +12,22 @@ export default function Login() {
   const [message, setMessage] = useState('')
   const [savedAccounts, setSavedAccounts] = useState<any[]>([])
   const router = useRouter()
+
+  const renderMessageText = (msg: string) => {
+    if (!msg) return null
+    const isSuccess = msg.includes('✅')
+    const isError = msg.includes('❌')
+    const isWarning = msg.includes('⚠️')
+    const cleaned = msg.replace(/[✅❌⚠️]/gu, '').trim()
+    return (
+      <span className="flex items-center justify-center gap-1.5">
+        {isSuccess && <Loader2 size={13} className="animate-spin shrink-0" />}
+        {isError && <AlertCircle size={13} className="shrink-0" />}
+        {isWarning && <AlertCircle size={13} className="shrink-0" />}
+        <span>{cleaned}</span>
+      </span>
+    )
+  }
 
   useEffect(() => {
     // 1. Switch Account Intercept Route Check
@@ -400,7 +416,7 @@ export default function Login() {
 
         {message && (
           <p className="mt-6 text-center text-xs font-black text-red-400 bg-red-950/30 border border-red-900/50 py-3 px-4 rounded-xl animate-in fade-in duration-300 leading-tight uppercase tracking-wide">
-            {message}
+            {renderMessageText(message)}
           </p>
         )}
 

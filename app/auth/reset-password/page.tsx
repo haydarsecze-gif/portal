@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Loader2, Lock, ArrowLeft, KeyRound, Mail, RefreshCw } from 'lucide-react'
+import { Loader2, Lock, ArrowLeft, KeyRound, Mail, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 
 export default function ResetPassword() {
@@ -13,6 +13,22 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const router = useRouter()
+
+  const renderMessageText = (msg: string) => {
+    if (!msg) return null
+    const isSuccess = msg.includes('✅')
+    const isError = msg.includes('❌')
+    const isWarning = msg.includes('⚠️')
+    const cleaned = msg.replace(/[✅❌⚠️]/gu, '').trim()
+    return (
+      <span className="flex items-center justify-center gap-1.5">
+        {isSuccess && <CheckCircle2 size={13} className="shrink-0" />}
+        {isError && <AlertCircle size={13} className="shrink-0" />}
+        {isWarning && <AlertCircle size={13} className="shrink-0" />}
+        <span>{cleaned}</span>
+      </span>
+    )
+  }
 
   useEffect(() => {
     // 1. Verify if we came from a recovery link (via URL search query or hash fragment)
@@ -212,7 +228,7 @@ export default function ResetPassword() {
                 ? 'text-emerald-555 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50' 
                 : 'text-red-555 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30 border-red-100 dark:border-red-900/50'
             }`}>
-              {message}
+              {renderMessageText(message)}
             </p>
           )}
         </form>
@@ -268,7 +284,7 @@ export default function ResetPassword() {
                 ? 'text-emerald-555 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50' 
                 : 'text-red-555 dark:text-red-400 bg-red-50/50 dark:bg-red-950/30 border-red-100 dark:border-red-900/50'
             }`}>
-              {message}
+              {renderMessageText(message)}
             </p>
           )}
         </form>

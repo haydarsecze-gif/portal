@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, nukeSession, safeInsertNotifications } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock } from 'lucide-react'
+import { BookOpen, Clock, LogOut, Loader2, Sparkles, ArrowRight, RefreshCw, Settings, User, Mail, KeyRound, HelpCircle, X, Smartphone, Share, PlusSquare, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -81,6 +81,22 @@ export default function LecturerDashboard() {
   const [newSubjEndTime, setNewSubjEndTime] = useState('11:30')
   const [createSubjLoading, setCreateSubjLoading] = useState(false)
   const [createSubjMessage, setCreateSubjMessage] = useState('')
+
+  const renderMessageText = (msg: string) => {
+    if (!msg) return null
+    const isSuccess = msg.includes('✅')
+    const isError = msg.includes('❌')
+    const isWarning = msg.includes('⚠️') || msg.includes('⚡')
+    const cleaned = msg.replace(/[✅❌⚠️⚡🔌]/gu, '').trim()
+    return (
+      <span className="flex items-center justify-center gap-1.5">
+        {isSuccess && <CheckCircle2 size={13} className="shrink-0" />}
+        {isError && <AlertCircle size={13} className="shrink-0" />}
+        {isWarning && <AlertCircle size={13} className="shrink-0" />}
+        <span>{cleaned}</span>
+      </span>
+    )
+  }
 
   const fetchData = useCallback(async (showFullLoader = false) => {
     if (showFullLoader) setLoading(true)
@@ -580,7 +596,7 @@ export default function LecturerDashboard() {
               <div className="space-y-3 p-5 bg-slate-50 dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-slate-900/60 shadow-xs">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                    🔌 Google Drive Integration
+                    Google Drive Integration
                   </label>
                   {profile?.google_refresh_token ? (
                     <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-950/45 px-2 py-0.5 rounded-lg border border-emerald-100 dark:border-emerald-900/40 uppercase tracking-wider">
@@ -599,13 +615,13 @@ export default function LecturerDashboard() {
                     : 'Link your personal or work Google Drive account to automatically create and host all subject folders and student submissions on your own Drive.'
                   }
                 </p>
-
+ 
                 {profile?.email && profile?.google_refresh_token && (
                   <div className="text-[8.5px] font-mono text-indigo-600 dark:text-indigo-300 select-all bg-indigo-50/50 dark:bg-indigo-950/20 p-2.5 rounded-xl border border-indigo-100/50 dark:border-indigo-900/40 break-all leading-tight font-bold">
                     Connected Drive Account: {profile.email}
                   </div>
                 )}
-
+ 
                 <div className="pt-1.5">
                   {profile?.google_refresh_token ? (
                     <button
@@ -621,7 +637,7 @@ export default function LecturerDashboard() {
                       onClick={handleConnectGoogleDrive}
                       className="w-full text-center bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition shadow-md shadow-indigo-500/10 cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      ⚡ Connect Google Drive
+                      Connect Google Drive
                     </button>
                   )}
                 </div>
@@ -650,7 +666,7 @@ export default function LecturerDashboard() {
                     ? 'text-blue-550 dark:text-blue-450 bg-blue-50 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/60'
                     : 'text-red-550 dark:text-red-450 bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/60'
               }`}>
-                {settingsMessage}
+                {renderMessageText(settingsMessage)}
               </p>
             )}
 
@@ -788,7 +804,7 @@ export default function LecturerDashboard() {
                   ? 'text-emerald-550 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/60' 
                   : 'text-red-550 dark:text-red-450 bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/60'
               }`}>
-                {createSubjMessage}
+                {renderMessageText(createSubjMessage)}
               </p>
             )}
 

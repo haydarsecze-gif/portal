@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, safeInsertNotifications } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react'
+import { ArrowLeft, FileText, BookOpen, X, Upload, Loader2, Check, RotateCcw, Cloud, Paperclip, Lock, File as FileIcon, Calendar, Clock, Trash2, MapPin, Hash, Mail, Phone, User, ExternalLink, RefreshCw, GraduationCap, AlertCircle, ChevronDown, ChevronUp, Eye, CheckCircle2, Settings } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -650,16 +650,31 @@ export default function StudentClassroom() {
                   {uploadProgress[item.title] && (
                     <div className="w-full border-t border-slate-100 dark:border-slate-850/60 pt-3.5 animate-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-between items-center mb-2">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${
+                        <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                           uploadProgress[item.title].status === 'success' 
                             ? 'text-emerald-600 dark:text-emerald-450' 
                             : uploadProgress[item.title].status === 'failed'
                               ? 'text-red-500 dark:text-red-450'
                               : 'text-indigo-600 dark:text-indigo-400'
                         }`}>
-                          {uploadProgress[item.title].status === 'success' && '✅ Submission Uploaded Successfully!'}
-                          {uploadProgress[item.title].status === 'failed' && `❌ Upload Failed: ${uploadProgress[item.title].error}`}
-                          {uploadProgress[item.title].status === 'uploading' && `⚡ Uploading... (${uploadProgress[item.title].progress}%)`}
+                          {uploadProgress[item.title].status === 'success' && (
+                            <>
+                              <CheckCircle2 size={12} className="shrink-0" />
+                              <span>Submission Uploaded Successfully!</span>
+                            </>
+                          )}
+                          {uploadProgress[item.title].status === 'failed' && (
+                            <>
+                              <AlertCircle size={12} className="shrink-0" />
+                              <span>Upload Failed: {uploadProgress[item.title].error}</span>
+                            </>
+                          )}
+                          {uploadProgress[item.title].status === 'uploading' && (
+                            <>
+                              <Loader2 size={12} className="animate-spin shrink-0" />
+                              <span>Uploading... ({uploadProgress[item.title].progress}%)</span>
+                            </>
+                          )}
                         </span>
                         {uploadProgress[item.title].status !== 'uploading' && (
                           <button 
@@ -727,19 +742,27 @@ export default function StudentClassroom() {
                 </div>
 
                 {geoError && (
-                  <p className="text-xs font-bold text-red-500 bg-red-50/50 p-3 rounded-xl border border-red-100 max-w-xl mt-3 leading-relaxed">
-                    ❌ {geoError}
+                  <p className="text-xs font-bold text-red-500 bg-red-50/50 p-3 rounded-xl border border-red-100 max-w-xl mt-3 leading-relaxed flex items-center gap-1.5">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{geoError}</span>
                   </p>
                 )}
                 {geoSuccess && checkInMessage && (
-                  <p className={`text-xs font-bold p-3 rounded-xl border mt-3 leading-relaxed ${
+                  <p className={`text-xs font-bold p-3 rounded-xl border mt-3 leading-relaxed flex items-center gap-1.5 ${
                     checkInMessage.includes('Absent') 
                       ? 'text-red-600 bg-red-50/50 border-red-100' 
                       : checkInMessage.includes('Late') 
                         ? 'text-amber-700 bg-amber-50/50 border-amber-100' 
                         : 'text-emerald-600 bg-emerald-50/50 border-emerald-100'
                   }`}>
-                    {checkInMessage}
+                    {checkInMessage.includes('Absent') ? (
+                      <AlertCircle size={14} className="shrink-0" />
+                    ) : checkInMessage.includes('Late') ? (
+                      <AlertCircle size={14} className="shrink-0" />
+                    ) : (
+                      <CheckCircle2 size={14} className="shrink-0" />
+                    )}
+                    <span>{checkInMessage}</span>
                   </p>
                 )}
                 {alreadyCheckedIn && (
@@ -1053,21 +1076,41 @@ export default function StudentClassroom() {
                               {uploadProgress[selectedItem.title] && (
                                 <div className="p-4 bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-100/30 dark:border-indigo-900/10 rounded-2xl flex flex-col gap-2">
                                   <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                                    <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center">
                                       {uploadProgress[selectedItem.title].status === 'success' && (
-                                        uploadProgress[selectedItem.title].type === 'submission_delete' 
-                                          ? '✅ File Deleted Successfully!' 
-                                          : '✅ Submission Uploaded Successfully!'
+                                        <span className="flex items-center gap-1.5">
+                                          <CheckCircle2 size={12} className="shrink-0" />
+                                          <span>
+                                            {uploadProgress[selectedItem.title].type === 'submission_delete' 
+                                              ? 'File Deleted Successfully!' 
+                                              : 'Submission Uploaded Successfully!'}
+                                          </span>
+                                        </span>
                                       )}
                                       {uploadProgress[selectedItem.title].status === 'failed' && (
-                                        uploadProgress[selectedItem.title].type === 'submission_delete'
-                                          ? `❌ Delete Failed: ${uploadProgress[selectedItem.title].error}`
-                                          : `❌ Upload Failed: ${uploadProgress[selectedItem.title].error}`
+                                        <span className="flex items-center gap-1.5">
+                                          <AlertCircle size={12} className="shrink-0" />
+                                          <span>
+                                            {uploadProgress[selectedItem.title].type === 'submission_delete'
+                                              ? `Delete Failed: ${uploadProgress[selectedItem.title].error}`
+                                              : `Upload Failed: ${uploadProgress[selectedItem.title].error}`}
+                                          </span>
+                                        </span>
                                       )}
                                       {uploadProgress[selectedItem.title].status === 'uploading' && (
-                                        uploadProgress[selectedItem.title].type === 'submission_delete' 
-                                          ? '🗑️ Deleting file from Google Drive...' 
-                                          : `⚡ Syncing to Google Drive... (${uploadProgress[selectedItem.title].progress}%)`
+                                        <span className="flex items-center gap-1.5">
+                                          {uploadProgress[selectedItem.title].type === 'submission_delete' ? (
+                                            <>
+                                              <Trash2 size={12} className="animate-pulse shrink-0" />
+                                              <span>Deleting file from Google Drive...</span>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Loader2 size={12} className="animate-spin shrink-0" />
+                                              <span>Syncing to Google Drive... ({uploadProgress[selectedItem.title].progress}%)</span>
+                                            </>
+                                          )}
+                                        </span>
                                       )}
                                     </span>
                                     {uploadProgress[selectedItem.title].status !== 'uploading' && (
@@ -1215,7 +1258,7 @@ export default function StudentClassroom() {
                 <div className="space-y-3">
                   <div className="flex gap-3 text-xs text-slate-700 dark:text-slate-350 font-bold">
                     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[10px] font-black shrink-0">1</span>
-                    <p className="leading-snug">Tap the <span className="font-black text-slate-900 dark:text-white">Lock Icon 🔒</span> or <span className="font-black text-slate-900 dark:text-white">Settings Icon ⚙️</span> located in your browser's address bar.</p>
+                    <p className="leading-snug flex items-center flex-wrap gap-1">Tap the <span className="font-black text-slate-900 dark:text-white inline-flex items-center gap-1"><Lock size={12} /> Lock Icon</span> or <span className="font-black text-slate-900 dark:text-white inline-flex items-center gap-1"><Settings size={12} /> Settings Icon</span> located in your browser's address bar.</p>
                   </div>
                   
                   <div className="flex gap-3 text-xs text-slate-700 dark:text-slate-350 font-bold">

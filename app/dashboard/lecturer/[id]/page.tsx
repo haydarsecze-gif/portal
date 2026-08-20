@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Plus, RefreshCw, Loader2, BookOpen, GraduationCap, FileText, Check } from 'lucide-react'
+import { ArrowLeft, Plus, RefreshCw, Loader2, BookOpen, GraduationCap, FileText, Check, AlertCircle, CheckCircle2 } from 'lucide-react'
 import ThemeToggle from '@/app/components/ThemeToggle'
 import NotificationBell from '@/app/components/NotificationBell'
 import AccountSwitcher from '@/app/components/AccountSwitcher'
@@ -266,16 +266,31 @@ export default function SubjectDetail() {
                     
                     <div className="w-full border-t border-slate-50 pt-3.5">
                       <div className="flex justify-between items-center mb-2">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${
+                        <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                           progressItem.status === 'success' 
                             ? 'text-emerald-600' 
                             : progressItem.status === 'failed'
                               ? 'text-red-550'
                               : 'text-indigo-600'
                         }`}>
-                           {progressItem.status === 'success' && '✅ Upload Successful! saving log...'}
-                           {progressItem.status === 'failed' && `❌ Upload Failed: ${progressItem.error}`}
-                           {progressItem.status === 'uploading' && `⚡ Uploading... (${progressItem.progress}%)`}
+                           {progressItem.status === 'success' && (
+                             <>
+                               <CheckCircle2 size={12} className="shrink-0" />
+                               <span>Upload Successful! saving log...</span>
+                             </>
+                           )}
+                           {progressItem.status === 'failed' && (
+                             <>
+                               <AlertCircle size={12} className="shrink-0" />
+                               <span>Upload Failed: {progressItem.error}</span>
+                             </>
+                           )}
+                           {progressItem.status === 'uploading' && (
+                             <>
+                               <Loader2 size={12} className="animate-spin shrink-0" />
+                               <span>Uploading... ({progressItem.progress}%)</span>
+                             </>
+                           )}
                         </span>
                         {progressItem.status === 'failed' && (
                           <button 
