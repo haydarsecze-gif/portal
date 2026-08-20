@@ -15,14 +15,17 @@
   --text-desc: #312E2E;       /* Rein - Elegant dark charcoal description */
   --text-muted: #807D7D;      /* Mustang - Muted mid-gray subtext */
   
-  /* Futuristic Purple Accent Colors */
-  --purple-accent: #8b5cf6;       /* Violet 600 */
-  --purple-accent-hover: #7c3aed; /* Violet 700 */
-  --purple-light: #f5f3ff;        /* Violet 50 */
-  --purple-border: #ddd6fe;       /* Violet 200 */
+  /* Mapped Warm-Neutral Accent Colors */
+  --purple-accent: #5C5551;       /* Saddle */
+  --purple-accent-hover: #312E2E; /* Rein */
+  --purple-light: #F3F4F6;        /* Clean light gray bg */
+  --purple-border: #E5E7EB;       /* Light clean border */
+
+  --red-accent: #5C5551;          /* Saddle warm gray instead of red */
+  --emerald-accent: #807D7D;      /* Mustang warm gray instead of green */
 }
 
-/* Premium Warm-Neutral Dark Theme (Caviar Black & Rein Charcoal with Glowing Purple accents) */
+/* Premium Warm-Neutral Dark Theme (Caviar Black & Rein Charcoal with Glowing accents) */
 .dark {
   --background: #010101;      /* Caviar - Deep pure black background */
   --foreground: #F9FAFB;
@@ -35,10 +38,13 @@
   --text-desc: #E2E8F0;       /* Light slate-gray for text */
   --text-muted: #807D7D;      /* Mustang - Muted mid-gray subtext */
   
-  --purple-accent: #a78bfa;       /* Violet 400 */
-  --purple-accent-hover: #c084fc; /* Purple 400 */
-  --purple-light: #201738;        /* Subtle deep purple background tint */
-  --purple-border: #4c1d95;       /* Futuristic dark purple border */
+  --purple-accent: #FFFFFF;       /* High contrast White */
+  --purple-accent-hover: #E2E8F0; /* Clean light gray */
+  --purple-light: #4E4949;        /* Shadow card subtext tint */
+  --purple-border: #5C5551;       /* Saddle card boundary outlines */
+
+  --red-accent: #807D7D;          /* Mustang gray instead of red */
+  --emerald-accent: #807D7D;      /* Mustang gray instead of green */
 }
 
 @theme inline {
@@ -88,6 +94,30 @@
   --color-purple-800: var(--purple-accent-hover);
   --color-purple-900: var(--bg-portal);
   --color-purple-950: var(--bg-portal);
+
+  --color-red-50: var(--purple-light);
+  --color-red-100: var(--purple-border);
+  --color-red-200: var(--purple-border);
+  --color-red-300: var(--text-muted);
+  --color-red-400: var(--text-muted);
+  --color-red-500: var(--red-accent);
+  --color-red-600: var(--red-accent);
+  --color-red-700: var(--purple-accent-hover);
+  --color-red-800: var(--purple-accent-hover);
+  --color-red-900: var(--bg-portal);
+  --color-red-950: var(--bg-portal);
+
+  --color-emerald-50: var(--purple-light);
+  --color-emerald-100: var(--purple-border);
+  --color-emerald-200: var(--purple-border);
+  --color-emerald-300: var(--text-muted);
+  --color-emerald-400: var(--text-muted);
+  --color-emerald-500: var(--emerald-accent);
+  --color-emerald-600: var(--emerald-accent);
+  --color-emerald-700: var(--purple-accent-hover);
+  --color-emerald-800: var(--purple-accent-hover);
+  --color-emerald-900: var(--bg-portal);
+  --color-emerald-950: var(--bg-portal);
   
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
