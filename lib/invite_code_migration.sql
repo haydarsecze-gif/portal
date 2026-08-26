@@ -13,6 +13,9 @@
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS invite_code TEXT UNIQUE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS registered_with_lecturer_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
 
+-- 1.1 Drop NOT NULL constraint on class_id of students table to allow lecturer code registration
+ALTER TABLE public.students ALTER COLUMN class_id DROP NOT NULL;
+
 -- 2. Create helper function to generate a random 7-character invite code (e.g. ABCD123)
 CREATE OR REPLACE FUNCTION public.generate_random_invite_code()
 RETURNS TEXT AS $$
