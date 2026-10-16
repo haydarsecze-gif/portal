@@ -1,8 +1,19 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Safe fallbacks to prevent Next.js build-time module evaluation crashes on Vercel if variables are missing
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
+export const DEFAULT_SUPABASE_URL = 'https://lnlrjaezfcbksjcbwvto.supabase.co'
+export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_gJ-T4a9HBBgs_jMOVzQ68A_KFWxulKC'
+
+// Ignore stale/offline old project URL or placeholder if still set in Vercel environment
+const isStaleUrl = (url?: string) => !url || url.includes('placeholder') || url.includes('aqvpwhubbytjzcdsfvhc')
+const isStaleAnon = (key?: string) => !key || key.includes('placeholder') || key.includes('jFj58eOTCt8Wx4CVsCjvIw')
+
+const supabaseUrl = isStaleUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) 
+  ? DEFAULT_SUPABASE_URL 
+  : process.env.NEXT_PUBLIC_SUPABASE_URL!
+
+const supabaseAnonKey = isStaleAnon(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  ? DEFAULT_SUPABASE_ANON_KEY
+  : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 // Resolve local domain proxy if running in a client browser to bypass DNS blocks
 const resolvedUrl = typeof window !== 'undefined' 
@@ -10,8 +21,7 @@ const resolvedUrl = typeof window !== 'undefined'
   : supabaseUrl
 
 // Explicitly use the real project ref derived from standard Supabase URL
-// aqvpwhubbytjzcdsfvhc is the project ref for https://aqvpwhubbytjzcdsfvhc.supabase.co
-const projectRef = 'aqvpwhubbytjzcdsfvhc'
+const projectRef = 'lnlrjaezfcbksjcbwvto'
 
 // ✅ Only public client (safe for browser) using clean localStorage-based session tracking
 const client = createClient(
@@ -58,6 +68,13 @@ export const supabaseRaw = createClient(
     }
   }
 )
+
+export function getServiceSupabase() {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false }
+  });
+}
 
 /**
  * Completely purges all possible Supabase session storage, cookies, and tokens

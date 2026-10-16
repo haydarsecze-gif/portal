@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/lib/supabaseServer';
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 
@@ -41,10 +42,7 @@ export async function GET(request: Request) {
       const { data: { user }, error: userError } = await supabase.auth.getUser(token);
       if (user && !userError) {
         // Authenticated user found, retrieve custom tokens
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-        const adminSupabase = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: { persistSession: false }
-        });
+        const adminSupabase = getServiceClient();
         
         const { data: profile, error: profileError } = await adminSupabase
           .from('profiles')

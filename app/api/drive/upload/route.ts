@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/lib/supabaseServer';
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 
@@ -6,11 +6,7 @@ export const maxDuration = 60; // Allow up to 60 seconds for file uploads to Goo
 
 async function resolveLecturerCredentials(targetFolderId: string) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false }
-    });
+    const supabase = getServiceClient();
 
     // 1. Try to find in assignments
     const { data: assignment } = await supabase
@@ -138,11 +134,7 @@ export async function POST(req: Request) {
     let dbFileUrls: string[] = [];
     if (isResubmission) {
       try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-          auth: { persistSession: false }
-        });
+        const supabase = getServiceClient();
 
         // 1. Resolve student ID
         let resolvedStudentId = null;

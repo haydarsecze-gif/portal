@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/lib/supabaseServer';
 
 export async function POST(req: Request) {
   try {
@@ -10,11 +10,7 @@ export async function POST(req: Request) {
     const token = authHeader.split(' ')[1];
 
     // Create service client to bypass RLS safely on the server
-    const serviceClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { persistSession: false } }
-    );
+    const serviceClient = getServiceClient();
 
     // Get the user from the auth token securely on the server
     const { data: { user }, error: authErr } = await serviceClient.auth.getUser(token);

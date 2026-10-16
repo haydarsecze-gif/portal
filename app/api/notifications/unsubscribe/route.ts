@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabaseServer'
 
 export async function POST(req: Request) {
   try {
@@ -8,12 +8,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing userId or endpoint' }, { status: 400 })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false }
-    })
+    const supabaseAdmin = getServiceClient()
 
     // Delete the specific subscription record by matching user_id and subscription endpoint
     const { error } = await supabaseAdmin

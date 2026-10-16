@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from '@/lib/supabaseServer';
 import { google } from 'googleapis';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -97,11 +97,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Initialize Supabase admin client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false },
-    });
+    const supabase = getServiceClient();
 
     // Update the profiles table with custom Drive information
     const { error: dbError } = await supabase

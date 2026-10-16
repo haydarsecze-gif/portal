@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabaseServer'
 
 export async function POST(req: Request) {
   try {
@@ -22,12 +22,7 @@ export async function POST(req: Request) {
     const authHeader = req.headers.get('authorization')
     const token = authHeader ? authHeader.replace('Bearer ', '') : null
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-    const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false }
-    })
+    const supabaseAdmin = getServiceClient()
 
     // If an authorization token is provided, verify it against the primary current user
     if (token && userId) {

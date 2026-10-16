@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getServiceClient } from '@/lib/supabaseServer'
 import webpush from 'web-push'
 
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
@@ -36,11 +36,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, message: 'Web Push is disabled on server' })
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-    const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false }
-    })
+    const supabaseAdmin = getServiceClient()
 
     let totalDispatched = 0
     let totalDeleted = 0
