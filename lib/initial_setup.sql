@@ -100,11 +100,13 @@ CREATE TABLE IF NOT EXISTS public.attendance (
 -- 7. Create public.materials table
 CREATE TABLE IF NOT EXISTS public.materials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    class_id UUID REFERENCES public.classes(id) ON DELETE CASCADE,
+    subject_id UUID REFERENCES public.subjects(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     description TEXT,
     file_url TEXT,
     file_name TEXT,
-    subject_id UUID REFERENCES public.subjects(id) ON DELETE CASCADE,
+    folder_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -276,5 +278,48 @@ BEGIN
         END IF;
     END IF;
 END $$;
+
+-- ====================================================================
+-- HELPER FUNCTIONS
+-- ====================================================================
+
+-- Function to generate a random 7-character invite code for lecturers (e.g. ABCD123)
+CREATE OR REPLACE FUNCTION public.generate_random_invite_code()
+RETURNS TEXT AS $$
+DECLARE
+    chars TEXT := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    nums TEXT := '0123456789';
+    result TEXT := '';
+    i INTEGER;
+BEGIN
+    FOR i IN 1..4 LOOP
+        result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+    END LOOP;
+    FOR i IN 1..3 LOOP
+        result := result || substr(nums, floor(random() * length(nums) + 1)::integer, 1);
+    END LOOP;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Helper function to promote any user to Administrator
+-- Usage: SELECT public.promote_user_to_admin('your-email@gmail.com');
+CREATE OR REPLACE FUNCTION public.promote_user_to_admin(target_email TEXT)
+RETURNS TEXT AS $$
+DECLARE
+    found_id UUID;
+BEGIN
+    SELECT id INTO found_id FROM public.profiles WHERE LOWER(email) = LOWER(target_email);
+    IF found_id IS NULL THEN
+        RETURN 'User with email ' || target_email || ' not found. Sign up in the portal first!';
+    END IF;
+
+    UPDATE public.profiles
+    SET role = 'admin', status = 'active', is_approved = true
+    WHERE id = found_id;
+
+    RETURN 'Success: ' || target_email || ' promoted to Administrator!';
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 NOTIFY pgrst, 'reload schema';
